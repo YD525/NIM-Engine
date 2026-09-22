@@ -212,6 +212,14 @@ namespace PhoenixEngine.Memory
                 CompactInternal();
             }
         }
+        public bool ContainsKey(TKey Key)
+        {
+            lock (GlobalLock)
+            {
+                return DictData.ContainsKey(Key);
+            }
+        }
+
         private void CompactInternal()
         {
             var NewCacheList = new List<TValue>();
