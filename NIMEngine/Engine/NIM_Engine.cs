@@ -13,7 +13,7 @@ using NIMEngine.Translate;
 
 namespace NIMEngine
 {
-    public class NIMEngine : ConfigExtend
+    public class NIM_Engine : ConfigExtend
     {
         //The engine allows the creation of multiple instances of the Translator, each capable of translating its own content, but sharing a single AIMemory. This improves context utilization.
         public static AITranslationMemory AIMemory = new AITranslationMemory();
@@ -32,7 +32,7 @@ namespace NIMEngine
         {
             if (Config.AutoSetThreadLimit)
             {
-                Config.MaxThreadCount = NIMEngine.AutoCalcThreadLimit();
+                Config.MaxThreadCount = NIM_Engine.AutoCalcThreadLimit();
             }
         }
 
@@ -46,10 +46,10 @@ namespace NIMEngine
 
             bool LocalAIEnable = false;
 
-            for (int i = 0; i < NIMEngine.Config.PlatformConfigs.Count; i++)
+            for (int i = 0; i < NIM_Engine.Config.PlatformConfigs.Count; i++)
             { 
-                int GetKey = NIMEngine.Config.PlatformConfigs.ElementAt(i).Key;
-                var GetConfig = NIMEngine.Config.PlatformConfigs[GetKey];
+                int GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+                var GetConfig = NIM_Engine.Config.PlatformConfigs[GetKey];
 
                 if (GetConfig.ApiKeys.Count > 0 && GetConfig.Enable && GetConfig.Platform != PlatformType.LMLocalAI)
                 {
@@ -71,7 +71,7 @@ namespace NIMEngine
         }
         public static string GetVersion()
         {
-            return NIMEngine.Version;
+            return NIM_Engine.Version;
         }
 
         public static string PluginsPath = @"\CorePlugins\";
@@ -107,7 +107,7 @@ namespace NIMEngine
             UniqueKeyHelper.Init();
 
             StepAction?.Invoke(7);
-            NIMEngine.LoadConfig();
+            NIM_Engine.LoadConfig();
 
             StepAction?.Invoke(8);
             ProxyCenter.UsingProxy();

@@ -25,8 +25,8 @@ namespace NIMEngine.Tests
         [TestInitialize]
         public void Initialize()
         {
-            _previousConfig = NIMEngine.Config;
-            NIMEngine.Config = new EngineConfigJson
+            _previousConfig = NIM_Engine.Config;
+            NIM_Engine.Config = new EngineConfigJson
             {
                 MaxThreadCount = 2,
                 PlatformConfigs = new Dictionary<int, PlatformConfig>()
@@ -39,7 +39,7 @@ namespace NIMEngine.Tests
         [TestCleanup]
         public void Cleanup()
         {
-            NIMEngine.Config = _previousConfig;
+            NIM_Engine.Config = _previousConfig;
         }
 
         /// <summary>
@@ -48,7 +48,7 @@ namespace NIMEngine.Tests
         [TestMethod]
         public async Task PausesAndResumesWithoutBlockingWorkerThreadsAsync()
         {
-            NIMEngine.Config.MaxThreadCount = 1;
+            NIM_Engine.Config.MaxThreadCount = 1;
             var provider = new PausingProvider();
             TranslatorCore core = CreateCore(provider, CreateGroup("first"), CreateGroup("second"));
 

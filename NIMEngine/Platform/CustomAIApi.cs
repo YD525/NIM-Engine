@@ -34,12 +34,12 @@ namespace NIMEngine.Platform
 
             this.ProxyRef = Proxy;
 
-            this.Model = NIMEngine.Config.GetPlatformData(this.CustomID).Model;
+            this.Model = NIM_Engine.Config.GetPlatformData(this.CustomID).Model;
         }
 
         public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call)
         {
-            var InFo = NIMEngine.Config.GetPlatformData(CustomID).CustomInFo;
+            var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetApiKey(ApiKey);
             Core.SetQueryRule(InFo.QueryRule);
@@ -132,7 +132,7 @@ namespace NIMEngine.Platform
         {
             CustomReqCore Core = new CustomReqCore();
 
-            var InFo = NIMEngine.Config.GetPlatformData(CustomID).CustomInFo;
+            var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetModel(Model);
             Core.SetApiKey(ApiKey);

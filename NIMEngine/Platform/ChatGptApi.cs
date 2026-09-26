@@ -52,7 +52,7 @@ namespace NIMEngine.Platform
         }
         public ChatGptRootobject CallAI(string ApiKey, string Msg,ref string Recv)
         {
-            this.Model = NIMEngine.Config.GetPlatformData(ChatGptApi.Type).Model;
+            this.Model = NIM_Engine.Config.GetPlatformData(ChatGptApi.Type).Model;
             int GetCount = Msg.Length; 
             ChatGptItem NChatGptItem = new ChatGptItem();
             NChatGptItem.model = Model;
