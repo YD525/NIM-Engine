@@ -50,7 +50,7 @@ CREATE TABLE [FontColors](
             // Check if table exists
             const string CheckTableSql =
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
-            var Result = Phoenix.LocalDB.ExecuteScalar(
+            var Result = NIM.LocalDB.ExecuteScalar(
                 CheckTableSql,
                 SqliteSql.Parameter("@tableName", TableName));
 
@@ -59,7 +59,7 @@ CREATE TABLE [FontColors](
                 // Table exists, check structure
                 string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
                 List<Dictionary<string, object>> Columns =
-                    Phoenix.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
+                    NIM.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
                 var ExistingCols = new HashSet<string>(
                       Columns.Select(R => R["name"].ToString()),
                     StringComparer.OrdinalIgnoreCase
@@ -72,14 +72,14 @@ CREATE TABLE [FontColors](
 
                 if (StructureChanged)
                 {
-                    Phoenix.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
-                    Phoenix.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIM.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
+                    NIM.LocalDB.ExecuteNonQuery(CreateSql);
                 }
             }
             else
             {
                 // Create if not exists
-                Phoenix.LocalDB.ExecuteNonQuery(CreateSql);
+                NIM.LocalDB.ExecuteNonQuery(CreateSql);
             }
         }
 
@@ -87,7 +87,7 @@ CREATE TABLE [FontColors](
         {
             const string SqlOrder =
                 "SELECT * FROM FontColors WHERE FileUniqueKey = @fileUniqueKey AND [Key] = @key;";
-            List<Dictionary<string, object>> NTable = Phoenix.LocalDB.ExecuteQuery(
+            List<Dictionary<string, object>> NTable = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@key", Key));
@@ -111,7 +111,7 @@ CREATE TABLE [FontColors](
         {
             const string SqlOrder =
                 "DELETE FROM FontColors WHERE FileUniqueKey = @fileUniqueKey AND [Key] = @key;";
-            int State = Phoenix.LocalDB.ExecuteNonQuery(
+            int State = NIM.LocalDB.ExecuteNonQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@key", Key));
@@ -127,7 +127,7 @@ CREATE TABLE [FontColors](
         {
             if ((R == 255 && G == 255 && B == 255) == false)
             {
-                int GetRowID = P_Convert.ObjToInt(Phoenix.LocalDB.ExecuteScalar(
+                int GetRowID = P_Convert.ObjToInt(NIM.LocalDB.ExecuteScalar(
                     "SELECT Rowid FROM FontColors WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key;",
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@key", Key)));
@@ -137,7 +137,7 @@ CREATE TABLE [FontColors](
                     const string SqlOrder = @"
 INSERT INTO FontColors ([FileUniqueKey], [Key], [R], [G], [B])
 VALUES (@fileUniqueKey, @key, @red, @green, @blue);";
-                    int State = Phoenix.LocalDB.ExecuteNonQuery(
+                    int State = NIM.LocalDB.ExecuteNonQuery(
                         SqlOrder,
                         SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                         SqliteSql.Parameter("@key", Key),
@@ -155,7 +155,7 @@ VALUES (@fileUniqueKey, @key, @red, @green, @blue);";
 UPDATE FontColors
 SET [R] = @red, [G] = @green, [B] = @blue
 WHERE Rowid = @rowid;";
-                    int State = Phoenix.LocalDB.ExecuteNonQuery(
+                    int State = NIM.LocalDB.ExecuteNonQuery(
                         SqlOrder,
                         SqliteSql.Parameter("@red", R),
                         SqliteSql.Parameter("@green", G),

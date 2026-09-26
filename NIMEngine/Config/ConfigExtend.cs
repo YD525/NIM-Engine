@@ -212,7 +212,7 @@ namespace NIMEngine
 
         public PlatformConfig GetPlatformData(PlatformType Type)
         {
-            lock (Phoenix.QueryPlatformDataLock)
+            lock (NIM.QueryPlatformDataLock)
             {
                 return this.PlatformConfigs[(int)Type];
             }
@@ -220,7 +220,7 @@ namespace NIMEngine
 
         public PlatformConfig GetPlatformData(int CustomID)
         {
-            lock (Phoenix.QueryPlatformDataLock)
+            lock (NIM.QueryPlatformDataLock)
             {
                 return this.PlatformConfigs[CustomID];
             }
@@ -228,7 +228,7 @@ namespace NIMEngine
 
         public string GetPlatformKeysStr(PlatformConfig Config)
         {
-            lock (Phoenix.QueryPlatformDataLock)
+            lock (NIM.QueryPlatformDataLock)
             {
                 string KeysStr = "";
 
@@ -336,29 +336,29 @@ namespace NIMEngine
         {
             string GetJson = JsonConvert.SerializeObject(Config);
             var EncryptedBytes = XOREncrypt(Encoding.UTF8.GetBytes(GetJson));
-            File.WriteAllBytes(Phoenix.GetFullPath("EngineConfig.data"), EncryptedBytes);
+            File.WriteAllBytes(NIM.GetFullPath("EngineConfig.data"), EncryptedBytes);
         }
 
         public static bool CheckAvailableNodes()
         {
             int EnableCount = 0;
-            for (int i = 0; i < Phoenix.Config.PlatformConfigs.Count; i++)
+            for (int i = 0; i < NIM.Config.PlatformConfigs.Count; i++)
             { 
-                var GetKey = Phoenix.Config.PlatformConfigs.ElementAt(i).Key;
-                if (Phoenix.Config.PlatformConfigs[GetKey].ApiKeys.Count > 0)
+                var GetKey = NIM.Config.PlatformConfigs.ElementAt(i).Key;
+                if (NIM.Config.PlatformConfigs[GetKey].ApiKeys.Count > 0)
                 {
-                    if (Phoenix.Config.PlatformConfigs[GetKey].Enable)
+                    if (NIM.Config.PlatformConfigs[GetKey].Enable)
                     {
                         EnableCount++;
                     }
                 }
                 else
-                if (Phoenix.Config.PlatformConfigs[GetKey].Platform == PlatformType.LMLocalAI && Phoenix.Config.PlatformConfigs[GetKey].Enable)
+                if (NIM.Config.PlatformConfigs[GetKey].Platform == PlatformType.LMLocalAI && NIM.Config.PlatformConfigs[GetKey].Enable)
                 {
                     EnableCount++;
                 }
                 else
-                if (Phoenix.Config.PlatformConfigs[GetKey].Platform == PlatformType.HumanTranslation && Phoenix.Config.PlatformConfigs[GetKey].Enable)
+                if (NIM.Config.PlatformConfigs[GetKey].Platform == PlatformType.HumanTranslation && NIM.Config.PlatformConfigs[GetKey].Enable)
                 {
                     EnableCount++;
                 }
@@ -372,7 +372,7 @@ namespace NIMEngine
         public static void LoadConfig()
         {
             NextCall:
-            string SetFullPath = Phoenix.GetFullPath("EngineConfig.data");
+            string SetFullPath = NIM.GetFullPath("EngineConfig.data");
             if (!File.Exists(SetFullPath))
             {
                 SetDefaultModel();

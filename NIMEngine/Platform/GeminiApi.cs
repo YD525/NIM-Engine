@@ -169,7 +169,7 @@ namespace NIMEngine.Platform
 
         public GeminiRootobject CallAI(string ApiKey,GeminiItem Item, ref string Recv)
         {
-            this.Model = Phoenix.Config.GetPlatformData(GeminiApi.Type).Model;
+            this.Model = NIM.Config.GetPlatformData(GeminiApi.Type).Model;
 
             string GetJson = JsonConvert.SerializeObject(Item);
             WebHeaderCollection Headers = new WebHeaderCollection();

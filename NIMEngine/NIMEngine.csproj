@@ -81,7 +81,7 @@
     <Compile Include="Engine\Context\ContextProc.cs" />
     <Compile Include="Engine\Core\BucketContainer.cs" />
     <Compile Include="Engine\Memory\DataGear.cs" />
-    <Compile Include="Engine\Phoenix.cs" />
+    <Compile Include="Engine\NIM.cs" />
     <Compile Include="Engine\Sequence\UnitSequence.cs" />
     <Compile Include="Engine\Thread\PThread.cs" />
     <Compile Include="Engine\Unit\UnitGroup.cs" />

@@ -73,7 +73,7 @@ CREATE TABLE [RecordsHistory](
             // Check if table exists
             const string CheckTableSql =
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
-            var Result = Phoenix.LocalDB.ExecuteScalar(
+            var Result = NIM.LocalDB.ExecuteScalar(
                 CheckTableSql,
                 SqliteSql.Parameter("@tableName", TableName));
 
@@ -82,7 +82,7 @@ CREATE TABLE [RecordsHistory](
                 // Table exists, check structure
                 string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
                 List<Dictionary<string, object>> Columns =
-                    Phoenix.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
+                    NIM.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
 
                 var ExistingCols = new HashSet<string>(
                     Columns.Select(R => R["name"].ToString()),
@@ -106,14 +106,14 @@ CREATE TABLE [RecordsHistory](
 
                 if (StructureChanged)
                 {
-                    Phoenix.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
-                    Phoenix.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIM.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
+                    NIM.LocalDB.ExecuteNonQuery(CreateSql);
                 }
             }
             else
             {
                 // Create if not exists
-                Phoenix.LocalDB.ExecuteNonQuery(CreateSql);
+                NIM.LocalDB.ExecuteNonQuery(CreateSql);
             }
         }
 
@@ -144,7 +144,7 @@ ORDER BY rowid DESC
 LIMIT 1;
 ";
 
-            var Table = Phoenix.LocalDB.ExecuteQuery(
+            var Table = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@currentId", CurrentID));
@@ -166,7 +166,7 @@ FROM [RecordsHistory]
 WHERE [FileUniqueKey] = @fileUniqueKey
 AND [RangeID] = @rangeId
 ORDER BY rowid ASC;";
-                var RangeTable = Phoenix.LocalDB.ExecuteQuery(
+                var RangeTable = NIM.LocalDB.ExecuteQuery(
                     RangeSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@rangeId", RangeID));
@@ -193,7 +193,7 @@ ORDER BY rowid ASC
 LIMIT 1;
 ";
 
-            var Table = Phoenix.LocalDB.ExecuteQuery(
+            var Table = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@currentId", CurrentID));
@@ -215,7 +215,7 @@ FROM [RecordsHistory]
 WHERE [FileUniqueKey] = @fileUniqueKey
 AND [RangeID] = @rangeId
 ORDER BY rowid ASC;";
-                var RangeTable = Phoenix.LocalDB.ExecuteQuery(
+                var RangeTable = NIM.LocalDB.ExecuteQuery(
                     RangeSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@rangeId", RangeID));
@@ -236,7 +236,7 @@ UPDATE [RecordsHistory]
 SET [IsCurrent] = 0
 WHERE [FileUniqueKey] = @fileUniqueKey;
 ";
-            Phoenix.LocalDB.ExecuteNonQuery(
+            NIM.LocalDB.ExecuteNonQuery(
                 ClearSelectionSql,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
 
@@ -248,7 +248,7 @@ AND rowid = @rowid
 LIMIT 1;
 ";
 
-            string RangeID = P_Convert.ObjToStr(Phoenix.LocalDB.ExecuteScalar(
+            string RangeID = P_Convert.ObjToStr(NIM.LocalDB.ExecuteScalar(
                 FindRangeSql,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@rowid", ID)));
@@ -261,7 +261,7 @@ SET [IsCurrent] = 1
 WHERE [FileUniqueKey] = @fileUniqueKey
 AND [RangeID] = @rangeId;
 ";
-                Phoenix.LocalDB.ExecuteNonQuery(
+                NIM.LocalDB.ExecuteNonQuery(
                     SelectRangeSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@rangeId", RangeID));
@@ -274,7 +274,7 @@ SET [IsCurrent] = 1
 WHERE [FileUniqueKey] = @fileUniqueKey
 AND rowid = @rowid;
 ";
-                Phoenix.LocalDB.ExecuteNonQuery(
+                NIM.LocalDB.ExecuteNonQuery(
                     SelectRowSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@rowid", ID));
@@ -292,7 +292,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey
 AND [IsCurrent] = 1;
 ";
 
-            var Table = Phoenix.LocalDB.ExecuteQuery(
+            var Table = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
             foreach (var Row in Table)
@@ -310,7 +310,7 @@ AND [IsCurrent] = 1;
 INSERT INTO RecordsHistory (FileUniqueKey, [Key], [To], CurrentText, [Time], RangeID)
 VALUES (@fileUniqueKey, @key, @to, @currentText, @time, @rangeId)
 RETURNING rowid;";
-            int Rowid = P_Convert.ObjToInt(Phoenix.LocalDB.ExecuteScalar(
+            int Rowid = P_Convert.ObjToInt(NIM.LocalDB.ExecuteScalar(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", Item.FileUniqueKey),
                 SqliteSql.Parameter("@key", Item.Key),
@@ -328,7 +328,7 @@ RETURNING rowid;";
             const string SqlOrder = @"
 DELETE FROM RecordsHistory
 WHERE FileUniqueKey = @fileUniqueKey AND rowid = @rowid;";
-            int State = Phoenix.LocalDB.ExecuteNonQuery(
+            int State = NIM.LocalDB.ExecuteNonQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@rowid", ID));
@@ -344,7 +344,7 @@ WHERE FileUniqueKey = @fileUniqueKey AND rowid = @rowid;";
      out int TargetID)
         {
             int PreviousRowid = P_Convert.ObjToInt(
-                Phoenix.LocalDB.ExecuteScalar(@"
+                NIM.LocalDB.ExecuteScalar(@"
 SELECT Rowid
 FROM RecordsHistory
 WHERE Rowid < @currentId
@@ -362,7 +362,7 @@ LIMIT 1;
             }
 
             int Count = P_Convert.ObjToInt(
-                Phoenix.LocalDB.ExecuteScalar(@"
+                NIM.LocalDB.ExecuteScalar(@"
 SELECT COUNT(*)
 FROM RecordsHistory
 WHERE Rowid = @rowid
@@ -398,7 +398,7 @@ AND CurrentText = @currentText;
 SELECT rowid AS Rowid, * FROM RecordsHistory
 WHERE FileUniqueKey = @fileUniqueKey AND rowid = @rowid
 LIMIT 1;";
-            var NTable = Phoenix.LocalDB.ExecuteQuery(
+            var NTable = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@rowid", ID));
@@ -429,7 +429,7 @@ LIMIT 1;";
 SELECT rowid AS Rowid, * FROM RecordsHistory
 WHERE FileUniqueKey = @fileUniqueKey AND [To] = @to;";
 
-            var NTable = Phoenix.LocalDB.ExecuteQuery(
+            var NTable = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@to", To));
@@ -461,7 +461,7 @@ WHERE FileUniqueKey = @fileUniqueKey AND [To] = @to;";
             const string SqlOrder =
                 "DELETE FROM RecordsHistory WHERE FileUniqueKey = @fileUniqueKey;";
 
-            int State = Phoenix.LocalDB.ExecuteNonQuery(
+            int State = NIM.LocalDB.ExecuteNonQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
 
@@ -484,7 +484,7 @@ WHERE FileUniqueKey = @fileUniqueKey;
 ";
 
             int Count = P_Convert.ObjToInt(
-                Phoenix.LocalDB.ExecuteScalar(
+                NIM.LocalDB.ExecuteScalar(
                     CountSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey))
             );
@@ -504,7 +504,7 @@ ORDER BY rowid ASC
 LIMIT 1;
 ";
 
-                var Table = Phoenix.LocalDB.ExecuteQuery(
+                var Table = NIM.LocalDB.ExecuteQuery(
                     FindSql,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
 
@@ -521,7 +521,7 @@ DELETE FROM RecordsHistory
 WHERE FileUniqueKey = @fileUniqueKey
 AND RangeID = @rangeId;
 ";
-                    DeleteCount = Phoenix.LocalDB.ExecuteNonQuery(
+                    DeleteCount = NIM.LocalDB.ExecuteNonQuery(
                         DeleteRangeSql,
                         SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                         SqliteSql.Parameter("@rangeId", RangeID));
@@ -533,7 +533,7 @@ AND RangeID = @rangeId;
 DELETE FROM RecordsHistory
 WHERE rowid = @rowid;
 ";
-                    DeleteCount = Phoenix.LocalDB.ExecuteNonQuery(
+                    DeleteCount = NIM.LocalDB.ExecuteNonQuery(
                         DeleteSql,
                         SqliteSql.Parameter("@rowid", Rowid));
                 }
@@ -557,7 +557,7 @@ ORDER BY rowid DESC
 LIMIT 1;
 ";
 
-            var Table = Phoenix.LocalDB.ExecuteQuery(
+            var Table = NIM.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
 
