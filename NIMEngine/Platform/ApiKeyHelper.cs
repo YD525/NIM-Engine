@@ -124,10 +124,10 @@ namespace NIMEngine.Platform
         public static int MaxErrorCount = 10;
         public void Init()
         {
-            for (int i = 0; i < NIMEngine.Config.PlatformConfigs.Count; i++)
+            for (int i = 0; i < NIM_Engine.Config.PlatformConfigs.Count; i++)
             { 
-                int GetKey = NIMEngine.Config.PlatformConfigs.ElementAt(i).Key;
-                var GetConfig = NIMEngine.Config.PlatformConfigs[GetKey];
+                int GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+                var GetConfig = NIM_Engine.Config.PlatformConfigs[GetKey];
 
                 PlatformApiKeys NPlatformApiKeys = new PlatformApiKeys();
                 NPlatformApiKeys.Type = GetConfig.Platform;

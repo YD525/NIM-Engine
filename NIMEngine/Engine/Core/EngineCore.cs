@@ -85,7 +85,7 @@ public class EngineCore
             Count++;
             _FailureCounts[Node.Key] = Count;
 
-            if (Count >= NIMEngine.NIMEngine.Config.FailThreshold)
+            if (Count >= NIMEngine.NIM_Engine.Config.FailThreshold)
             {
                 _DisabledPlatforms[Node.Key] = true;
                 Node.Disabled = true;
@@ -111,58 +111,58 @@ public class EngineCore
             EngineNodes.Clear();
             PlatformApiKeys KeyData = null;
 
-            var ChatGptConfig = NIMEngine.NIMEngine.Config.GetPlatformData(ChatGptApi.Type);
-            KeyData = NIMEngine.NIMEngine.KeyData.GetData(ChatGptApi.Type);
+            var ChatGptConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(ChatGptApi.Type);
+            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(ChatGptApi.Type);
             if (ChatGptConfig.Enable && KeyData.HaveKey())
             {
                 ChatGptApi NChatGptApi = new ChatGptApi();
-                NChatGptApi.Init(0, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                NChatGptApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                 AddNode_NoLock(new EngineNode(this, NChatGptApi, KeyData.GetKeyCount(), "ChatGpt"));
             }
 
-            var GeminiConfig = NIMEngine.NIMEngine.Config.GetPlatformData(GeminiApi.Type);
-            KeyData = NIMEngine.NIMEngine.KeyData.GetData(GeminiApi.Type);
+            var GeminiConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(GeminiApi.Type);
+            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(GeminiApi.Type);
             if (GeminiConfig.Enable && KeyData.HaveKey())
             {
                 GeminiApi NGeminiApi = new GeminiApi();
-                NGeminiApi.Init(0, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                NGeminiApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                 AddNode_NoLock(new EngineNode(this, NGeminiApi, KeyData.GetKeyCount(), "Gemini"));
             }
 
-            var DeepSeekConfig = NIMEngine.NIMEngine.Config.GetPlatformData(DeepSeekApi.Type);
-            KeyData = NIMEngine.NIMEngine.KeyData.GetData(DeepSeekApi.Type);
+            var DeepSeekConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(DeepSeekApi.Type);
+            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(DeepSeekApi.Type);
             if (DeepSeekConfig.Enable && KeyData.HaveKey())
             {
                 DeepSeekApi NDeepSeekApi = new DeepSeekApi();
-                NDeepSeekApi.Init(0, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                NDeepSeekApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                 AddNode_NoLock(new EngineNode(this, NDeepSeekApi, KeyData.GetKeyCount(), "DeepSeek"));
             }
 
-            var LMLocalAIConfig = NIMEngine.NIMEngine.Config.GetPlatformData(LMStudio.Type);
+            var LMLocalAIConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(LMStudio.Type);
             if (LMLocalAIConfig.Enable)
             {
                 LMStudio NLMStudio = new LMStudio();
-                NLMStudio.Init(0, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config);
+                NLMStudio.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
                 AddNode_NoLock(new EngineNode(this, NLMStudio, 1, "LMStudio"));
             }
 
-            var DeepLConfig = NIMEngine.NIMEngine.Config.GetPlatformData(DeepLApi.Type);
-            KeyData = NIMEngine.NIMEngine.KeyData.GetData(DeepLApi.Type);
+            var DeepLConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(DeepLApi.Type);
+            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type);
             if (DeepLConfig.Enable && KeyData.HaveKey())
             {
                 DeepLApi NDeepLApi = new DeepLApi();
-                NDeepLApi.Init(0, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                NDeepLApi.Init(0, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                 AddNode_NoLock(new EngineNode(this, NDeepLApi, KeyData.GetKeyCount(), "DeepL"));
             }
 
-            for (int i = 0; i < NIMEngine.NIMEngine.Config.PlatformConfigs.Count; i++)
+            for (int i = 0; i < NIMEngine.NIM_Engine.Config.PlatformConfigs.Count; i++)
             {
-                int GetKey = NIMEngine.NIMEngine.Config.PlatformConfigs.ElementAt(i).Key;
-                var CustomInFo = NIMEngine.NIMEngine.Config.PlatformConfigs[GetKey].CustomInFo;
+                int GetKey = NIMEngine.NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+                var CustomInFo = NIMEngine.NIM_Engine.Config.PlatformConfigs[GetKey].CustomInFo;
                 if (CustomInFo == null) continue;
-                if (CustomInFo.CustomID <= 0 || !NIMEngine.NIMEngine.Config.PlatformConfigs[GetKey].Enable) continue;
+                if (CustomInFo.CustomID <= 0 || !NIMEngine.NIM_Engine.Config.PlatformConfigs[GetKey].Enable) continue;
 
-                KeyData = NIMEngine.NIMEngine.KeyData.GetData(CustomInFo.CustomID);
+                KeyData = NIMEngine.NIM_Engine.KeyData.GetData(CustomInFo.CustomID);
                 string CustomKey = "Custom_" + CustomInFo.CustomID;
 
                 switch (CustomInFo.Type)
@@ -170,32 +170,32 @@ public class EngineCore
                     case CustomPlatformType.LocalAI:
                         {
                             CustomLocalAIApi NCustomLocalAIApi = new CustomLocalAIApi();
-                            NCustomLocalAIApi.Init(CustomInFo.CustomID, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config);
+                            NCustomLocalAIApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
                             AddNode_NoLock(new EngineNode(this, NCustomLocalAIApi, 1, CustomKey));
                         }
                         break;
                     case CustomPlatformType.CloudAI:
                         {
                             CustomAIApi NCustomAIApi = new CustomAIApi();
-                            NCustomAIApi.Init(CustomInFo.CustomID, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                            NCustomAIApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                             AddNode_NoLock(new EngineNode(this, NCustomAIApi, KeyData.GetKeyCount(), CustomKey));
                         }
                         break;
                     case CustomPlatformType.Traditional:
                         {
                             CustomApi NCustomApi = new CustomApi();
-                            NCustomApi.Init(CustomInFo.CustomID, NIMEngine.NIMEngine.Config, ProxyCenter.CurrentProxy);
+                            NCustomApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
                             AddNode_NoLock(new EngineNode(this, NCustomApi, KeyData.GetKeyCount(), CustomKey));
                         }
                         break;
                 }
             }
 
-            var HumanConfig = NIMEngine.NIMEngine.Config.GetPlatformData(HumanTranslationApi.Type);
+            var HumanConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(HumanTranslationApi.Type);
             if (HumanConfig.Enable)
             {
                 HumanTranslationApi NHumanTranslationApi = new HumanTranslationApi();
-                NHumanTranslationApi.Init(0, NIMEngine.NIMEngine.AIMemory, NIMEngine.NIMEngine.Config);
+                NHumanTranslationApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
                 AddNode_NoLock(new EngineNode(this, NHumanTranslationApi, 1, "Human"));
             }
 
@@ -300,7 +300,7 @@ public class EngineCore
                 string SetType = "";
 
                 GetTrans = CurrentEngine.Call(TranslatorRef.ID, CancelToken, TranslatorRef, ref Item, ref Sequences, From, To,
-                true, NIMEngine.NIMEngine.Config.ContextLimit, AIParam, ref SetType);
+                true, NIMEngine.NIM_Engine.Config.ContextLimit, AIParam, ref SetType);
 
                 CancelToken.ThrowIfCancellationRequested();
 
@@ -341,7 +341,7 @@ public class EngineCore
 
                 if (!Passed)
                 {
-                    Delay(CancelToken, NIMEngine.NIMEngine.Config.ThrottleDelayMs);
+                    Delay(CancelToken, NIMEngine.NIM_Engine.Config.ThrottleDelayMs);
 
                     if (PassUnits.Count == 0)
                     {
@@ -488,7 +488,7 @@ public class EngineCore
                 From = P_Language.DetectLanguageByLine(GetSource);
             }
 
-            int MaxTranslationAttempts = NIMEngine.NIMEngine.Config.MaxTranslationAttempts;
+            int MaxTranslationAttempts = NIMEngine.NIM_Engine.Config.MaxTranslationAttempts;
             string TransText = string.Empty;
 
             List<ReplaceTag> CustomWords = new List<ReplaceTag>();
@@ -500,7 +500,7 @@ public class EngineCore
 
             if (this.ApiRef is DeepLApi SetDeepL)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(DeepLApi.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(DeepLApi.Type).Enable)
                 {
                     PlatformCall Call = new PlatformCall();
                     string GetData = null;
@@ -511,13 +511,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(DeepLApi.Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type).GetFirstKey();
                         GetData = SetDeepL.QuickTrans(CurrentApiKey, Source, From, To, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -526,7 +526,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(DeepLApi.Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -537,7 +537,7 @@ public class EngineCore
             }
             else if (this.ApiRef is CustomApi SetCustomApi)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(SetCustomApi.CustomID).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomApi.CustomID).Enable)
                 {
                     var Type = SetCustomApi.CustomID;
                     PlatformCall Call = new PlatformCall();
@@ -549,13 +549,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
                         GetData = SetCustomApi.QuickTrans(CurrentApiKey, Source, From, To, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -564,7 +564,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -575,7 +575,7 @@ public class EngineCore
             }
             else if (this.ApiRef is LMStudio SetLM)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(LMStudio.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(LMStudio.Type).Enable)
                 {
                     if (IsLocked(LMStudio.SingleLock))
                     {
@@ -599,7 +599,7 @@ public class EngineCore
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -617,7 +617,7 @@ public class EngineCore
             }
             else if (this.ApiRef is ChatGptApi SetChatGpt)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(ChatGptApi.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(ChatGptApi.Type).Enable)
                 {
                     var Type = ChatGptApi.Type;
                     AICall Call = new AICall();
@@ -629,13 +629,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
                         GetData = SetChatGpt.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -644,7 +644,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -655,7 +655,7 @@ public class EngineCore
             }
             else if (this.ApiRef is GeminiApi SetGemini)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(GeminiApi.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(GeminiApi.Type).Enable)
                 {
                     var Type = GeminiApi.Type;
                     AICall Call = new AICall();
@@ -667,13 +667,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
                         GetData = SetGemini.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -682,7 +682,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -693,7 +693,7 @@ public class EngineCore
             }
             else if (this.ApiRef is DeepSeekApi SetDeepSeek)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(DeepSeekApi.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(DeepSeekApi.Type).Enable)
                 {
                     var Type = DeepSeekApi.Type;
                     AICall Call = new AICall();
@@ -705,13 +705,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
                         GetData = SetDeepSeek.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -720,7 +720,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -731,7 +731,7 @@ public class EngineCore
             }
             else if (this.ApiRef is CustomAIApi SetCustomAI)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(SetCustomAI.CustomID).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomAI.CustomID).Enable)
                 {
                     var Type = SetCustomAI.CustomID;
                     AICall Call = new AICall();
@@ -743,13 +743,13 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIMEngine.KeyData.GetData(Type).GetFirstKey();
+                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
                         GetData = SetCustomAI.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -758,7 +758,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIMEngine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -769,7 +769,7 @@ public class EngineCore
             }
             else if (this.ApiRef is CustomLocalAIApi SetCustomLocal)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(SetCustomLocal.CustomID).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomLocal.CustomID).Enable)
                 {
                     var Type = SetCustomLocal.CustomID;
                     AICall Call = new AICall();
@@ -785,7 +785,7 @@ public class EngineCore
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else
@@ -803,7 +803,7 @@ public class EngineCore
             }
             else if (this.ApiRef is HumanTranslationApi SetHuman)
             {
-                if (NIMEngine.NIMEngine.Config.GetPlatformData(HumanTranslationApi.Type).Enable)
+                if (NIMEngine.NIM_Engine.Config.GetPlatformData(HumanTranslationApi.Type).Enable)
                 {
                     var Type = SetHuman.CustomID;
                     AICall Call = new AICall();
@@ -819,7 +819,7 @@ public class EngineCore
 
                         if (!Passed && MaxTry > 0)
                         {
-                            Delay(CancelToken, NIMEngine.NIMEngine.Config.ReTryWaitTime);
+                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
                             MaxTry--;
                         }
                         else

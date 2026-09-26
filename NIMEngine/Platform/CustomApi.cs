@@ -30,7 +30,7 @@ namespace NIMEngine.Platform
         }
         public string QuickTrans(string ApiKey, UnitGroup Source, Languages FromLang, Languages ToLang, ref PlatformCall Call)
         {
-            var InFo = NIMEngine.Config.GetPlatformData(CustomID).CustomInFo;
+            var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             bool CanTrans = false;
             string TransSource = Source.GenContent(ref CanTrans);

@@ -63,7 +63,7 @@ namespace NIMEngine.Translate
             TranslationStore = new NullTranslationStore();
             TranslationScheduler = new SequentialTranslationScheduler();
 
-            if (NIMEngine.AIMemory.OptimizeToken(this))
+            if (NIM_Engine.AIMemory.OptimizeToken(this))
             {
                 if (SetFrom != Languages.Null)
                 {
@@ -120,7 +120,7 @@ namespace NIMEngine.Translate
 
         public void ClearAICache()
         {
-            NIMEngine.AIMemory.Clear();
+            NIM_Engine.AIMemory.Clear();
         }
         public List<BaseUnit> ChunkTranslationUnit(BaseUnit Unit, ref List<UnitChunk> Chunks)
         {
@@ -241,7 +241,7 @@ namespace NIMEngine.Translate
                 {
                     int UnitTokenLen = P_Bucket_Core.CalcTextTokenEstimate(Units[i].Original);
 
-                    if (SetLength + UnitTokenLen < NIMEngine.Config.BucketLengthLimit)
+                    if (SetLength + UnitTokenLen < NIM_Engine.Config.BucketLengthLimit)
                     {
                         SetLength += UnitTokenLen;
                         NewUnitGroup.Units.Add(Units[i]);
@@ -346,7 +346,7 @@ namespace NIMEngine.Translate
 
         public void AddAIMemory(string Original, string Translated)
         {
-            NIMEngine.AIMemory.AddTranslation(this.From, this.To, Original, Translated);
+            NIM_Engine.AIMemory.AddTranslation(this.From, this.To, Original, Translated);
         }
         public int CalcTranslatedCount(int Addition)
         {
@@ -363,7 +363,7 @@ FROM (
     WHERE FileUniqueKey = @fileUniqueKey AND [To] = @to
 ) AS Combined;";
 
-            int GetCount = P_Convert.ObjToInt(NIMEngine.LocalDB.ExecuteScalar(
+            int GetCount = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                 SqliteSql.Parameter("@to", (int)this.To)));

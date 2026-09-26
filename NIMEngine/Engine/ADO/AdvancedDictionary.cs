@@ -57,7 +57,7 @@ namespace NIMEngine.ADO
         {
             const string CheckTableSql =
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
-            var Result = NIMEngine.LocalDB.ExecuteScalar(
+            var Result = NIM_Engine.LocalDB.ExecuteScalar(
                 CheckTableSql,
                 SqliteSql.Parameter("@tableName", "AdvancedDictionary"));
 
@@ -70,7 +70,7 @@ namespace NIMEngine.ADO
             {
                 //Table exists, check whether it's the old structure (has TargetModName instead of TargetFileName)
                 string CheckOldColumnSql = "PRAGMA table_info(AdvancedDictionary);";
-                var dt = NIMEngine.LocalDB.ExecuteQuery(CheckOldColumnSql);
+                var dt = NIM_Engine.LocalDB.ExecuteQuery(CheckOldColumnSql);
 
                 bool HasTargetFileName = dt.Any(r => r["name"].ToString() == "TargetFileName");
                 bool HasTargetModName = dt.Any(r => r["name"].ToString() == "TargetModName");
@@ -102,13 +102,13 @@ CREATE TABLE [AdvancedDictionary](
   [IgnoreCase] INT, 
   [Regex] TEXT
 );";
-            NIMEngine.LocalDB.ExecuteNonQuery(SqlOrder);
+            NIM_Engine.LocalDB.ExecuteNonQuery(SqlOrder);
         }
 
         private static void MigrateOldTable()
         {
             //Rename the old table
-            NIMEngine.LocalDB.ExecuteNonQuery("ALTER TABLE AdvancedDictionary RENAME TO AdvancedDictionary_Old;");
+            NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE AdvancedDictionary RENAME TO AdvancedDictionary_Old;");
 
             //Create a new table with the updated structure
             CreateNewTable();
@@ -120,23 +120,23 @@ INSERT INTO AdvancedDictionary
 SELECT TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex
 FROM AdvancedDictionary_Old;";
 
-            NIMEngine.LocalDB.ExecuteNonQuery(SqlOrder);
+            NIM_Engine.LocalDB.ExecuteNonQuery(SqlOrder);
 
             //Drop the old table after migration
-            NIMEngine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
         }
 
         private static void RecreateNewTable()
         {
             //Defensive fallback: drop the broken table and recreate it
-            NIMEngine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS AdvancedDictionary;");
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS AdvancedDictionary;");
             CreateNewTable();
         }
 
         public static string GetSourceByRowid(int Rowid)
         {
             const string SqlOrder = "SELECT [Source] FROM AdvancedDictionary WHERE Rowid = @rowid;";
-            return SQLSafeCodec.Decode(P_Convert.ObjToStr(NIMEngine.LocalDB.ExecuteScalar(
+            return SQLSafeCodec.Decode(P_Convert.ObjToStr(NIM_Engine.LocalDB.ExecuteScalar(
                 SqlOrder,
                 SqliteSql.Parameter("@rowid", Rowid))));
         }
@@ -162,7 +162,7 @@ AND ([Type] IS NULL OR [Type] = '' OR [Type] = @type)
 AND [Source] = @source
 LIMIT 1;";
 
-            List<Dictionary<string, object>> NTable = NIMEngine.LocalDB.ExecuteQuery(
+            List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@from", (int)From),
                 SqliteSql.Parameter("@to", (int)To),
@@ -340,7 +340,7 @@ WHERE
 ";
             }
 
-            List<Dictionary<string, object>> NTable = NIMEngine.LocalDB.ExecuteQuery(
+            List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileName", SQLSafeCodec.Encode(FileName)),
                 SqliteSql.Parameter("@type", SQLSafeCodec.Encode(Type)),
@@ -393,7 +393,7 @@ WHERE
 [From] = @from AND
 [To] = @to;";
 
-            int Count = Convert.ToInt32(NIMEngine.LocalDB.ExecuteScalar(
+            int Count = Convert.ToInt32(NIM_Engine.LocalDB.ExecuteScalar(
                 CheckSql,
                 SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(item.TargetFileName)),
                 SqliteSql.Parameter("@type", SQLSafeCodec.Encode(item.Type)),
@@ -422,7 +422,7 @@ VALUES (
 @ignoreCase,
 @regex
 );";
-                int State = NIMEngine.LocalDB.ExecuteNonQuery(
+                int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                     sql,
                     SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
                     SqliteSql.Parameter("@type", SQLSafeCodec.Encode(Item.Type)),
@@ -457,7 +457,7 @@ Result = @result AND
 ExactMatch = @exactMatch AND
 IgnoreCase = @ignoreCase AND
 Regex = @regex;";
-            NIMEngine.LocalDB.ExecuteNonQuery(
+            NIM_Engine.LocalDB.ExecuteNonQuery(
                 sql,
                 SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(item.TargetFileName)),
                 SqliteSql.Parameter("@type", SQLSafeCodec.Encode(item.Type)),
@@ -483,7 +483,7 @@ Regex = @regex;";
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
                 PageNo,
-                NIMEngine.Config.DefPageSize,
+                NIM_Engine.Config.DefPageSize,
                 Where,
                 SqliteSql.Parameter("@from", From),
                 SqliteSql.Parameter("@to", To));
@@ -524,7 +524,7 @@ Regex = @regex;";
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
                 PageNo,
-                NIMEngine.Config.DefPageSize,
+                NIM_Engine.Config.DefPageSize,
                 Where,
                 SqliteSql.Parameter("@source", SQLSafeCodec.Encode(SourceText)),
                 SqliteSql.Parameter("@from", From),
@@ -554,7 +554,7 @@ Regex = @regex;";
         public static bool DeleteByRowid(int Rowid)
         {
             const string SqlOrder = "DELETE FROM AdvancedDictionary WHERE Rowid = @rowid;";
-            int State = NIMEngine.LocalDB.ExecuteNonQuery(
+            int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@rowid", Rowid));
             if (State != 0)

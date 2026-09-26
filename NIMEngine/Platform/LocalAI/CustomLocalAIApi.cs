@@ -37,7 +37,7 @@ namespace NIMEngine.Platform.LocalAI
 
         public string QuickTrans(List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call)
         {
-            var InFo = NIMEngine.Config.GetPlatformData(CustomID).CustomInFo;
+            var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetQueryRule(InFo.QueryRule);
 
@@ -131,7 +131,7 @@ namespace NIMEngine.Platform.LocalAI
         {
             CustomReqCore Core = new CustomReqCore();
 
-            var InFo = NIMEngine.Config.GetPlatformData(CustomID).CustomInFo;
+            var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetModel(Model);
             Core.SetUrl(InFo.Url);
