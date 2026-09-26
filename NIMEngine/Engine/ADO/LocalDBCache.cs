@@ -52,14 +52,14 @@ CREATE TABLE [LocalTranslation](
             // Check if table exists
             const string CheckTableSql =
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
-            var Result = NIM.LocalDB.ExecuteScalar(
+            var Result = NIMEngine.LocalDB.ExecuteScalar(
                 CheckTableSql,
                 SqliteSql.Parameter("@tableName", TableName));
 
             if (Result != null && Result != DBNull.Value)
             {
                 // Table exists, check column structure
-                var Columns = NIM.LocalDB.ExecuteQuery("PRAGMA table_info(LocalTranslation);");
+                var Columns = NIMEngine.LocalDB.ExecuteQuery("PRAGMA table_info(LocalTranslation);");
 
                 // Current columns
                 var ExistingCols = new HashSet<string>(
@@ -76,15 +76,15 @@ CREATE TABLE [LocalTranslation](
 
                 if (StructureChanged)
                 {
-                    NIM.LocalDB.ExecuteNonQuery(
+                    NIMEngine.LocalDB.ExecuteNonQuery(
                         "DROP TABLE IF EXISTS " + SqliteSql.QuoteIdentifier(TableName) + ";");
-                    NIM.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIMEngine.LocalDB.ExecuteNonQuery(CreateSql);
                 }
             }
             else
             {
                 // Create if not exists
-                NIM.LocalDB.ExecuteNonQuery(CreateSql);
+                NIMEngine.LocalDB.ExecuteNonQuery(CreateSql);
             }
         }
 
@@ -100,7 +100,7 @@ CREATE TABLE [LocalTranslation](
 SELECT * FROM LocalTranslation
 WHERE [To] = @to AND [Source] = @source
 LIMIT @limit;";
-                List<Dictionary<string, object>> NTable = NIM.LocalDB.ExecuteQuery(
+                List<Dictionary<string, object>> NTable = NIMEngine.LocalDB.ExecuteQuery(
                     SqlOrder,
                     SqliteSql.Parameter("@to", To),
                     SqliteSql.Parameter("@source", SQLSafeCodec.Encode(Source)),
@@ -136,7 +136,7 @@ LIMIT @limit;";
                 const string SqlOrder = @"
 DELETE FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [To] = @to;";
-                int State = NIM.LocalDB.ExecuteNonQuery(
+                int State = NIMEngine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@to", (int)TargetLanguage));
@@ -160,7 +160,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [To] = @to;";
                 const string SqlOrder = @"
 DELETE FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Source] = @source AND [To] = @to;";
-                int State = NIM.LocalDB.ExecuteNonQuery(
+                int State = NIMEngine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@source", SQLSafeCodec.Encode(Source)),
@@ -183,7 +183,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Source] = @source AND [To] = @to;";
                 const string SqlOrder = @"
 DELETE FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Result] = @result AND [To] = @to;";
-                int State = NIM.LocalDB.ExecuteNonQuery(
+                int State = NIMEngine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@result", SQLSafeCodec.Encode(ResultText)),
@@ -206,7 +206,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Result] = @result AND [To] = @to;";
                 const string SqlOrder = @"
 DELETE FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
-                int State = NIM.LocalDB.ExecuteNonQuery(
+                int State = NIMEngine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@key", Key),
@@ -229,7 +229,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
                 const string SqlOrder = @"
 SELECT Result FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
-                string GetText = P_Convert.ObjToStr(NIM.LocalDB.ExecuteScalar(
+                string GetText = P_Convert.ObjToStr(NIMEngine.LocalDB.ExecuteScalar(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@key", Key),
@@ -258,7 +258,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
                 const string SqlOrder = @"
 SELECT Result FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
-                string GetResult = P_Convert.ObjToStr(NIM.LocalDB.ExecuteScalar(
+                string GetResult = P_Convert.ObjToStr(NIMEngine.LocalDB.ExecuteScalar(
                     SqlOrder,
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                     SqliteSql.Parameter("@key", Key),
@@ -280,7 +280,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;";
             {
                 new TranslationPreprocessor().OptimizeStrings(ref Source);
 
-                int GetRowID = P_Convert.ObjToInt(NIM.LocalDB.ExecuteScalar(
+                int GetRowID = P_Convert.ObjToInt(NIMEngine.LocalDB.ExecuteScalar(
                     @"SELECT Rowid FROM LocalTranslation
 WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;",
                     SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
@@ -301,7 +301,7 @@ WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key AND [To] = @to;",
                     const string SqlOrder = @"
 INSERT INTO LocalTranslation ([FileUniqueKey], [Key], [To], [Source], [Result], [Index])
 VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);";
-                    int State = NIM.LocalDB.ExecuteNonQuery(
+                    int State = NIMEngine.LocalDB.ExecuteNonQuery(
                         SqlOrder,
                         SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
                         SqliteSql.Parameter("@key", Key),
@@ -320,7 +320,7 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);";
 UPDATE LocalTranslation
 SET [Result] = @result, [Index] = @index
 WHERE Rowid = @rowid;";
-                    int State = NIM.LocalDB.ExecuteNonQuery(
+                    int State = NIMEngine.LocalDB.ExecuteNonQuery(
                         SqlOrder,
                         SqliteSql.Parameter("@result", SQLSafeCodec.Encode(Result)),
                         SqliteSql.Parameter("@index", Index),
@@ -343,7 +343,7 @@ WHERE Rowid = @rowid;";
         {
             const string SqlOrder =
                 "DELETE FROM LocalTranslation WHERE [FileUniqueKey] = @fileUniqueKey;";
-            int State = NIM.LocalDB.ExecuteNonQuery(
+            int State = NIMEngine.LocalDB.ExecuteNonQuery(
                 SqlOrder,
                 SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey));
             if (State != 0)

@@ -74,7 +74,7 @@ namespace NIMEngine.Unit
 
                 // Similarity buckets always use deduplication.
                 // Relationship buckets require ForceContextDeduplication.
-                bool EnableDeduplication = !IsLink || NIM.Config.ForceContextDeduplication;
+                bool EnableDeduplication = !IsLink || NIMEngine.Config.ForceContextDeduplication;
 
                 bool IsDuplicate = EnableDeduplication && Seen.ContainsKey(Key);
 
@@ -325,7 +325,7 @@ namespace NIMEngine.Unit
         public string GenContent(ref bool CanTrans)
         {
             SetConfirmPasser();
-            return ConfirmPasser.GenContent(ref CanTrans,this.IsLink,NIM.Config.PreserveConversationContext);
+            return ConfirmPasser.GenContent(ref CanTrans,this.IsLink,NIMEngine.Config.PreserveConversationContext);
         }
 
         public ConfirmPasser AnalysisContent(string Content)

@@ -367,7 +367,7 @@ namespace NIMEngine.Memory
 
             BaseUnit Head = (HeadSource.Units.Count > 0) ? HeadSource.Units[0] : null;
 
-            var LeaderCandidates = NIM.AIMemory.FindRelevantTranslationsPublic(
+            var LeaderCandidates = NIMEngine.AIMemory.FindRelevantTranslationsPublic(
                    From, To, Head.Original, ContextLength
                );
             if (LeaderCandidates.Count > 0)
@@ -384,7 +384,7 @@ namespace NIMEngine.Memory
             Dictionary<string, int> ScoreMap = new Dictionary<string, int>();
             foreach (var Unit in UnitRef.Units)
             {
-                var Candidates = NIM.AIMemory.FindRelevantTranslationsPublic(
+                var Candidates = NIMEngine.AIMemory.FindRelevantTranslationsPublic(
                     From, To, Unit.Original, ContextLength - UsedLength
                 );
                 foreach (string Entry in Candidates)

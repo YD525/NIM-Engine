@@ -36,7 +36,7 @@ namespace NIMEngine.Engine.Core
             var HtmlItem = new HTMLGenerator().Generate(
                 Item.Units,
                 Item.IsLink,
-                NIM.Config.PreserveConversationContext
+                NIMEngine.Config.PreserveConversationContext
             );
 
             if (HtmlItem == null || string.IsNullOrEmpty(HtmlItem.Html))

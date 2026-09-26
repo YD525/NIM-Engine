@@ -181,9 +181,9 @@ namespace NIMEngine.Translate
             Container.Build();
             ProcStage = 2;
 
-            if (NIM.Config.MaxThreadCount <= 0)
+            if (NIMEngine.Config.MaxThreadCount <= 0)
             {
-                NIM.Config.MaxThreadCount = 1;
+                NIMEngine.Config.MaxThreadCount = 1;
             }
 
             lock (_runLock)
@@ -495,7 +495,7 @@ namespace NIMEngine.Translate
             }
 
             var pendingGroups = new ConcurrentQueue<UnitGroup>(groups);
-            int workerCount = Math.Min(Math.Max(1, NIM.Config.MaxThreadCount), groups.Count);
+            int workerCount = Math.Min(Math.Max(1, NIMEngine.Config.MaxThreadCount), groups.Count);
             var workers = new List<Task>(workerCount);
             for (int index = 0; index < workerCount; index++)
             {

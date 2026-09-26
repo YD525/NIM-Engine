@@ -72,7 +72,7 @@ namespace NIMEngine.Unit
 
                     if (GetUnit.Translated.Trim().Length > 0)
                     { 
-                        NIM.AIMemory.AddTranslation(TranslatorRef.From, TranslatorRef.To, GetUnit.GetRealOriginal(), GetUnit.Translated);
+                        NIMEngine.AIMemory.AddTranslation(TranslatorRef.From, TranslatorRef.To, GetUnit.GetRealOriginal(), GetUnit.Translated);
                     }
                 }
             }
