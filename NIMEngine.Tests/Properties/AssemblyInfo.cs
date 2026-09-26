@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("NIMEngine.Tests")]
-[assembly: AssemblyCopyright("Copyright (C) 2026 YD525,Wuerfelhusten")]
+[assembly: AssemblyCopyright("Copyright (C) 2026 NIMEngine")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]
