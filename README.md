@@ -1,6 +1,6 @@
-# 🔥 PhoenixEngine
+# 🔥 NIM Engine
 
-**PhoenixEngine** is a high-performance, multi-threaded language translation engine.  
+**NIM Engine** is a high-performance, multi-threaded language translation engine.  
 It combines AI-powered translation with **context generation**, text segmentation, and **priority-based ordering** to deliver natural and context-aware results.  
 It also implements **Placeholder Logic**, allowing users to define custom dictionaries and placeholders for specific words, names, or terms, ensuring consistent translation of key terms across multiple contexts.
 
@@ -8,7 +8,7 @@ It also implements **Placeholder Logic**, allowing users to define custom dictio
 
 ## ⭐ Aggregation-based Translation
 
-Unlike traditional translation engines that rely on simple batching or brute-force concurrency, **Lexicon AI Translator** introduces an **aggregation-based translation model** at the engine level.
+Unlike traditional translation engines that rely on simple batching or brute-force concurrency, **NIM Translator** introduces an **aggregation-based translation model** at the engine level.
 
 Before any AI request is issued, the engine analyzes the **structure and semantic relationships** of the source content.  
 Text units that are contextually related, structurally similar, or semantically repetitive are grouped into a single **UnitGroup** and translated as one coherent semantic unit.
@@ -57,8 +57,8 @@ In short: **aggregation-based translation improves performance by eliminating re
 
 ## Building from source
 
-PhoenixEngine requires Visual Studio 2022 and the .NET Framework 4.8.1 Developer Pack. `PhoenixEngine.sln` is
-the canonical build entry point; it contains the supported `PhoenixEngine\PhoenixEngine.csproj` product project
+NIMEngine requires Visual Studio 2022 and the .NET Framework 4.8.1 Developer Pack. `NIMEngine.sln` is
+the canonical build entry point; it contains the supported `NIMEngine\NIMEngine.csproj` product project
 and its test project.
 
 Restore the locked PackageReference dependencies, run analyzers, and build the x64 Release configuration:
@@ -73,14 +73,14 @@ Restore the locked PackageReference dependencies, run analyzers, and build the x
 Use `Invoke-Build.ps1 -UpdateLockFiles` only when intentionally changing package versions, then review and commit
 both generated `packages.lock.json` files. Generated build outputs are not tracked.
 
-Push a version tag matching `v*` to create `PhoenixEngine-win-x64.zip` and its SHA256 checksum as GitHub Release
+Push a version tag matching `v*` to create `NIMEngine-win-x64.zip` and its SHA256 checksum as GitHub Release
 assets. The archive contains the complete x64 Release output required by consuming applications.
 
 ---
 
 ## ✅ Summary
 
-PhoenixEngine combines **semantic aggregation**, **fine-grained unit control**, and **placeholder logic** to deliver a translation engine that is:
+NIMEngine combines **semantic aggregation**, **fine-grained unit control**, and **placeholder logic** to deliver a translation engine that is:
 
 - Fast
 - Context-aware
