@@ -17,7 +17,7 @@ namespace NIMEngine.Language
         {
             const string CheckTableSql =
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
-            var Result = NIM.LocalDB.ExecuteScalar(
+            var Result = NIMEngine.LocalDB.ExecuteScalar(
                 CheckTableSql,
                 SqliteSql.Parameter("@tableName", "ChineseVariantMap"));
 
@@ -40,7 +40,7 @@ namespace NIMEngine.Language
             [MatchType] INT
             );";
 
-            NIM.LocalDB.ExecuteNonQuery(SqlOrder);
+            NIMEngine.LocalDB.ExecuteNonQuery(SqlOrder);
         }
 
         private static void ReadRamChars()
@@ -49,7 +49,7 @@ namespace NIMEngine.Language
 
             string SqlOrder = "Select Traditional From ChineseVariantMap Where MatchType = 1;";
 
-            List<Dictionary<string, object>> GetResult = NIM.LocalDB.ExecuteQuery(SqlOrder);
+            List<Dictionary<string, object>> GetResult = NIMEngine.LocalDB.ExecuteQuery(SqlOrder);
 
             for (int i = 0; i < GetResult.Count; i++)
             {
@@ -136,7 +136,7 @@ SELECT 1 FROM ChineseVariantMap
 WHERE MatchType = 0 AND instr(@line, Traditional) > 0
 LIMIT 1;";
 
-                var Result = NIM.LocalDB.ExecuteScalar(
+                var Result = NIMEngine.LocalDB.ExecuteScalar(
                     SqlOrder,
                     SqliteSql.Parameter("@line", Line));
 

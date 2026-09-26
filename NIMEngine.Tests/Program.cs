@@ -750,20 +750,20 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
         private static void WithTemporaryDatabase(Action<P_SQLite> test)
         {
             string path = Path.Combine(Path.GetTempPath(), "NIMEngine-SQL-" + Guid.NewGuid() + ".db");
-            P_SQLite previousDatabase = NIM.LocalDB;
+            P_SQLite previousDatabase = NIMEngine.LocalDB;
             try
             {
                 using (var database = new P_SQLite())
                 {
                     database.PoolingEnabled = false;
                     database.OpenSQL(path);
-                    NIM.LocalDB = database;
+                    NIMEngine.LocalDB = database;
                     test(database);
                 }
             }
             finally
             {
-                NIM.LocalDB = previousDatabase;
+                NIMEngine.LocalDB = previousDatabase;
                 System.Data.SQLite.SQLiteConnection.ClearAllPools();
                 DeleteDatabaseFile(path);
                 DeleteDatabaseFile(path + "-wal");

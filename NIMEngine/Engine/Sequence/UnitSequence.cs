@@ -113,9 +113,9 @@ namespace NIMEngine.Sequence
                 Sequences[GetUnit.Key].CanSkipSleep = true;
 
                 //Update AI memory
-                if (Source.Length > 0 && NIM.Config.ContextEnable)
+                if (Source.Length > 0 && NIMEngine.Config.ContextEnable)
                 {
-                    NIM.AIMemory.AddTranslation(From, To, GetUnit.Original, GetCacheStr);
+                    NIMEngine.AIMemory.AddTranslation(From, To, GetUnit.Original, GetCacheStr);
                 }
 
                 Sequences[GetUnit.Key].Data = GetCacheStr;
@@ -123,7 +123,7 @@ namespace NIMEngine.Sequence
                 Sequences[GetUnit.Key].CanSkip = true;
                 return true;
             }
-            if (NIM.Config.EnableGlobalSearch)
+            if (NIMEngine.Config.EnableGlobalSearch)
             {
                 var MatchItem = CloudDBCache.Match((int)To, Source);
                 if (MatchItem != null)
@@ -139,9 +139,9 @@ namespace NIMEngine.Sequence
 
                     Sequences[GetUnit.Key].CanSkipSleep = true;
 
-                    if (Source.Length > 0 && NIM.Config.ContextEnable)
+                    if (Source.Length > 0 && NIMEngine.Config.ContextEnable)
                     {
-                        NIM.AIMemory.AddTranslation(From, To, GetUnit.Original, MatchItem.Result);
+                        NIMEngine.AIMemory.AddTranslation(From, To, GetUnit.Original, MatchItem.Result);
                     }
 
                     Sequences[GetUnit.Key].Data = MatchItem.Result;
@@ -200,7 +200,7 @@ namespace NIMEngine.Sequence
 
                 string Source = string.Copy(Sequences[GetUnit.Key].Data);
 
-                if (NIM.Config.PreTranslateEnable)
+                if (NIMEngine.Config.PreTranslateEnable)
                 {
                     PreTranslateCall NPreTranslateCall = new PreTranslateCall();
                     NPreTranslateCall.Platform = PlatformType.NIMEngine;

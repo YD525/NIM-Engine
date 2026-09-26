@@ -24,8 +24,8 @@ namespace NIMEngine.Tests
         [TestMethod]
         public async Task TranslatorFacadeUsesInjectedProviderStoreAndSchedulerAsync()
         {
-            EngineConfigJson previousConfig = NIM.Config;
-            NIM.Config = new EngineConfigJson
+            EngineConfigJson previousConfig = NIMEngine.Config;
+            NIMEngine.Config = new EngineConfigJson
             {
                 PlatformConfigs = new Dictionary<int, PlatformConfig>()
             };
@@ -56,7 +56,7 @@ namespace NIMEngine.Tests
             finally
             {
                 translator.Close();
-                NIM.Config = previousConfig;
+                NIMEngine.Config = previousConfig;
             }
         }
 

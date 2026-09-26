@@ -13,11 +13,11 @@ using NIMEngine.Translate;
 
 namespace NIMEngine
 {
-    public class NIM : ConfigExtend
+    public class NIMEngine : ConfigExtend
     {
         //The engine allows the creation of multiple instances of the Translator, each capable of translating its own content, but sharing a single AIMemory. This improves context utilization.
         public static AITranslationMemory AIMemory = new AITranslationMemory();
-        public static string Version = "3.3.8.7";
+        public static string Version = "3.3.8.8";
 
         public static object QueryPlatformDataLock = new object();
 
@@ -32,7 +32,7 @@ namespace NIMEngine
         {
             if (Config.AutoSetThreadLimit)
             {
-                Config.MaxThreadCount = NIM.AutoCalcThreadLimit();
+                Config.MaxThreadCount = NIMEngine.AutoCalcThreadLimit();
             }
         }
 
@@ -46,10 +46,10 @@ namespace NIMEngine
 
             bool LocalAIEnable = false;
 
-            for (int i = 0; i < NIM.Config.PlatformConfigs.Count; i++)
+            for (int i = 0; i < NIMEngine.Config.PlatformConfigs.Count; i++)
             { 
-                int GetKey = NIM.Config.PlatformConfigs.ElementAt(i).Key;
-                var GetConfig = NIM.Config.PlatformConfigs[GetKey];
+                int GetKey = NIMEngine.Config.PlatformConfigs.ElementAt(i).Key;
+                var GetConfig = NIMEngine.Config.PlatformConfigs[GetKey];
 
                 if (GetConfig.ApiKeys.Count > 0 && GetConfig.Enable && GetConfig.Platform != PlatformType.LMLocalAI)
                 {
@@ -71,7 +71,7 @@ namespace NIMEngine
         }
         public static string GetVersion()
         {
-            return NIM.Version;
+            return NIMEngine.Version;
         }
 
         public static string PluginsPath = @"\CorePlugins\";
@@ -107,7 +107,7 @@ namespace NIMEngine
             UniqueKeyHelper.Init();
 
             StepAction?.Invoke(7);
-            NIM.LoadConfig();
+            NIMEngine.LoadConfig();
 
             StepAction?.Invoke(8);
             ProxyCenter.UsingProxy();
