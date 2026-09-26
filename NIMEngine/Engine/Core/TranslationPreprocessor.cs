@@ -91,7 +91,7 @@ namespace NIMEngine.Engine
             var Tags = new List<ReplaceTag>();
             int Index = 0;
 
-            foreach (var Pattern in Phoenix.Config.ProtectedPatterns)
+            foreach (var Pattern in NIM.Config.ProtectedPatterns)
             {
                 var Matches = Regex.Matches(Source, Pattern);
                 foreach (Match Match in Matches)

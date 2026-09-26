@@ -147,13 +147,13 @@ namespace NIMEngine.Engine
 
                             var BucketIndex = 0;
                             List<P_Bucket> Buckets = new List<P_Bucket>();
-                            Buckets.Add(new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 1));
+                            Buckets.Add(new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 1));
 
                             foreach (var Link in FilteredLinks)
                             {
                                 if (!Buckets[BucketIndex].TryAdd(Link))
                                 {
-                                    var NewBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 1);
+                                    var NewBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 1);
                                     NewBucket.Next = null;
 
                                     Buckets[BucketIndex].Next = NewBucket;
@@ -237,7 +237,7 @@ namespace NIMEngine.Engine
             Heads.Clear();
 
             List<BaseUnit> LeftoverUnits = new List<BaseUnit>();
-            int MaxCharsForHeadSelection = Phoenix.Config.ContextLimit;
+            int MaxCharsForHeadSelection = NIM.Config.ContextLimit;
             var FilteredItems = new List<int>();
 
             for (int i = 0; i < N; i++)
@@ -365,7 +365,7 @@ namespace NIMEngine.Engine
 
             foreach (var GetHead in Heads.Values)
             {
-                var Bucket = new P_Bucket(this.AddedKeys, GetHead, Phoenix.Config.BucketLengthLimit, 0, 0);
+                var Bucket = new P_Bucket(this.AddedKeys, GetHead, NIM.Config.BucketLengthLimit, 0, 0);
                 Bucket.HeadTokens = TextTokenizer.BuildTokenSignature(TranslatorRef.From, GetHead.Original);
                 Bucket.Next = null;
                 this.UnitBuckets.Add(Bucket);
@@ -393,7 +393,7 @@ namespace NIMEngine.Engine
 
                 if (TokensB.Count == 0)
                 {
-                    var NewIndependentBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 0);
+                    var NewIndependentBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 0);
                     NewIndependentBucket.Add(Unit, 0);
                     this.UnitBuckets.Add(NewIndependentBucket);
 
@@ -443,7 +443,7 @@ namespace NIMEngine.Engine
 
                     if (!Placed)
                     {
-                        var NewBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 0);
+                        var NewBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 0);
                         NewBucket.Add(Unit, 0);
 
                         NewBucket.HeadTokens = BestHeadBucket.HeadTokens;
@@ -457,7 +457,7 @@ namespace NIMEngine.Engine
                 }
                 else
                 {
-                    var NewIndependentBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 0);
+                    var NewIndependentBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 0);
                     NewIndependentBucket.Add(Unit, 0);
                     this.UnitBuckets.Add(NewIndependentBucket);
                 }
@@ -520,7 +520,7 @@ namespace NIMEngine.Engine
 
                     foreach (var Bucket in AllAnchorBuckets)
                     {
-                        if (Phoenix.Config.StrictLinkBucketPurity && Bucket.Type == 1)
+                        if (NIM.Config.StrictLinkBucketPurity && Bucket.Type == 1)
                             continue; 
 
                         if (Bucket.TryAdd(Unit))
@@ -574,7 +574,7 @@ namespace NIMEngine.Engine
                     {
                         var Target = AllAnchorBuckets[j];
 
-                        if (Phoenix.Config.StrictLinkBucketPurity && Target.Type == 1)
+                        if (NIM.Config.StrictLinkBucketPurity && Target.Type == 1)
                             continue; 
 
                         bool IsLinkToLink = (Source.Type == 1 && Target.Type == 1);
@@ -597,12 +597,12 @@ namespace NIMEngine.Engine
 
             if (UnplacedUnits.Count > 0)
             {
-                var NewBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 0);
+                var NewBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 0);
                 foreach (var Unit in UnplacedUnits)
                 {
                     if (!NewBucket.TryAdd(Unit))
                     {
-                        var OverflowBucket = new P_Bucket(this.AddedKeys, null, Phoenix.Config.BucketLengthLimit, 0, 0);
+                        var OverflowBucket = new P_Bucket(this.AddedKeys, null, NIM.Config.BucketLengthLimit, 0, 0);
                         OverflowBucket.Add(Unit, 0);
                         UnitBuckets.Add(OverflowBucket);
                     }

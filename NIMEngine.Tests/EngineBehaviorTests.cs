@@ -24,15 +24,15 @@ namespace NIMEngine.Tests
         [TestInitialize]
         public void Initialize()
         {
-            _previousConfig = Phoenix.Config;
-            _previousMemory = Phoenix.AIMemory;
+            _previousConfig = NIM.Config;
+            _previousMemory = NIM.AIMemory;
             _previousStateCallback = EngineEvents.SetBaseUnitStateChangedCallback;
 
-            Phoenix.Config = new EngineConfigJson
+            NIM.Config = new EngineConfigJson
             {
                 PlatformConfigs = new Dictionary<int, PlatformConfig>()
             };
-            Phoenix.AIMemory = new AITranslationMemory();
+            NIM.AIMemory = new AITranslationMemory();
             EngineEvents.SetBaseUnitStateChangedCallback = null;
         }
 
@@ -41,17 +41,17 @@ namespace NIMEngine.Tests
         public void Cleanup()
         {
             EngineEvents.SetBaseUnitStateChangedCallback = _previousStateCallback;
-            Phoenix.AIMemory = _previousMemory;
-            Phoenix.Config = _previousConfig;
+            NIM.AIMemory = _previousMemory;
+            NIM.Config = _previousConfig;
         }
 
         /// <summary>Verifies stable bucket formation without mixing unrelated content into linked groups.</summary>
         [TestMethod]
         public void FormsBucketsDeterministicallyAndPreservesLinks()
         {
-            Phoenix.Config.BucketLengthLimit = 500;
-            Phoenix.Config.ContextLimit = 200;
-            Phoenix.Config.StrictLinkBucketPurity = true;
+            NIM.Config.BucketLengthLimit = 500;
+            NIM.Config.ContextLimit = 200;
+            NIM.Config.StrictLinkBucketPurity = true;
 
             string[] first = BuildBucketSignatures();
             string[] second = BuildBucketSignatures();

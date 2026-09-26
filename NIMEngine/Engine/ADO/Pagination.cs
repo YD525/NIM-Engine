@@ -30,9 +30,9 @@ namespace NIMEngine
             string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
             string Filter = SqliteSql.RequirePaginationFilter(Where);
             string SqlOrder = "SELECT COUNT(*) FROM " + QuotedTableName + " " + Filter + ";";
-            int GetCount = P_Convert.ObjToInt(Phoenix.LocalDB.ExecuteScalar(SqlOrder, Parameters));
-            int PageCount = GetCount / Phoenix.Config.DefPageSize;
-            if (GetCount % Phoenix.Config.DefPageSize > 0)
+            int GetCount = P_Convert.ObjToInt(NIM.LocalDB.ExecuteScalar(SqlOrder, Parameters));
+            int PageCount = GetCount / NIM.Config.DefPageSize;
+            if (GetCount % NIM.Config.DefPageSize > 0)
             {
                 PageCount++;
             }
@@ -78,7 +78,7 @@ namespace NIMEngine
                 SqliteSql.Parameter("@pageSize", Count),
                 SqliteSql.Parameter("@offset", ((long)PageNo - 1L) * Count)
             };
-            return Phoenix.LocalDB.ExecuteQuery(SqlOrder, BoundParameters.ToArray());
+            return NIM.LocalDB.ExecuteQuery(SqlOrder, BoundParameters.ToArray());
         }
     }
 

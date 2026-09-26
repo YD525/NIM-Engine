@@ -8,16 +8,16 @@ namespace NIMEngine.Request
 
         public static void UsingProxy()
         {
-            if (!string.IsNullOrWhiteSpace(Phoenix.Config.ProxyUrl))
+            if (!string.IsNullOrWhiteSpace(NIM.Config.ProxyUrl))
             {
-                WebProxy NewProxy = new WebProxy(Phoenix.Config.ProxyUrl);
+                WebProxy NewProxy = new WebProxy(NIM.Config.ProxyUrl);
 
-                if (!string.IsNullOrEmpty(Phoenix.Config.ProxyUserName) &&
-               !string.IsNullOrEmpty(Phoenix.Config.ProxyPassword))
+                if (!string.IsNullOrEmpty(NIM.Config.ProxyUserName) &&
+               !string.IsNullOrEmpty(NIM.Config.ProxyPassword))
                 {
                     NewProxy.Credentials = new NetworkCredential(
-                        Phoenix.Config.ProxyUserName,
-                        Phoenix.Config.ProxyPassword
+                        NIM.Config.ProxyUserName,
+                        NIM.Config.ProxyPassword
                     );
                 }
 
