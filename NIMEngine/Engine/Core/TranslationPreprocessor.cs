@@ -131,7 +131,7 @@ namespace NIMEngine.Engine
             return Tags;
         }
 
-        public string GeneratePlaceholderText(string FileName, Languages From, Languages To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace, bool ForceReplaceProtected = true)
+        public string GeneratePlaceholderText(string FileName, Languages From, Languages To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace, bool ForceReplaceProtected)
         {
             ReplaceTags.Clear();
             HasPlaceholder = false;

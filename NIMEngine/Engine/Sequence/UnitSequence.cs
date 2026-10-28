@@ -185,9 +185,8 @@ namespace NIMEngine.Sequence
             }
         }
 
-        public static void StartGeneratePlaceholder(this UnitGroup Item,
-      Translator TranslatorRef, Languages From, Languages To,
-      ref Dictionary<string, UnitSequence> Sequences, bool ForceReplace)
+        public static void StartGeneratePlaceholder(this UnitGroup Item,Translator TranslatorRef, Languages From, Languages To, ref Dictionary<string, UnitSequence> Sequences, 
+         bool ForceReplace, bool ForceReplaceProtected)
         {
             for (int i = 0; i < Item.Units.Count; i++)
             {
@@ -209,7 +208,7 @@ namespace NIMEngine.Sequence
 
                     NPreTranslateCall.SendString = Source;
 
-                    Source = Preprocessor.GeneratePlaceholderText(TranslatorRef.LastLoadFileName, From, To, Source, GetUnit.Type, out CanTrans, ForceReplace);
+                    Source = Preprocessor.GeneratePlaceholderText(TranslatorRef.LastLoadFileName, From, To, Source, GetUnit.Type, out CanTrans, ForceReplace, ForceReplaceProtected);
 
                     CustomWords.Clear();
                     foreach (var GetWord in Preprocessor.ReplaceTags)
