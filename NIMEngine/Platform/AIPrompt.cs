@@ -66,8 +66,20 @@ public class AIPrompt
         "Output ONLY the translated HTML.\n"
         );
 
-        var ForcedTags = CustomWords?.Where(CustomWord => !CustomWord.IsHint).ToList() ?? new List<ReplaceTag>();
-        var HintTags = CustomWords?.Where(CustomWord => CustomWord.IsHint).ToList() ?? new List<ReplaceTag>();
+        // ForcedTags    : placeholders ([_N] / [_PN]) that were substituted into the text
+        // ProtectedTags : protected content left in the text as-is (hint mode, Key == Value)
+        // HintTags      : user-defined term suggestions (dictionary hints)
+        var ForcedTags = CustomWords.Where(CustomWord => !CustomWord.IsHint).ToList();
+        var ProtectedTags = CustomWords.Where(CustomWord => CustomWord.IsHint && CustomWord.IsProtected).ToList();
+        var HintTags = CustomWords.Where(CustomWord => CustomWord.IsHint && !CustomWord.IsProtected).ToList();
+
+        if (ProtectedTags.Count > 0)
+        {
+            var Seen = new HashSet<string>();
+            ProtectedTags = ProtectedTags
+                .Where(ProtectedTag => Seen.Add(ProtectedTag.Value))
+                .ToList();
+        }
 
         if (HintTags.Count > 0)
         {
@@ -97,6 +109,26 @@ public class AIPrompt
             foreach (var GetWord in ForcedTags)
             {
                 Prompt.AppendLine($"{GetWord.Key} // meaning: {GetWord.Value}");
+            }
+            Prompt.AppendLine();
+        }
+
+        if (ProtectedTags.Count > 0)
+        {
+            Prompt.AppendLine("[Protected Content Rule]");
+            Prompt.AppendLine(
+                "The following strings appear in the text and are protected content (e.g. code, variables, tags, format strings).\n" +
+                "Rules:\n" +
+                "1. DO NOT translate, rewrite, transliterate, or modify them in any way\n" +
+                "2. Copy each one exactly as it appears in the original text, character for character\n" +
+                "3. You may ONLY move them if required for natural sentence flow in the target language\n" +
+                "4. Never remove them, never replace them with a translated equivalent\n"
+            );
+
+            Prompt.AppendLine("Protected content (keep verbatim):");
+            foreach (var GetWord in ProtectedTags)
+            {
+                Prompt.AppendLine($"- {GetWord.Value}");
             }
             Prompt.AppendLine();
         }

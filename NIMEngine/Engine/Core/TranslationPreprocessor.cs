@@ -12,8 +12,8 @@ namespace NIMEngine.Engine
         public int Rowid = 0;
         public string Key { get; set; } = "";
         public string Value { get; set; } = "";
-        public bool IsHint { get; set; } = false;  
-        public bool IsProtected { get; set; } = false; 
+        public bool IsHint { get; set; } = false;
+        public bool IsProtected { get; set; } = false;
         public ReplaceTag(string Key, string Value)
         {
             this.Key = Key;
@@ -75,6 +75,9 @@ namespace NIMEngine.Engine
 
             foreach (var Word in CustomWords)
             {
+                if (Word.IsHint)
+                    continue;
+
                 var IDMatch = Regex.Match(Word.Key, @"\[_([Pp]?\d+)\]");
                 if (IDMatch.Success)
                 {
@@ -86,7 +89,11 @@ namespace NIMEngine.Engine
             return FoundIds.Count == ExpectedIds.Count && ExpectedIds.All(id => FoundIds.Contains(id));
         }
 
-        private List<ReplaceTag> GenerateProtectedTags(string Source, bool IsAIPlatform)
+        /// <summary>
+        /// ForceReplace = true  : Generates placeholders such as [_P0] (Key = placeholder, Value = original text).
+        /// ForceReplace = false : Hint only (Key = Value = original text, IsHint = true); the source text is not modified.
+        /// </summary>
+        private List<ReplaceTag> GenerateProtectedTags(string Source, bool ForceReplace)
         {
             var Tags = new List<ReplaceTag>();
             int Index = 0;
@@ -104,15 +111,19 @@ namespace NIMEngine.Engine
                     if (Tags.Any(T => T.Value == Value))
                         continue;
 
-                    if (IsAIPlatform)
+                    if (ForceReplace)
                     {
-                        Tags.Add(new ReplaceTag(Value, Value));
+                        string Placeholder = $"[_P{Index}]";
+                        Tags.Add(new ReplaceTag(Placeholder, Value) { IsProtected = true });
+                        Index++;
                     }
                     else
                     {
-                        string Placeholder = $"[_P{Index}]";
-                        Tags.Add(new ReplaceTag(Placeholder, Value));
-                        Index++;
+                        Tags.Add(new ReplaceTag(Value, Value)
+                        {
+                            IsHint = true,
+                            IsProtected = true
+                        });
                     }
                 }
             }
@@ -120,13 +131,13 @@ namespace NIMEngine.Engine
             return Tags;
         }
 
-        public string GeneratePlaceholderText(string FileName, Languages From, Languages To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace)
+        public string GeneratePlaceholderText(string FileName, Languages From, Languages To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace, bool ForceReplaceProtected = true)
         {
             ReplaceTags.Clear();
             HasPlaceholder = false;
             bool UseWordBoundary = LanguageExtensions.IsSpaceDelimitedLanguage(From);
 
-            var ProtectedTags = GenerateProtectedTags(SourceStr, false);
+            var ProtectedTags = GenerateProtectedTags(SourceStr, ForceReplaceProtected);
             for (int i = 0; i < ProtectedTags.Count; i++)
             {
                 if (ProtectedTags[i].Value == string.Empty)
@@ -137,6 +148,13 @@ namespace NIMEngine.Engine
                 {
                     var Source = ProtectedTags[i].Value;
                     var Placeholder = ProtectedTags[i].Key;
+
+                    if (ProtectedTags[i].IsHint)
+                    {
+                        ReplaceTags.Add(ProtectedTags[i]);
+                        continue;
+                    }
+
                     if (UseWordBoundary)
                     {
                         string Pattern = Regex.Escape(Source);
@@ -227,6 +245,10 @@ namespace NIMEngine.Engine
                     {
                         CheckText = CheckText.Replace(Tag.Key, "");
                     }
+                    else if (Tag.IsHint && Tag.IsProtected && !string.IsNullOrEmpty(Tag.Key))
+                    {
+                        CheckText = CheckText.Replace(Tag.Key, "");
+                    }
                 }
 
                 foreach (var FoundSource in FoundSources)
@@ -255,6 +277,10 @@ namespace NIMEngine.Engine
             foreach (var Tag in ReplaceTags)
             {
                 if (!Tag.IsHint && Tag.Key.Contains("[_") && Tag.Key.Contains("]"))
+                {
+                    Residual = Residual.Replace(Tag.Key, "");
+                }
+                else if (Tag.IsHint && Tag.IsProtected && !string.IsNullOrEmpty(Tag.Key))
                 {
                     Residual = Residual.Replace(Tag.Key, "");
                 }
@@ -306,7 +332,7 @@ namespace NIMEngine.Engine
             {
                 foreach (var Tag in ReplaceTags)
                 {
-                    if (Tag.IsHint && !string.IsNullOrEmpty(Tag.Key) && !string.IsNullOrEmpty(Tag.Value))
+                    if (Tag.IsHint && !Tag.IsProtected && !string.IsNullOrEmpty(Tag.Key) && !string.IsNullOrEmpty(Tag.Value))
                     {
                         Result = Result.Replace(Tag.Key, Tag.Value);
                     }
