@@ -461,13 +461,15 @@ public class EngineCore
            Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string SetType)
         {
             bool ForceReplace = true;
+            bool ForceReplaceProtected = true;
 
             if (this.ApiRef is ChatGptApi || this.ApiRef is GeminiApi || this.ApiRef is DeepSeekApi || this.ApiRef is LMStudio || this.ApiRef is CustomAIApi || this.ApiRef is CustomLocalAIApi || this.ApiRef is HumanTranslationApi)
             {
                 ForceReplace = false;
+                ForceReplaceProtected = false;
             }
 
-            Source.StartGeneratePlaceholder(TranslatorRef, From, To, ref Sequences, ForceReplace);
+            Source.StartGeneratePlaceholder(TranslatorRef, From, To, ref Sequences, ForceReplace, ForceReplaceProtected);
 
             CheckCanSkip(TranslatorID, Sequences, ref Source);
 
