@@ -212,8 +212,7 @@ namespace NIMEngine.Engine.ADO
 
             public List<Dictionary<string, object>> GetData()
             {
-                lock (DataLock)
-                    return new List<Dictionary<string, object>>
+                return new List<Dictionary<string, object>>
                            {
                               Manual,
                               Machine
