@@ -8,28 +8,31 @@ using NIMEngine.Language;
 
 namespace NIMEngine.ADO
 {
-    public class LocalTransItem
+    public class LocalTranslationItem
     {
         public int FileUniqueKey = 0;
         public string Key = "";
         public int To = 0;
+        public string Source = "";
         public string Result = "";
         public int Index = 0;
 
-        public LocalTransItem(int FileUniqueKey, string Key, Languages TargetLanguage, string Result)
+        public LocalTranslationItem(int FileUniqueKey, string Key, Languages TargetLanguage,string Source, string Result)
         {
             this.FileUniqueKey = FileUniqueKey;
             this.Key = Key;
             this.To = (int)TargetLanguage;
+            this.Source = Source;
             this.Result = Result;
             this.Index = 0;
         }
 
-        public LocalTransItem(object FileUniqueKey, object Key, object To, object Result)
+        public LocalTranslationItem(object FileUniqueKey, object Key, object To,object Source, object Result)
         {
             this.FileUniqueKey = P_Convert.ObjToInt(FileUniqueKey);
             this.Key = P_Convert.ObjToStr(Key);
             this.To = P_Convert.ObjToInt(To);
+            this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
             this.Index = 0;
         }
@@ -79,13 +82,13 @@ namespace NIMEngine.ADO
             }
         }
 
-        public static List<CloudTranslationItem> MatchLocalItem(int To, string Source, int Limit = 5)
+        public static List<LocalTranslationItem> MatchLocalItem(int To, string Source, int Limit = 5)
         {
             new TranslationPreprocessor().OptimizeStrings(ref Source);
 
             try
             {
-                List<CloudTranslationItem> CloudTranslationItems = new List<CloudTranslationItem>();
+                List<LocalTranslationItem> LocalTransItems = new List<LocalTranslationItem>();
 
                 const string SQLOrder = "SELECT * FROM LocalTranslation WHERE [To] = @To AND [Source] = @Source LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
@@ -99,7 +102,7 @@ namespace NIMEngine.ADO
                     {
                         var Row = NTable[i];
 
-                        CloudTranslationItems.Add(new CloudTranslationItem(
+                        LocalTransItems.Add(new LocalTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
                             Row["To"],
@@ -109,11 +112,11 @@ namespace NIMEngine.ADO
                     }
                 }
 
-                return CloudTranslationItems;
+                return LocalTransItems;
             }
             catch
             {
-                return new List<CloudTranslationItem>();
+                return new List<LocalTranslationItem>();
             }
         }
 
@@ -323,6 +326,31 @@ namespace NIMEngine.ADO
             {
                 return false;
             }
+        }
+
+        public static List<LocalTranslationItem> GetItemsByFileKey(int FileUniqueKey)
+        {
+            const string SQLOrder = "Select * From LocalTranslation Where [FileUniqueKey] = @FileUniqueKey;";
+            List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
+
+            List<LocalTranslationItem> LocalTransItems = new List<LocalTranslationItem>();
+
+            for (int i = 0; i < NTable.Count; i++)
+            {
+                var Row = NTable[i];
+
+                LocalTransItems.Add(new LocalTranslationItem(
+                            Row["FileUniqueKey"],
+                            Row["Key"],
+                            Row["To"],
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                ));
+            }
+
+            return LocalTransItems;
         }
     }
 }

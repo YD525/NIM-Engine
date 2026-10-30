@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using NIMEngine.ADO;
 using NIMEngine.Language;
 
 namespace NIMEngine.Engine.ADO
@@ -66,6 +67,15 @@ namespace NIMEngine.Engine.ADO
             private void CollectTrainableItems(int FileUniqueKey)
             {
                 // TODO: Implement logic to filter and collect data available for training.
+
+
+                //The first step is to implement retrieval methods for the two tables.
+                var ManualData = LocalDBCache.GetItemsByFileKey(FileUniqueKey);
+                var MachineData = CloudDBCache.GetItemsByFileKey(FileUniqueKey);
+
+                //First, data translated manually by users should be given higher priority than data translated by AI.
+                //If a user consents to saving a manually translated record to the database, and an AI-translated record for the same item already exists, the AI-translated record should be automatically removed—since one version (the manual one) has already been adopted.
+
             }
 
             /// <summary>
@@ -81,9 +91,9 @@ namespace NIMEngine.Engine.ADO
             /// Removes the specified training item from PendingItems.
             /// </summary>
             /// <param name="item">The training item to remove.</param>
-            public void Cancel(DictionaryTrainingItem item)
+            public void Cancel(DictionaryTrainingItem Item)
             {
-                PendingItems.Remove(item);
+                PendingItems.Remove(Item);
             }
         }
     }

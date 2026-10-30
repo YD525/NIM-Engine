@@ -306,5 +306,31 @@ namespace NIMEngine.ADO
                 return false;
             }
         }
+
+        public static List<CloudTranslationItem> GetItemsByFileKey(int FileUniqueKey)
+        {
+            const string SQLOrder = "Select * From CloudTranslation Where [FileUniqueKey] = @FileUniqueKey;";
+            List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
+
+            List<CloudTranslationItem> CloudTranslationItems = new List<CloudTranslationItem>();
+
+            for (int i = 0; i < NTable.Count; i++)
+            {
+                var Row = NTable[i];
+
+                CloudTranslationItems.Add(new CloudTranslationItem(
+                            Row["FileUniqueKey"],
+                            Row["Key"],
+                            Row["To"],
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                ));
+            }
+
+            return CloudTranslationItems;
+
+        }
     }
 }
