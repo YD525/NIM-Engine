@@ -17,44 +17,18 @@ namespace NIMEngine.Engine.ADO
             ManualTranslation = 2,  // LocalTranslation
         }
 
-        public class DictionaryTrainingItem
-        {
-            /// <summary>
-            /// Associated database record ID.
-            /// </summary>
-            public int Rowid = 0;
-
-            /// <summary>
-            /// DataSource of the data (e.g., Machine/AI [CloudTranslation Table] or Manual translation [LocalTranslation Table]).
-            /// </summary>
-            public DataSource DataSource = DataSource.Null;
-
-            /// <summary>
-            /// Source language.
-            /// </summary>
-            public Languages From = Languages.Null;
-
-            /// <summary>
-            /// Target language.
-            /// </summary>
-            public Languages To = Languages.Null;
-
-            /// <summary>
-            /// Original text.
-            /// </summary>
-            public string Original = "";
-
-            /// <summary>
-            /// Translated text.
-            /// </summary>
-            public string Translated = "";
-        }
-
         public class ModTrainingSession
         {
             private Dictionary<string, object> Manual = new Dictionary<string, object>();
             private Dictionary<string, object> Machine = new Dictionary<string, object>();
 
+            private Dictionary<string, string> _PairedMachineKeys = new Dictionary<string, string>();
+
+            //The paired-key data is read-only. The same item can appear in both the manual and AI translation lists, so the UI uses this mapping to look up the associated entry and let the user choose which one to apply.
+            public IReadOnlyDictionary<string, string> PairedMachineKeys 
+            {
+                get { return _PairedMachineKeys; }
+            }
 
             public int From = 0;
 
@@ -118,6 +92,7 @@ namespace NIMEngine.Engine.ADO
                         if (CacheCloudItem != null)
                         {
                             Manual.Add(MachineKey, CacheCloudItem);
+                            _PairedMachineKeys[GenKey] = MachineKey;
                         }
                     }
                 }
