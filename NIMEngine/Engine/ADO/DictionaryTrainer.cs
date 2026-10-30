@@ -133,7 +133,7 @@ namespace NIMEngine.Engine.ADO
             {
                 object Value = null;
 
-                lock (CancelLock)
+                lock (DataLock)
                 {
                     if (!Machine.TryGetValue(Key, out Value))
                     {
@@ -172,7 +172,7 @@ namespace NIMEngine.Engine.ADO
                 });
             }
 
-            private object CancelLock = new object();
+            private object DataLock = new object();
 
             /// <summary>
             /// Removes the specified training item from PendingItems.
@@ -180,7 +180,7 @@ namespace NIMEngine.Engine.ADO
             /// <param name="Key">The training item to remove.</param>
             public void Cancel(string Key)
             {
-                lock (CancelLock)
+                lock (DataLock)
                 {
                     if (Machine.ContainsKey(Key))
                     {
@@ -212,11 +212,11 @@ namespace NIMEngine.Engine.ADO
 
             public List<Dictionary<string, object>> GetData()
             {
-                lock (CancelLock)
+                lock (DataLock)
                     return new List<Dictionary<string, object>>
                            {
-                              new Dictionary<string, object>(Manual),
-                              new Dictionary<string, object>(Machine)
+                              Manual,
+                              Machine
                            };
             }
         }
