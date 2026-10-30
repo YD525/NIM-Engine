@@ -351,7 +351,7 @@ namespace NIMEngine.Translate
         public int CalcTranslatedCount(int Addition)
         {
             if (LastLoadFileName.Length == 0) return 0;
-            const string SqlOrder = @"SELECT COUNT(*) AS TotalCount
+            const string SQLOrder = @"SELECT COUNT(*) AS TotalCount
 FROM (
     SELECT Key
     FROM LocalTranslation
@@ -364,9 +364,9 @@ FROM (
 ) AS Combined;";
 
             int GetCount = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
-                SqlOrder,
-                SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@to", (int)this.To)));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@fileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@to", (int)this.To)));
 
             return GetCount + Addition;
         }

@@ -10,7 +10,7 @@ namespace NIMEngine.ADO
     {
 
         /// <summary>Enable SQL logging</summary>
-        public bool EnableSqlOutput { get; set; } = false;
+        public bool EnableSQLOutput { get; set; } = false;
 
         /// <summary>Number of retries if SQLite operation fails (e.g., Busy)</summary>
         public int RetryCount { get; set; } = 3;
@@ -165,7 +165,7 @@ namespace NIMEngine.ADO
 
         private void LogSQL(string SQL)
         {
-            if (EnableSqlOutput)
+            if (EnableSQLOutput)
                 System.Diagnostics.Debug.WriteLine("[SQLITE] " + SQL);
         }
         public List<Dictionary<string, object>> P_ExecuteQuery(string SQL)
