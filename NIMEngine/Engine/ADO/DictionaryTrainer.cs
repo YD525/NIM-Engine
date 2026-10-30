@@ -52,13 +52,13 @@ namespace NIMEngine.Engine.ADO
 
         public class ModTrainingSession
         {
-            private Dictionary<string, object> PendingItems = new Dictionary<string, object>();
+            private Dictionary<string, object> Manual = new Dictionary<string, object>();
+            private Dictionary<string, object> Machine = new Dictionary<string, object>();
 
-            public int CutOffset { get; private set; } = 0;
 
             public int From = 0;
 
-            public ModTrainingSession(int From,int FileUniqueKey)
+            public ModTrainingSession(int From, int FileUniqueKey)
             {
                 CollectTrainableItems(FileUniqueKey);
                 this.From = From;
@@ -78,9 +78,7 @@ namespace NIMEngine.Engine.ADO
 
                 //First, data translated manually by users should be given higher priority than data translated by AI.
                 //If a user consents to saving a manually translated record to the database, and an AI-translated record for the same item already exists, the AI-translated record should be automatically removed—since one version (the manual one) has already been adopted.
-                Dictionary<string, object> Data = new Dictionary<string, object>();
-
-                CutOffset = 0;
+                Dictionary<string, object> TempData = new Dictionary<string, object>();
 
                 for (int i = 0; i < MachineData.Count; i++)
                 {
@@ -88,12 +86,10 @@ namespace NIMEngine.Engine.ADO
 
                     string GenKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
 
-                    if (!Data.ContainsKey(GenKey))
+                    if (!TempData.ContainsKey(GenKey))
                     {
-                        Data.Add(GenKey, Item);
+                        TempData.Add(GenKey, Item);
                     }
-
-                    CutOffset = i;
                 }
 
                 for (int i = 0; i < ManualData.Count; i++)
@@ -103,101 +99,77 @@ namespace NIMEngine.Engine.ADO
                     string GenKey = Item.Source + "_" + Item.To.ToString() + "_Manual";
                     string MachineKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
 
-                    if (!Data.ContainsKey(GenKey))
+                    if (!Manual.ContainsKey(GenKey))
                     {
                         CloudTranslationItem CacheCloudItem = null;
 
-                        if (Data.ContainsKey(MachineKey))
+                        if (TempData.ContainsKey(MachineKey))
                         {
                             //This record exists in the cloud-based translation history.
                             //Set
-                            CacheCloudItem = (CloudTranslationItem)Data[MachineKey];
+                            CacheCloudItem = (CloudTranslationItem)TempData[MachineKey];
                             //Remove
-                            Data.Remove(MachineKey);
-
-                            this.CutOffset--;
+                            TempData.Remove(MachineKey);
                         }
 
-                        Data.Add(GenKey, Item);
+                        Manual.Add(GenKey, Item);
 
                         //Ensure that cloud translation records are assigned a lower priority than manual translation records.
                         if (CacheCloudItem != null)
                         {
-                            Data.Add(MachineKey, CacheCloudItem);
+                            Manual.Add(MachineKey, CacheCloudItem);
                         }
                     }
                 }
 
-                this.PendingItems = Data;
+                this.Machine = TempData;
             }
 
             /// <summary>
             /// Applies the confirmed training item to the database.
             /// </summary>
-            /// <param name="item">The training item to apply.</param>
-            public bool ApplyToAdvancedDictionary(string Key)
+            /// <param name="Key">The training item to apply.</param>
+            public bool Apply(string Key)
             {
-                // TODO: Implement logic to write the confirmed training data to the database.
+                object Value = null;
 
-                //SQLiteBuilder.Parameter("@TargetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
-                //SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Item.Type)),
-                //SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Item.Source)),
-                //SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Item.Result)),
-                //SQLiteBuilder.Parameter("@From", Item.From),
-                //SQLiteBuilder.Parameter("@To", Item.To),
-                //SQLiteBuilder.Parameter("@ExactMatch", Item.ExactMatch),
-                //SQLiteBuilder.Parameter("@IgnoreCase", Item.IgnoreCase),
-                //SQLiteBuilder.Parameter("@Regex", SQLSafeCodec.Encode(Item.Regex)));
-
-                if (PendingItems.ContainsKey(Key))
+                lock (CancelLock)
                 {
-                    if (PendingItems[Key] is LocalTranslationItem)
+                    if (!Machine.TryGetValue(Key, out Value))
                     {
-                        var Item = (LocalTranslationItem)PendingItems[Key];
-
-                        //Implement addition to the advanced dictionary
-
-                        return AdvancedDictionary.AddItem(new AdvancedDictionaryItem() {
-                             TargetFileName = "",
-                             Source = Item.Source,
-                             Result = Item.Result,
-                             From = this.From,
-                             To = Item.To,
-                             ExactMatch = 1,//Exact Match only
-                             IgnoreCase = 0,
-                             Regex = string.Empty
-                        });
-                    }
-                    else
-                    {
-                        var Item = (CloudTranslationItem)PendingItems[Key];
-
-                        //Implement addition to the advanced dictionary
-
-                        return AdvancedDictionary.AddItem(new AdvancedDictionaryItem()
-                        {
-                            TargetFileName = "",
-                            Source = Item.Source,
-                            Result = Item.Result,
-                            From = this.From,
-                            To = Item.To,
-                            ExactMatch = 1,//Exact Match only
-                            IgnoreCase = 0,
-                            Regex = string.Empty
-                        });
+                        Manual.TryGetValue(Key, out Value);
                     }
                 }
 
-                return false;
-            }
+                string Source, Result;
+                int To;
 
-            public void ApplyAll()
-            {
-                //must use `new` here to prevent multiple threads from accessing the same object.
-                foreach (var GetItem in new Dictionary<string, object>(PendingItems))
+                if (Value is LocalTranslationItem)
                 {
-                    ApplyToAdvancedDictionary(GetItem.Key);
+                    var Item = (LocalTranslationItem)Value;
+                    Source = Item.Source; Result = Item.Result; To = Item.To;
                 }
+                else if (Value is CloudTranslationItem)
+                {
+                    var Item = (CloudTranslationItem)Value;
+                    Source = Item.Source; Result = Item.Result; To = Item.To;
+                }
+                else
+                {
+                    return false;
+                }
+
+                return AdvancedDictionary.AddItem(new AdvancedDictionaryItem()
+                {
+                    TargetFileName = "",
+                    Source = Source,
+                    Result = Result,
+                    From = this.From,
+                    To = To,
+                    ExactMatch = 1,//Exact Match only
+                    IgnoreCase = 0,
+                    Regex = string.Empty
+                });
             }
 
             private object CancelLock = new object();
@@ -208,29 +180,18 @@ namespace NIMEngine.Engine.ADO
             /// <param name="Key">The training item to remove.</param>
             public void Cancel(string Key)
             {
-                lock(CancelLock)
-                PendingItems.Remove(Key);
-            }
-
-            /// <summary>
-            /// Gets a sub-dictionary range based on the specified DataSource using CutOffset.
-            /// </summary>
-            /// <param name="dataSource">The target data source range to retrieve.</param>
-            /// <returns>A sliced dictionary containing only the requested range.</returns>
-            public Dictionary<string, object> GetRange(DataSource DataSource)
-            {
-                if (DataSource == DataSource.MachineTranslation)
+                lock (CancelLock)
                 {
-                    // Take items from the start up to CutOffset (pure machine translations)
-                    return PendingItems.Take(CutOffset).ToDictionary(X => X.Key, X => X.Value);
-                }
-                else if (DataSource == DataSource.ManualTranslation)
-                {
-                    // Returns manual translations along with their associated/paired machine items shifted to the bottom (from CutOffset onwards)
-                    return PendingItems.Skip(CutOffset).ToDictionary(X => X.Key, X => X.Value);
-                }
+                    if (Machine.ContainsKey(Key))
+                    {
+                        Machine.Remove(Key);
+                    }
 
-                return new Dictionary<string, object>();
+                    if (Manual.ContainsKey(Key))
+                    {
+                        Manual.Remove(Key);
+                    }
+                }
             }
 
             /// <summary>
@@ -239,15 +200,25 @@ namespace NIMEngine.Engine.ADO
             /// <typeparam name="T"></typeparam>
             /// <param name="Any"></param>
             /// <returns></returns>
-            public T To <T>(object Any) where T : class
+            public T To<T>(object Any) where T : class
             {
                 if (Any is T)
-                { 
-                   return (T)Any;
+                {
+                    return (T)Any;
                 }
-            
+
                 return null;
-            }   
+            }
+
+            public List<Dictionary<string, object>> GetData()
+            {
+                lock (CancelLock)
+                    return new List<Dictionary<string, object>>
+                           {
+                              new Dictionary<string, object>(Manual),
+                              new Dictionary<string, object>(Machine)
+                           };
+            }
         }
     }
 }
