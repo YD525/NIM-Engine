@@ -206,7 +206,7 @@ namespace NIMEngine.Engine.ADO
             /// <summary>
             /// Removes the specified training item from PendingItems.
             /// </summary>
-            /// <param name="item">The training item to remove.</param>
+            /// <param name="Key">The training item to remove.</param>
             public void Cancel(string Key)
             {
                 lock(CancelLock)
