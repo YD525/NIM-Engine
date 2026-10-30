@@ -53,11 +53,16 @@ namespace NIMEngine.Engine.ADO
 
         public class ModTrainingSession
         {
-            public Dictionary<string, object> PendingItems = new Dictionary<string, object>();
+            private Dictionary<string, object> PendingItems = new Dictionary<string, object>();
 
-            public ModTrainingSession(int FileUniqueKey)
+            public int CutOffset { get; private set; } = 0;
+
+            public int From = 0;
+
+            public ModTrainingSession(int From,int FileUniqueKey)
             {
                 CollectTrainableItems(FileUniqueKey);
+                this.From = From;
             }
 
             /// <summary>
@@ -76,6 +81,8 @@ namespace NIMEngine.Engine.ADO
                 //If a user consents to saving a manually translated record to the database, and an AI-translated record for the same item already exists, the AI-translated record should be automatically removed—since one version (the manual one) has already been adopted.
                 Dictionary<string, object> Data = new Dictionary<string, object>();
 
+                CutOffset = 0;
+
                 for (int i = 0; i < MachineData.Count; i++)
                 {
                     var Item = MachineData[i];//Almost wrote a bug there—haha!
@@ -86,6 +93,8 @@ namespace NIMEngine.Engine.ADO
                     {
                         Data.Add(GenKey, Item);
                     }
+
+                    CutOffset = i;
                 }
 
                 for (int i = 0; i < ManualData.Count; i++)
@@ -106,6 +115,8 @@ namespace NIMEngine.Engine.ADO
                             CacheCloudItem = (CloudTranslationItem)Data[MachineKey];
                             //Remove
                             Data.Remove(MachineKey);
+
+                            this.CutOffset--;
                         }
 
                         Data.Add(GenKey, Item);
@@ -125,22 +136,60 @@ namespace NIMEngine.Engine.ADO
             /// Applies the confirmed training item to the database.
             /// </summary>
             /// <param name="item">The training item to apply.</param>
-            public void ApplyToAdvancedDictionary(string Key)
+            public bool ApplyToAdvancedDictionary(string Key)
             {
                 // TODO: Implement logic to write the confirmed training data to the database.
+
+                //SQLiteBuilder.Parameter("@TargetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
+                //SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Item.Type)),
+                //SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Item.Source)),
+                //SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Item.Result)),
+                //SQLiteBuilder.Parameter("@From", Item.From),
+                //SQLiteBuilder.Parameter("@To", Item.To),
+                //SQLiteBuilder.Parameter("@ExactMatch", Item.ExactMatch),
+                //SQLiteBuilder.Parameter("@IgnoreCase", Item.IgnoreCase),
+                //SQLiteBuilder.Parameter("@Regex", SQLSafeCodec.Encode(Item.Regex)));
+
                 if (PendingItems.ContainsKey(Key))
                 {
                     if (PendingItems[Key] is LocalTranslationItem)
                     {
                         var Item = (LocalTranslationItem)PendingItems[Key];
+
                         //Implement addition to the advanced dictionary
+
+                        return AdvancedDictionary.AddItem(new AdvancedDictionaryItem() {
+                             TargetFileName = "",
+                             Source = Item.Source,
+                             Result = Item.Result,
+                             From = this.From,
+                             To = Item.To,
+                             ExactMatch = 1,//Exact Match only
+                             IgnoreCase = 0,
+                             Regex = string.Empty
+                        });
                     }
                     else
                     {
                         var Item = (CloudTranslationItem)PendingItems[Key];
+
                         //Implement addition to the advanced dictionary
+
+                        return AdvancedDictionary.AddItem(new AdvancedDictionaryItem()
+                        {
+                            TargetFileName = "",
+                            Source = Item.Source,
+                            Result = Item.Result,
+                            From = this.From,
+                            To = Item.To,
+                            ExactMatch = 1,//Exact Match only
+                            IgnoreCase = 0,
+                            Regex = string.Empty
+                        });
                     }
                 }
+
+                return false;
             }
 
             public void ApplyAll()
@@ -148,16 +197,7 @@ namespace NIMEngine.Engine.ADO
                 //must use `new` here to prevent multiple threads from accessing the same object.
                 foreach (var GetItem in new Dictionary<string, object>(PendingItems))
                 {
-                    if (GetItem.Value is LocalTranslationItem)
-                    {
-                        var Item = (LocalTranslationItem)GetItem.Value;
-                        //Implement addition to the advanced dictionary
-                    }
-                    else
-                    {
-                        var Item = (CloudTranslationItem)GetItem.Value;
-                        //Implement addition to the advanced dictionary
-                    }
+                    ApplyToAdvancedDictionary(GetItem.Key);
                 }
             }
 
@@ -168,6 +208,27 @@ namespace NIMEngine.Engine.ADO
             public void Cancel(string Key)
             {
                 PendingItems.Remove(Key);
+            }
+
+            /// <summary>
+            /// Gets a sub-dictionary range based on the specified DataSource using CutOffset.
+            /// </summary>
+            /// <param name="dataSource">The target data source range to retrieve.</param>
+            /// <returns>A sliced dictionary containing only the requested range.</returns>
+            public Dictionary<string, object> GetRange(DataSource DataSource)
+            {
+                if (DataSource == DataSource.MachineTranslation)
+                {
+                    // Take items from the start up to CutOffset (pure machine translations)
+                    return PendingItems.Take(CutOffset).ToDictionary(X => X.Key, X => X.Value);
+                }
+                else if (DataSource == DataSource.ManualTranslation)
+                {
+                    // Returns manual translations along with their associated/paired machine items shifted to the bottom (from CutOffset onwards)
+                    return PendingItems.Skip(CutOffset).ToDictionary(X => X.Key, X => X.Value);
+                }
+
+                return new Dictionary<string, object>();
             }
 
             /// <summary>
@@ -185,6 +246,8 @@ namespace NIMEngine.Engine.ADO
             
                 return null;
             }
+
+           
         }
     }
 }
