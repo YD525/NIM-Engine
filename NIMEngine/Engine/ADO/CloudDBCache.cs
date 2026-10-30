@@ -31,26 +31,18 @@ namespace NIMEngine.ADO
         public static void Init()
         {
             string TableName = "CloudTranslation";
-            string CreateSql = @"
-CREATE TABLE [CloudTranslation](
-  [FileUniqueKey] INT, 
-  [Key] TEXT, 
-  [To] INT, 
-  [Source] TEXT,
-  [Result] TEXT
-);";
+            string CreateSQL = "CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [Source] TEXT, [Result] TEXT);";
 
             // Check if table exists
-            const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
+            const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                CheckTableSql,
-                SqliteSql.Parameter("@TableName", TableName));
+                CheckTableSQL,
+                SQLiteBuilder.Parameter("@TableName", TableName));
 
             if (Result != null && Result != DBNull.Value)
             {
                 // Table exists, check structure
-                string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
+                string QuotedTableName = SQLiteBuilder.QuoteIdentifier(TableName);
                 List<Dictionary<string, object>> Columns =
                     NIM_Engine.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
                 var ExistingCols = new HashSet<string>(
@@ -66,13 +58,13 @@ CREATE TABLE [CloudTranslation](
                 if (StructureChanged)
                 {
                     NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
-                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
             }
             else
             {
                 // Create if not exists
-                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
             }
         }
 
@@ -80,14 +72,12 @@ CREATE TABLE [CloudTranslation](
         {
             try
             {
-                const string SqlOrder = @"
-DELETE FROM CloudTranslation
-WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
+                const string SQLOrder = "DELETE FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
                 int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@Key", Key),
-                    SqliteSql.Parameter("@To", (int)TargetLanguage));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Key", Key),
+                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
 
                 if (State != 0)
                 {
@@ -102,14 +92,12 @@ WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
         {
             try
             {
-                const string SqlOrder = @"
-SELECT Result FROM CloudTranslation
-WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
+                const string SQLOrder = "SELECT Result FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
                 string GetResult = P_Convert.ObjToStr(NIM_Engine.LocalDB.ExecuteScalar(
-                    SqlOrder,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@Key", Key),
-                    SqliteSql.Parameter("@To", (int)TargetLanguage)));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Key", Key),
+                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage)));
 
                 if (GetResult.Trim().Length > 0)
                 {
@@ -127,25 +115,21 @@ WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
             {
                 new TranslationPreprocessor().OptimizeStrings(ref Source);
 
-                int GetRowID = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
-                    @"SELECT Rowid FROM CloudTranslation
-WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;",
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@Key", Key),
-                    SqliteSql.Parameter("@To", To)));
+                int GetRowID = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar("SELECT Rowid FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;",
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Key", Key),
+                    SQLiteBuilder.Parameter("@To", To)));
 
                 if (GetRowID <= 0)
                 {
-                    const string SqlOrder = @"
-INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result])
-VALUES (@FileUniqueKey, @Key, @To, @Source, @Result);";
+                    const string SQLOrder = "INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result);";
                     int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                        SqlOrder,
-                        SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                        SqliteSql.Parameter("@Key", Key),
-                        SqliteSql.Parameter("@To", To),
-                        SqliteSql.Parameter("@Source", SQLSafeCodec.Encode(Source)),
-                        SqliteSql.Parameter("@Result", SQLSafeCodec.Encode(Result)));
+                        SQLOrder,
+                        SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                        SQLiteBuilder.Parameter("@Key", Key),
+                        SQLiteBuilder.Parameter("@To", To),
+                        SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
+                        SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Result)));
 
                     if (State != 0)
                     {
@@ -168,20 +152,17 @@ VALUES (@FileUniqueKey, @Key, @To, @Source, @Result);";
 
                 List<CloudTranslationItem> CloudTranslationItems = new List<CloudTranslationItem>();
 
-                const string SqlOrder = @"
-SELECT * FROM CloudTranslation
-WHERE [To] = @To AND [Source] = @Source
-LIMIT @Limit;";
+                const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@To", To),
-                    SqliteSql.Parameter("@Source", SQLSafeCodec.Encode(Source)),
-                    SqliteSql.Parameter("@Limit", 5));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
+                    SQLiteBuilder.Parameter("@Limit", Limit));
                 if (NTable.Count > 0)
                 {
-                    for (int I = 0; I < NTable.Count; I++)
+                    for (int i = 0; i < NTable.Count; i++)
                     {
-                        var Row = NTable[I];
+                        var Row = NTable[i];
 
                         CloudTranslationItems.Add(new CloudTranslationItem(
                             Row["FileUniqueKey"],
@@ -206,14 +187,11 @@ LIMIT @Limit;";
             {
                 new TranslationPreprocessor().OptimizeStrings(ref Source);
 
-                const string SqlOrder = @"
-SELECT * FROM CloudTranslation
-WHERE [To] = @To AND [Source] = @Source
-LIMIT 1;";
+                const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source LIMIT 1;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@To", To),
-                    SqliteSql.Parameter("@Source", SQLSafeCodec.Encode(Source)));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)));
                 if (NTable.Count > 0)
                 {
                     var Row = NTable[0];
@@ -241,21 +219,18 @@ LIMIT 1;";
 
                 List<CloudTranslationItem> CloudTranslationItems = new List<CloudTranslationItem>();
 
-                const string SqlOrder = @"
-SELECT * FROM CloudTranslation
-WHERE [To] = @To AND [Source] = @Source AND Rowid != @Rowid
-LIMIT @Limit;";
+                const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source AND Rowid != @Rowid LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@To", To),
-                    SqliteSql.Parameter("@Source", SQLSafeCodec.Encode(Source)),
-                    SqliteSql.Parameter("@Rowid", Rowid),
-                    SqliteSql.Parameter("@Limit", 5));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
+                    SQLiteBuilder.Parameter("@Rowid", Rowid),
+                    SQLiteBuilder.Parameter("@Limit", Limit));
                 if (NTable.Count > 0)
                 {
-                    for (int I = 0; I < NTable.Count; I++)
+                    for (int i = 0; i < NTable.Count; i++)
                     {
-                        var Row = NTable[I];
+                        var Row = NTable[i];
 
                         CloudTranslationItems.Add(new CloudTranslationItem(
                             Row["FileUniqueKey"],
@@ -279,14 +254,12 @@ LIMIT @Limit;";
         {
             try
             {
-                const string SqlOrder = @"
-SELECT Rowid, Result FROM CloudTranslation
-WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
+                const string SQLOrder = "SELECT Rowid, Result FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
                 List<Dictionary<string, object>> GetResult = NIM_Engine.LocalDB.ExecuteQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@Key", Key),
-                    SqliteSql.Parameter("@To", To));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Key", Key),
+                    SQLiteBuilder.Parameter("@To", To));
 
                 if (GetResult.Count > 0)
                 {
@@ -305,10 +278,10 @@ WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
         {
             try
             {
-                const string SqlOrder = "DELETE FROM CloudTranslation WHERE Rowid = @Rowid;";
+                const string SQLOrder = "DELETE FROM CloudTranslation WHERE Rowid = @Rowid;";
                 int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                    SqlOrder,
-                    SqliteSql.Parameter("@Rowid", Rowid));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@Rowid", Rowid));
                 if (State != 0)
                 {
                     return true;
@@ -320,11 +293,10 @@ WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;";
 
         public static bool ClearCloudCache(int FileUniqueKey)
         {
-            const string SqlOrder =
-                "DELETE FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey;";
+            const string SQLOrder = "DELETE FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
             if (State != 0)
             {
                 return true;

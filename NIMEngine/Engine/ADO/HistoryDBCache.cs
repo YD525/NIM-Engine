@@ -59,28 +59,18 @@ namespace NIMEngine.Engine.ADO
         {
             string TableName = "RecordsHistory";
 
-            string CreateSql = @"
-CREATE TABLE [RecordsHistory](
-    [FileUniqueKey] INT,
-    [Key] TEXT,
-    [To] INT,
-    [CurrentText] TEXT,
-    [IsCurrent] INT,
-    [Time] INT64,
-    [RangeID] TEXT
-);";
+            string CreateSQL = "CREATE TABLE [RecordsHistory]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [CurrentText] TEXT, [IsCurrent] INT, [Time] INT64, [RangeID] TEXT);";
 
             // Check if table exists
-            const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
+            const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                CheckTableSql,
-                SqliteSql.Parameter("@TableName", TableName));
+                CheckTableSQL,
+                SQLiteBuilder.Parameter("@TableName", TableName));
 
             if (Result != null && Result != DBNull.Value)
             {
                 // Table exists, check structure
-                string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
+                string QuotedTableName = SQLiteBuilder.QuoteIdentifier(TableName);
                 List<Dictionary<string, object>> Columns =
                     NIM_Engine.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
 
@@ -107,21 +97,18 @@ CREATE TABLE [RecordsHistory](
                 if (StructureChanged)
                 {
                     NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
-                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
             }
             else
             {
                 // Create if not exists
-                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
             }
         }
 
         private static object LockGenRangeID = new object();
-        [System.Diagnostics.CodeAnalysis.SuppressMessage(
-            "Security",
-            "CA5394:Do not use insecure randomness",
-            Justification = "The random suffix separates local history ranges and is not a security token.")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "CA5394:Do not use insecure randomness", Justification = "The random suffix separates local history ranges and is not a security token.")]
         public static string GenRangeID()
         {
             lock (LockGenRangeID)
@@ -135,19 +122,12 @@ CREATE TABLE [RecordsHistory](
         {
             List<int> IDs = new List<int>();
 
-            const string SqlOrder = @"
-SELECT rowid AS Rowid, [RangeID], [Key]
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND rowid < @CurrentId
-ORDER BY rowid DESC
-LIMIT 1;
-";
+            const string SQLOrder = "SELECT rowid AS Rowid, [RangeID], [Key] FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND rowid < @CurrentId ORDER BY rowid DESC LIMIT 1;";
 
             var Table = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@CurrentId", CurrentID));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@CurrentId", CurrentID));
 
             if (Table.Count == 0)
                 return IDs;
@@ -160,18 +140,14 @@ LIMIT 1;
             }
             else
             {
-                const string RangeSql = @"
-SELECT rowid AS Rowid
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND [RangeID] = @RangeId
-ORDER BY rowid ASC;";
+                const string RangeSQL = "SELECT rowid AS Rowid FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND [RangeID] = @RangeId ORDER BY rowid ASC;";
                 var RangeTable = NIM_Engine.LocalDB.ExecuteQuery(
-                    RangeSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@RangeId", RangeID));
-                foreach (var Row in RangeTable)
+                    RangeSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@RangeId", RangeID));
+                for (int i = 0; i < RangeTable.Count; i++)
                 {
+                    var Row = RangeTable[i];
                     IDs.Add(P_Convert.ObjToInt(Row["Rowid"]));
                 }
             }
@@ -184,19 +160,12 @@ ORDER BY rowid ASC;";
         {
             List<int> IDs = new List<int>();
 
-            const string SqlOrder = @"
-SELECT rowid AS Rowid, [RangeID], [Key]
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND rowid > @CurrentId
-ORDER BY rowid ASC
-LIMIT 1;
-";
+            const string SQLOrder = "SELECT rowid AS Rowid, [RangeID], [Key] FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND rowid > @CurrentId ORDER BY rowid ASC LIMIT 1;";
 
             var Table = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@CurrentId", CurrentID));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@CurrentId", CurrentID));
 
             if (Table.Count == 0)
                 return IDs;
@@ -209,18 +178,14 @@ LIMIT 1;
             }
             else
             {
-                const string RangeSql = @"
-SELECT rowid AS Rowid
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND [RangeID] = @RangeId
-ORDER BY rowid ASC;";
+                const string RangeSQL = "SELECT rowid AS Rowid FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND [RangeID] = @RangeId ORDER BY rowid ASC;";
                 var RangeTable = NIM_Engine.LocalDB.ExecuteQuery(
-                    RangeSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@RangeId", RangeID));
-                foreach (var Row in RangeTable)
+                    RangeSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@RangeId", RangeID));
+                for (int i = 0; i < RangeTable.Count; i++)
                 {
+                    var Row = RangeTable[i];
                     IDs.Add(P_Convert.ObjToInt(Row["Rowid"]));
                 }
             }
@@ -231,53 +196,33 @@ ORDER BY rowid ASC;";
         //Set Pointer
         public static void SelectID(int FileUniqueKey, int ID)
         {
-            const string ClearSelectionSql = @"
-UPDATE [RecordsHistory]
-SET [IsCurrent] = 0
-WHERE [FileUniqueKey] = @FileUniqueKey;
-";
+            const string ClearSelectionSQL = "UPDATE [RecordsHistory] SET [IsCurrent] = 0 WHERE [FileUniqueKey] = @FileUniqueKey;";
             NIM_Engine.LocalDB.ExecuteNonQuery(
-                ClearSelectionSql,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
+                ClearSelectionSQL,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
 
-            const string FindRangeSql = @"
-SELECT [RangeID]
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND rowid = @Rowid
-LIMIT 1;
-";
+            const string FindRangeSQL = "SELECT [RangeID] FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND rowid = @Rowid LIMIT 1;";
 
             string RangeID = P_Convert.ObjToStr(NIM_Engine.LocalDB.ExecuteScalar(
-                FindRangeSql,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@Rowid", ID)));
+                FindRangeSQL,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@Rowid", ID)));
 
             if (!string.IsNullOrEmpty(RangeID))
             {
-                const string SelectRangeSql = @"
-UPDATE [RecordsHistory]
-SET [IsCurrent] = 1
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND [RangeID] = @RangeId;
-";
+                const string SelectRangeSQL = "UPDATE [RecordsHistory] SET [IsCurrent] = 1 WHERE [FileUniqueKey] = @FileUniqueKey AND [RangeID] = @RangeId;";
                 NIM_Engine.LocalDB.ExecuteNonQuery(
-                    SelectRangeSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@RangeId", RangeID));
+                    SelectRangeSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@RangeId", RangeID));
             }
             else
             {
-                const string SelectRowSql = @"
-UPDATE [RecordsHistory]
-SET [IsCurrent] = 1
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND rowid = @Rowid;
-";
+                const string SelectRowSQL = "UPDATE [RecordsHistory] SET [IsCurrent] = 1 WHERE [FileUniqueKey] = @FileUniqueKey AND rowid = @Rowid;";
                 NIM_Engine.LocalDB.ExecuteNonQuery(
-                    SelectRowSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@Rowid", ID));
+                    SelectRowSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Rowid", ID));
             }
         }
 
@@ -285,18 +230,14 @@ AND rowid = @Rowid;
         {
             List<int> IDs = new List<int>();
 
-            const string SqlOrder = @"
-SELECT rowid AS Rowid
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-AND [IsCurrent] = 1;
-";
+            const string SQLOrder = "SELECT rowid AS Rowid FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey AND [IsCurrent] = 1;";
 
             var Table = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
-            foreach (var Row in Table)
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
+            for (int i = 0; i < Table.Count; i++)
             {
+                var Row = Table[i];
                 IDs.Add(P_Convert.ObjToInt(Row["Rowid"]));
             }
 
@@ -306,18 +247,15 @@ AND [IsCurrent] = 1;
         //Add
         public static int AddHistory(HistoryItem Item)
         {
-            const string SqlOrder = @"
-INSERT INTO RecordsHistory (FileUniqueKey, [Key], [To], CurrentText, [Time], RangeID)
-VALUES (@FileUniqueKey, @Key, @To, @CurrentText, @Time, @RangeId)
-RETURNING rowid;";
+            const string SQLOrder = "INSERT INTO RecordsHistory (FileUniqueKey, [Key], [To], CurrentText, [Time], RangeID) VALUES (@FileUniqueKey, @Key, @To, @CurrentText, @Time, @RangeId) RETURNING rowid;";
             int Rowid = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", Item.FileUniqueKey),
-                SqliteSql.Parameter("@Key", Item.Key),
-                SqliteSql.Parameter("@To", Item.To),
-                SqliteSql.Parameter("@CurrentText", SQLSafeCodec.Encode(Item.CurrentText)),
-                SqliteSql.Parameter("@Time", TimeHelper.DateTimeToTimestamp(Item.Time)),
-                SqliteSql.Parameter("@RangeId", Item.RangeID)));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", Item.FileUniqueKey),
+                SQLiteBuilder.Parameter("@Key", Item.Key),
+                SQLiteBuilder.Parameter("@To", Item.To),
+                SQLiteBuilder.Parameter("@CurrentText", SQLSafeCodec.Encode(Item.CurrentText)),
+                SQLiteBuilder.Parameter("@Time", TimeHelper.DateTimeToTimestamp(Item.Time)),
+                SQLiteBuilder.Parameter("@RangeId", Item.RangeID)));
             return Rowid;
         }
 
@@ -325,33 +263,19 @@ RETURNING rowid;";
         //Delete
         public static bool DeleteHistory(int FileUniqueKey, int ID)
         {
-            const string SqlOrder = @"
-DELETE FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey AND rowid = @Rowid;";
+            const string SQLOrder = "DELETE FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey AND rowid = @Rowid;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@Rowid", ID));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@Rowid", ID));
             return State != 0;
         }
 
-        public static bool CheckPreviousHistoryItem(
-     int CurrentID,
-     int FileUniqueKey,
-     int To,
-     string Key,
-     string CurrentText,
-     out int TargetID)
+        public static bool CheckPreviousHistoryItem(int CurrentID, int FileUniqueKey, int To, string Key, string CurrentText, out int TargetID)
         {
             int PreviousRowid = P_Convert.ObjToInt(
-                NIM_Engine.LocalDB.ExecuteScalar(@"
-SELECT Rowid
-FROM RecordsHistory
-WHERE Rowid < @CurrentId
-ORDER BY Rowid DESC
-LIMIT 1;
-",
-                    SqliteSql.Parameter("@CurrentId", CurrentID))
+                NIM_Engine.LocalDB.ExecuteScalar("SELECT Rowid FROM RecordsHistory WHERE Rowid < @CurrentId ORDER BY Rowid DESC LIMIT 1;",
+                SQLiteBuilder.Parameter("@CurrentId", CurrentID))
             );
 
 
@@ -362,20 +286,12 @@ LIMIT 1;
             }
 
             int Count = P_Convert.ObjToInt(
-                NIM_Engine.LocalDB.ExecuteScalar(@"
-SELECT COUNT(*)
-FROM RecordsHistory
-WHERE Rowid = @Rowid
-AND FileUniqueKey = @FileUniqueKey
-AND [To] = @To
-AND [Key] = @Key
-AND CurrentText = @CurrentText;
-",
-                    SqliteSql.Parameter("@Rowid", PreviousRowid),
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@To", To),
-                    SqliteSql.Parameter("@Key", Key),
-                    SqliteSql.Parameter("@CurrentText", SQLSafeCodec.Encode(CurrentText)))
+                NIM_Engine.LocalDB.ExecuteScalar("SELECT COUNT(*) FROM RecordsHistory WHERE Rowid = @Rowid AND FileUniqueKey = @FileUniqueKey AND [To] = @To AND [Key] = @Key AND CurrentText = @CurrentText;",
+                SQLiteBuilder.Parameter("@Rowid", PreviousRowid),
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@To", To),
+                SQLiteBuilder.Parameter("@Key", Key),
+                SQLiteBuilder.Parameter("@CurrentText", SQLSafeCodec.Encode(CurrentText)))
             );
 
             if (Count > 0)
@@ -394,14 +310,11 @@ AND CurrentText = @CurrentText;
         //Get Full InFo By CurrentKey
         public static HistoryItem IDToHistoryItem(int FileUniqueKey, int ID)
         {
-            const string SqlOrder = @"
-SELECT rowid AS Rowid, * FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey AND rowid = @Rowid
-LIMIT 1;";
+            const string SQLOrder = "SELECT rowid AS Rowid, * FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey AND rowid = @Rowid LIMIT 1;";
             var NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@Rowid", ID));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@Rowid", ID));
 
             if (NTable.Count > 0)
             {
@@ -425,20 +338,18 @@ LIMIT 1;";
         {
             List<HistoryItem> HistoryItems = new List<HistoryItem>();
 
-            const string SqlOrder = @"
-SELECT rowid AS Rowid, * FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey AND [To] = @To;";
+            const string SQLOrder = "SELECT rowid AS Rowid, * FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey AND [To] = @To;";
 
             var NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@To", To));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@To", To));
 
             if (NTable.Count > 0)
             {
-                for (int I = 0; I < NTable.Count; I++)
+                for (int i = 0; i < NTable.Count; i++)
                 {
-                    var Row = NTable[I];
+                    var Row = NTable[i];
 
                     HistoryItems.Add(new HistoryItem(
                         Row["FileUniqueKey"],
@@ -458,12 +369,11 @@ WHERE FileUniqueKey = @FileUniqueKey AND [To] = @To;";
 
         public static bool ClearHistory(int FileUniqueKey)
         {
-            const string SqlOrder =
-                "DELETE FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey;";
+            const string SQLOrder = "DELETE FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey;";
 
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
 
             if (State != 0)
             {
@@ -477,16 +387,12 @@ WHERE FileUniqueKey = @FileUniqueKey AND [To] = @To;";
         // RangeID records are treated as a single operation and will not be split.
         public static bool CompactHistory(int FileUniqueKey, int MaxCount = 10000)
         {
-            const string CountSql = @"
-SELECT COUNT(*) 
-FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey;
-";
+            const string CountSQL = "SELECT COUNT(*) FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey;";
 
             int Count = P_Convert.ObjToInt(
                 NIM_Engine.LocalDB.ExecuteScalar(
-                    CountSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey))
+                CountSQL,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey))
             );
 
             if (Count <= MaxCount)
@@ -496,17 +402,11 @@ WHERE FileUniqueKey = @FileUniqueKey;
 
             while (NeedDelete > 0)
             {
-                const string FindSql = @"
-SELECT rowid AS Rowid, [RangeID]
-FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey
-ORDER BY rowid ASC
-LIMIT 1;
-";
+                const string FindSQL = "SELECT rowid AS Rowid, [RangeID] FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey ORDER BY rowid ASC LIMIT 1;";
 
                 var Table = NIM_Engine.LocalDB.ExecuteQuery(
-                    FindSql,
-                    SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
+                    FindSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
 
                 if (Table.Count == 0)
                     break;
@@ -516,26 +416,19 @@ LIMIT 1;
 
                 if (!string.IsNullOrEmpty(RangeID))
                 {
-                    const string DeleteRangeSql = @"
-DELETE FROM RecordsHistory
-WHERE FileUniqueKey = @FileUniqueKey
-AND RangeID = @RangeId;
-";
+                    const string DeleteRangeSQL = "DELETE FROM RecordsHistory WHERE FileUniqueKey = @FileUniqueKey AND RangeID = @RangeId;";
                     DeleteCount = NIM_Engine.LocalDB.ExecuteNonQuery(
-                        DeleteRangeSql,
-                        SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey),
-                        SqliteSql.Parameter("@RangeId", RangeID));
+                        DeleteRangeSQL,
+                        SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                        SQLiteBuilder.Parameter("@RangeId", RangeID));
                 }
                 else
                 {
                     int Rowid = P_Convert.ObjToInt(Table[0]["Rowid"]);
-                    const string DeleteSql = @"
-DELETE FROM RecordsHistory
-WHERE rowid = @Rowid;
-";
+                    const string DeleteSQL = "DELETE FROM RecordsHistory WHERE rowid = @Rowid;";
                     DeleteCount = NIM_Engine.LocalDB.ExecuteNonQuery(
-                        DeleteSql,
-                        SqliteSql.Parameter("@Rowid", Rowid));
+                        DeleteSQL,
+                        SQLiteBuilder.Parameter("@Rowid", Rowid));
                 }
 
                 if (DeleteCount <= 0)
@@ -549,17 +442,11 @@ WHERE rowid = @Rowid;
 
         public static int GetLastID(int FileUniqueKey)
         {
-            const string SqlOrder = @"
-SELECT rowid AS Rowid
-FROM [RecordsHistory]
-WHERE [FileUniqueKey] = @FileUniqueKey
-ORDER BY rowid DESC
-LIMIT 1;
-";
+            const string SQLOrder = "SELECT rowid AS Rowid FROM [RecordsHistory] WHERE [FileUniqueKey] = @FileUniqueKey ORDER BY rowid DESC LIMIT 1;";
 
             var Table = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@FileUniqueKey", FileUniqueKey));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey));
 
             if (Table.Count > 0)
             {

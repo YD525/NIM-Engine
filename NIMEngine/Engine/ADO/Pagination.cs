@@ -22,15 +22,12 @@ namespace NIMEngine
         /// <param name="Where">An allow-listed filter template containing parameters, not values.</param>
         /// <param name="Parameters">The data values referenced by <paramref name="Where"/>.</param>
         /// <returns>The number of pages at the configured default page size.</returns>
-        public static int GetPageCount(
-            string TableName,
-            string Where,
-            params SQLiteParameter[] Parameters)
+        public static int GetPageCount(string TableName,string Where,params SQLiteParameter[] Parameters)
         {
-            string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
-            string Filter = SqliteSql.RequirePaginationFilter(Where);
-            string SqlOrder = "SELECT COUNT(*) FROM " + QuotedTableName + " " + Filter + ";";
-            int GetCount = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(SqlOrder, Parameters));
+            string QuotedTableName = SQLiteBuilder.QuoteIdentifier(TableName);
+            string Filter = SQLiteBuilder.RequirePaginationFilter(Where);
+            string SQLOrder = "SELECT COUNT(*) FROM " + QuotedTableName + " " + Filter + ";";
+            int GetCount = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(SQLOrder, Parameters));
             int PageCount = GetCount / NIM_Engine.Config.DefPageSize;
             if (GetCount % NIM_Engine.Config.DefPageSize > 0)
             {
@@ -45,11 +42,7 @@ namespace NIMEngine
         /// <param name="Count">The maximum number of rows returned.</param>
         /// <param name="Where">An empty or allow-listed parameter-free filter template.</param>
         /// <returns>The rows in descending row-id order.</returns>
-        public static List<Dictionary<string, object>> GetTablePageData(
-            string TableName,
-            int PageNo,
-            int Count,
-            string Where = "")
+        public static List<Dictionary<string, object>> GetTablePageData(string TableName,int PageNo,int Count,string Where = "")
         {
             return GetTablePageData(TableName, PageNo, Count, Where, new SQLiteParameter[0]);
         }
@@ -61,24 +54,18 @@ namespace NIMEngine
         /// <param name="Where">An allow-listed filter template containing parameters, not values.</param>
         /// <param name="Parameters">The data values referenced by <paramref name="Where"/>.</param>
         /// <returns>The rows in descending row-id order.</returns>
-        public static List<Dictionary<string, object>> GetTablePageData(
-            string TableName,
-            int PageNo,
-            int Count,
-            string Where,
-            params SQLiteParameter[] Parameters)
+        public static List<Dictionary<string, object>> GetTablePageData(string TableName,int PageNo,int Count,string Where,params SQLiteParameter[] Parameters)
         {
-            string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
-            string Filter = SqliteSql.RequirePaginationFilter(Where);
-            string SqlOrder = "SELECT Rowid, * FROM " + QuotedTableName + " " + Filter +
-                " ORDER BY Rowid DESC LIMIT @pageSize OFFSET @offset;";
+            string QuotedTableName = SQLiteBuilder.QuoteIdentifier(TableName);
+            string Filter = SQLiteBuilder.RequirePaginationFilter(Where);
+            string SQLOrder = "SELECT Rowid, * FROM " + QuotedTableName + " " + Filter + " ORDER BY Rowid DESC LIMIT @PageSize OFFSET @Offset;";
 
             var BoundParameters = new List<SQLiteParameter>(Parameters ?? new SQLiteParameter[0])
             {
-                SqliteSql.Parameter("@pageSize", Count),
-                SqliteSql.Parameter("@offset", ((long)PageNo - 1L) * Count)
+                SQLiteBuilder.Parameter("@PageSize", Count),
+                SQLiteBuilder.Parameter("@Offset", ((long)PageNo - 1L) * Count)
             };
-            return NIM_Engine.LocalDB.ExecuteQuery(SqlOrder, BoundParameters.ToArray());
+            return NIM_Engine.LocalDB.ExecuteQuery(SQLOrder, BoundParameters.ToArray());
         }
     }
 

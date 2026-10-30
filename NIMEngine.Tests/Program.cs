@@ -637,7 +637,7 @@ namespace NIMEngine.Tests
                     1,
                     Convert.ToInt32(database.ExecuteScalar(
                         "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = @name;",
-                        SqliteSql.Parameter("@name", "LocalTranslation"))),
+                        SQLiteBuilder.Parameter("@name", "LocalTranslation"))),
                     "Hostile values must not alter the schema.");
             });
         }
@@ -658,12 +658,12 @@ namespace NIMEngine.Tests
                     @"INSERT INTO LocalTranslation
 ([FileUniqueKey], [Key], [To], [Source], [Result], [Index])
 VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
-                    SqliteSql.Parameter("@fileUniqueKey", fileUniqueKey),
-                    SqliteSql.Parameter("@key", key),
-                    SqliteSql.Parameter("@to", (int)Languages.German),
-                    SqliteSql.Parameter("@source", SQLSafeCodec.Encode(source)),
-                    SqliteSql.Parameter("@result", SQLSafeCodec.Encode(result)),
-                    SqliteSql.Parameter("@index", 0));
+                    SQLiteBuilder.Parameter("@fileUniqueKey", fileUniqueKey),
+                    SQLiteBuilder.Parameter("@key", key),
+                    SQLiteBuilder.Parameter("@to", (int)Languages.German),
+                    SQLiteBuilder.Parameter("@source", SQLSafeCodec.Encode(source)),
+                    SQLiteBuilder.Parameter("@result", SQLSafeCodec.Encode(result)),
+                    SQLiteBuilder.Parameter("@index", 0));
 
                 AssertEqual(
                     result,
@@ -676,16 +676,16 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
         [TestMethod]
         public void RejectsUnapprovedSqlIdentifiersAndFilters()
         {
-            AssertEqual("[AdvancedDictionary]", SqliteSql.QuoteIdentifier("AdvancedDictionary"),
+            AssertEqual("[AdvancedDictionary]", SQLiteBuilder.QuoteIdentifier("AdvancedDictionary"),
                 "A known schema identifier must be quoted centrally.");
             AssertThrows<ArgumentException>(
-                () => SqliteSql.QuoteIdentifier("AdvancedDictionary; DROP TABLE UniqueKeys;"),
+                () => SQLiteBuilder.QuoteIdentifier("AdvancedDictionary; DROP TABLE UniqueKeys;"),
                 "A hostile table identifier must be rejected.");
             AssertThrows<ArgumentException>(
-                () => SqliteSql.RequirePaginationFilter("WHERE [From] = 1 OR 1 = 1"),
+                () => SQLiteBuilder.RequirePaginationFilter("WHERE [From] = 1 OR 1 = 1"),
                 "A filter containing embedded values must be rejected.");
             AssertThrows<ArgumentException>(
-                () => SqliteSql.Parameter("@value; DROP", "data"),
+                () => SQLiteBuilder.Parameter("@value; DROP", "data"),
                 "A hostile parameter name must be rejected.");
         }
 
@@ -704,16 +704,16 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
 VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                         Params: new[]
                         {
-                            SqliteSql.Parameter("@fileUniqueKey", 41),
-                            SqliteSql.Parameter("@key", "transaction-key"),
-                            SqliteSql.Parameter("@to", (int)Languages.German),
-                            SqliteSql.Parameter("@source", "source"),
-                            SqliteSql.Parameter("@result", "result"),
-                            SqliteSql.Parameter("@index", 0)
+                            SQLiteBuilder.Parameter("@fileUniqueKey", 41),
+                            SQLiteBuilder.Parameter("@key", "transaction-key"),
+                            SQLiteBuilder.Parameter("@to", (int)Languages.German),
+                            SQLiteBuilder.Parameter("@source", "source"),
+                            SQLiteBuilder.Parameter("@result", "result"),
+                            SQLiteBuilder.Parameter("@index", 0)
                         }),
                     (
                         SQL: "INSERT INTO LocalTranslation ([MissingColumn]) VALUES (@value);",
-                        Params: new[] { SqliteSql.Parameter("@value", "must fail") })
+                        Params: new[] { SQLiteBuilder.Parameter("@value", "must fail") })
                 };
 
                 AssertEqual(false, database.ExecuteTransaction(commands),
@@ -722,7 +722,7 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                     0,
                     Convert.ToInt32(database.ExecuteScalar(
                         "SELECT COUNT(*) FROM LocalTranslation WHERE [Key] = @key;",
-                        SqliteSql.Parameter("@key", "transaction-key"))),
+                        SQLiteBuilder.Parameter("@key", "transaction-key"))),
                     "A failed transaction must roll back earlier commands.");
 
                 AssertEqual(
@@ -735,12 +735,12 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
 VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                             Params: new[]
                             {
-                                SqliteSql.Parameter("@fileUniqueKey", 42),
-                                SqliteSql.Parameter("@key", "committed-key"),
-                                SqliteSql.Parameter("@to", (int)Languages.German),
-                                SqliteSql.Parameter("@source", "source"),
-                                SqliteSql.Parameter("@result", "result"),
-                                SqliteSql.Parameter("@index", 0)
+                                SQLiteBuilder.Parameter("@fileUniqueKey", 42),
+                                SQLiteBuilder.Parameter("@key", "committed-key"),
+                                SQLiteBuilder.Parameter("@to", (int)Languages.German),
+                                SQLiteBuilder.Parameter("@source", "source"),
+                                SQLiteBuilder.Parameter("@result", "result"),
+                                SQLiteBuilder.Parameter("@index", 0)
                             })
                     }),
                     "The connection must remain usable after rollback.");

@@ -37,7 +37,7 @@ namespace NIMEngine.ADO
             this.IgnoreCase = P_Convert.ObjToInt(IgnoreCase);
             this.Regex = P_Convert.ObjToStr(Regex);
         }
-        public AdvancedDictionaryItem(object Rowid,object TargetFileName, object Type, object Source, object Result, object From, object To, object ExactMatch, object IgnoreCase, object Regex)
+        public AdvancedDictionaryItem(object Rowid, object TargetFileName, object Type, object Source, object Result, object From, object To, object ExactMatch, object IgnoreCase, object Regex)
         {
             this.Rowid = P_Convert.ObjToInt(Rowid);
             this.TargetFileName = P_Convert.ObjToStr(TargetFileName);
@@ -55,11 +55,10 @@ namespace NIMEngine.ADO
     {
         public static void Init()
         {
-            const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
+            const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                CheckTableSql,
-                SqliteSql.Parameter("@tableName", "AdvancedDictionary"));
+                CheckTableSQL,
+                SQLiteBuilder.Parameter("@TableName", "AdvancedDictionary"));
 
             if (Result == null || Result == DBNull.Value)
             {
@@ -69,11 +68,11 @@ namespace NIMEngine.ADO
             else
             {
                 //Table exists, check whether it's the old structure (has TargetModName instead of TargetFileName)
-                string CheckOldColumnSql = "PRAGMA table_info(AdvancedDictionary);";
-                var dt = NIM_Engine.LocalDB.ExecuteQuery(CheckOldColumnSql);
+                string CheckOldColumnSQL = "PRAGMA table_info(AdvancedDictionary);";
+                var Dt = NIM_Engine.LocalDB.ExecuteQuery(CheckOldColumnSQL);
 
-                bool HasTargetFileName = dt.Any(r => r["name"].ToString() == "TargetFileName");
-                bool HasTargetModName = dt.Any(r => r["name"].ToString() == "TargetModName");
+                bool HasTargetFileName = Dt.Any(R => R["name"].ToString() == "TargetFileName");
+                bool HasTargetModName = Dt.Any(R => R["name"].ToString() == "TargetModName");
 
                 if (!HasTargetFileName && HasTargetModName)
                 {
@@ -90,19 +89,8 @@ namespace NIMEngine.ADO
 
         private static void CreateNewTable()
         {
-            string SqlOrder = @"
-CREATE TABLE [AdvancedDictionary](
-  [TargetFileName] TEXT, 
-  [Type] TEXT, 
-  [Source] TEXT, 
-  [Result] TEXT, 
-  [From] INT, 
-  [To] INT, 
-  [ExactMatch] INT, 
-  [IgnoreCase] INT, 
-  [Regex] TEXT
-);";
-            NIM_Engine.LocalDB.ExecuteNonQuery(SqlOrder);
+            string SQLOrder = "CREATE TABLE [AdvancedDictionary]([TargetFileName] TEXT, [Type] TEXT, [Source] TEXT, [Result] TEXT, [From] INT, [To] INT, [ExactMatch] INT, [IgnoreCase] INT, [Regex] TEXT);";
+            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
         }
 
         private static void MigrateOldTable()
@@ -114,13 +102,9 @@ CREATE TABLE [AdvancedDictionary](
             CreateNewTable();
 
             //Migrate data from the old table to the new table
-            string SqlOrder = @"
-INSERT INTO AdvancedDictionary
-(TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex)
-SELECT TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex
-FROM AdvancedDictionary_Old;";
+            string SQLOrder = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) SELECT TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;";
 
-            NIM_Engine.LocalDB.ExecuteNonQuery(SqlOrder);
+            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
 
             //Drop the old table after migration
             NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
@@ -135,10 +119,10 @@ FROM AdvancedDictionary_Old;";
 
         public static string GetSourceByRowid(int Rowid)
         {
-            const string SqlOrder = "SELECT [Source] FROM AdvancedDictionary WHERE Rowid = @rowid;";
+            const string SQLOrder = "SELECT [Source] FROM AdvancedDictionary WHERE Rowid = @Rowid;";
             return SQLSafeCodec.Decode(P_Convert.ObjToStr(NIM_Engine.LocalDB.ExecuteScalar(
-                SqlOrder,
-                SqliteSql.Parameter("@rowid", Rowid))));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@Rowid", Rowid))));
         }
         public static bool IsRegexMatch(string Input, string SetRegex)
         {
@@ -152,22 +136,16 @@ FROM AdvancedDictionary_Old;";
             }
         }
 
-        public static AdvancedDictionaryItem ExactMatch(Languages From,Languages To,string Type,string Source)
+        public static AdvancedDictionaryItem ExactMatch(Languages From, Languages To, string Type, string Source)
         {
-            const string SqlOrder = @"
-SELECT Rowid, * FROM AdvancedDictionary
-WHERE [From] = @from
-AND [To] = @to
-AND ([Type] IS NULL OR [Type] = '' OR [Type] = @type)
-AND [Source] = @source
-LIMIT 1;";
+            const string SQLOrder = "SELECT Rowid, * FROM AdvancedDictionary WHERE [From] = @From AND [To] = @To AND ([Type] IS NULL OR [Type] = '' OR [Type] = @Type) AND [Source] = @Source LIMIT 1;";
 
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@from", (int)From),
-                SqliteSql.Parameter("@to", (int)To),
-                SqliteSql.Parameter("@type", SQLSafeCodec.Encode(Type)),
-                SqliteSql.Parameter("@source", SQLSafeCodec.Encode(Source)));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@From", (int)From),
+                SQLiteBuilder.Parameter("@To", (int)To),
+                SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Type)),
+                SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)));
             if (NTable.Count > 0)
             {
                 var Row = NTable[0]; // row is Dictionary<string, object>
@@ -193,13 +171,14 @@ LIMIT 1;";
         {
             if (Items == null || Items.Count <= 1) return;
 
-            var SortedItems = Items.OrderByDescending(x => x.Source.Length).ToList();
+            var SortedItems = Items.OrderByDescending(X => X.Source.Length).ToList();
             var FinalList = new List<AdvancedDictionaryItem>();
 
-            foreach (var Current in SortedItems)
+            for (int i = 0; i < SortedItems.Count; i++)
             {
+                var Current = SortedItems[i];
                 string CurrentSource = Current.Source;
-                
+
                 StringComparison ComparisonMode = Current.IgnoreCase == 1 ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
                 int MatchStart = SourceText.IndexOf(CurrentSource, ComparisonMode);
@@ -224,129 +203,28 @@ LIMIT 1;";
             Items = FinalList;
         }
 
-        public static List<AdvancedDictionaryItem> Query(string FileName, string Type, Languages From, Languages To, string SourceText,bool UseWordBoundary)
+        public static List<AdvancedDictionaryItem> Query(string FileName, string Type, Languages From, Languages To, string SourceText, bool UseWordBoundary)
         {
             List<AdvancedDictionaryItem> AdvancedDictionaryItems = new List<AdvancedDictionaryItem>();
 
-            string SqlOrder = "";
+            string SQLOrder = "";
 
             if (!UseWordBoundary)
             {
-                SqlOrder = @"
-SELECT Rowid,* FROM AdvancedDictionary
-WHERE 
-  (
-    TargetFileName IS NULL
-    OR TargetFileName = ''
-    OR TargetFileName = @fileName
-  )
-  AND (
-    [Type] IS NULL
-    OR [Type] = ''
-    OR [Type] = @type
-  )
-  AND [From] = @from
-  AND [To] = @to
-  AND (
-    (ExactMatch = 1 AND (
-      (IgnoreCase = 1 AND LOWER(Source) = LOWER(@sourceText))
-      OR (IgnoreCase = 0 AND Source = @sourceText)
-    ))
-    OR
-    (ExactMatch = 0 AND (
-      (IgnoreCase = 1 AND LOWER(@sourceText) LIKE '%' || LOWER(Source) || '%')
-      OR (IgnoreCase = 0 AND @sourceText LIKE '%' || Source || '%')
-    ))
-  )
-";
+                SQLOrder = "SELECT Rowid,* FROM AdvancedDictionary WHERE (TargetFileName IS NULL OR TargetFileName = '' OR TargetFileName = @FileName) AND ([Type] IS NULL OR [Type] = '' OR [Type] = @Type) AND [From] = @From AND [To] = @To AND ((ExactMatch = 1 AND ((IgnoreCase = 1 AND LOWER(Source) = LOWER(@SourceText)) OR (IgnoreCase = 0 AND Source = @SourceText))) OR (ExactMatch = 0 AND ((IgnoreCase = 1 AND LOWER(@SourceText) LIKE '%' || LOWER(Source) || '%') OR (IgnoreCase = 0 AND @SourceText LIKE '%' || Source || '%'))));";
             }
             else
             {
-                SqlOrder = @"
-SELECT Rowid,* FROM AdvancedDictionary
-WHERE 
-  (
-    TargetFileName IS NULL
-    OR TargetFileName = ''
-    OR TargetFileName = @fileName
-  )
-  AND (
-    [Type] IS NULL
-    OR [Type] = ''
-    OR [Type] = @type
-  )
-  AND [From] = @from
-  AND [To] = @to
-  AND (
-    -- Exact match
-    (
-      ExactMatch = 1 AND (
-        (IgnoreCase = 1 AND LOWER(Source) = LOWER(@sourceText))
-        OR (IgnoreCase = 0 AND Source = @sourceText)
-      )
-    )
-    OR
-    -- Non-exact match with word boundary
-    (
-      ExactMatch = 0 AND (
-        (
-          IgnoreCase = 1
-          AND INSTR(LOWER(@sourceText), LOWER(Source)) > 0
-          AND (
-            -- Left boundary: start of string or non-word character
-            INSTR(LOWER(@sourceText), LOWER(Source)) = 1
-            OR SUBSTR(
-                 LOWER(@sourceText),
-                 INSTR(LOWER(@sourceText), LOWER(Source)) - 1,
-                 1
-               ) NOT GLOB '[a-z0-9_]'
-          )
-          AND (
-            -- Right boundary: end of string or non-word character
-            INSTR(LOWER(@sourceText), LOWER(Source)) + LENGTH(Source) - 1 = LENGTH(@sourceText)
-            OR SUBSTR(
-                 LOWER(@sourceText),
-                 INSTR(LOWER(@sourceText), LOWER(Source)) + LENGTH(Source),
-                 1
-               ) NOT GLOB '[a-z0-9_]'
-          )
-        )
-        OR
-        (
-          IgnoreCase = 0
-          AND INSTR(@sourceText, Source) > 0
-          AND (
-            -- Left boundary: start of string or non-word character
-            INSTR(@sourceText, Source) = 1
-            OR SUBSTR(
-                 @sourceText,
-                 INSTR(@sourceText, Source) - 1,
-                 1
-               ) NOT GLOB '[A-Za-z0-9_]'
-          )
-          AND (
-            -- Right boundary: end of string or non-word character
-            INSTR(@sourceText, Source) + LENGTH(Source) - 1 = LENGTH(@sourceText)
-            OR SUBSTR(
-                 @sourceText,
-                 INSTR(@sourceText, Source) + LENGTH(Source),
-                 1
-               ) NOT GLOB '[A-Za-z0-9_]'
-          )
-        )
-      )
-    )
-  )
-";
+                SQLOrder = "SELECT Rowid,* FROM AdvancedDictionary WHERE (TargetFileName IS NULL OR TargetFileName = '' OR TargetFileName = @FileName) AND ([Type] IS NULL OR [Type] = '' OR [Type] = @Type) AND [From] = @From AND [To] = @To AND ((ExactMatch = 1 AND ((IgnoreCase = 1 AND LOWER(Source) = LOWER(@SourceText)) OR (IgnoreCase = 0 AND Source = @SourceText))) OR (ExactMatch = 0 AND ((IgnoreCase = 1 AND INSTR(LOWER(@SourceText), LOWER(Source)) > 0 AND (INSTR(LOWER(@SourceText), LOWER(Source)) = 1 OR SUBSTR(LOWER(@SourceText), INSTR(LOWER(@SourceText), LOWER(Source)) - 1, 1) NOT GLOB '[a-z0-9_]') AND (INSTR(LOWER(@SourceText), LOWER(Source)) + LENGTH(Source) - 1 = LENGTH(@SourceText) OR SUBSTR(LOWER(@SourceText), INSTR(LOWER(@SourceText), LOWER(Source)) + LENGTH(Source), 1) NOT GLOB '[a-z0-9_]')) OR (IgnoreCase = 0 AND INSTR(@SourceText, Source) > 0 AND (INSTR(@SourceText, Source) = 1 OR SUBSTR(@SourceText, INSTR(@SourceText, Source) - 1, 1) NOT GLOB '[A-Za-z0-9_]') AND (INSTR(@SourceText, Source) + LENGTH(Source) - 1 = LENGTH(@SourceText) OR SUBSTR(@SourceText, INSTR(@SourceText, Source) + LENGTH(Source), 1) NOT GLOB '[A-Za-z0-9_]')))));";
             }
 
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@fileName", SQLSafeCodec.Encode(FileName)),
-                SqliteSql.Parameter("@type", SQLSafeCodec.Encode(Type)),
-                SqliteSql.Parameter("@from", (int)From),
-                SqliteSql.Parameter("@to", (int)To),
-                SqliteSql.Parameter("@sourceText", SQLSafeCodec.Encode(SourceText)));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileName", SQLSafeCodec.Encode(FileName)),
+                SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Type)),
+                SQLiteBuilder.Parameter("@From", (int)From),
+                SQLiteBuilder.Parameter("@To", (int)To),
+                SQLiteBuilder.Parameter("@SourceText", SQLSafeCodec.Encode(SourceText)));
 
             for (int i = 0; i < NTable.Count; i++)
             {
@@ -365,7 +243,7 @@ WHERE
             );
                 if (Get.Regex.Trim().Length > 0)
                 {
-                    if (IsRegexMatch(SourceText,System.Web.HttpUtility.HtmlDecode(Get.Regex)))
+                    if (IsRegexMatch(SourceText, System.Web.HttpUtility.HtmlDecode(Get.Regex)))
                     {
                         AdvancedDictionaryItems.Add(Get);
                     }
@@ -381,26 +259,18 @@ WHERE
             return AdvancedDictionaryItems;
         }
 
-        public static bool CheckSame(AdvancedDictionaryItem item)
+        public static bool CheckSame(AdvancedDictionaryItem Item)
         {
-            const string CheckSql = @"
-SELECT COUNT(*) FROM AdvancedDictionary 
-WHERE 
-[TargetFileName] = @targetFileName AND
-[Type] = @type AND
-[Source] = @source AND
-[Result] = @result AND
-[From] = @from AND
-[To] = @to;";
+            const string CheckSQL = "SELECT COUNT(*) FROM AdvancedDictionary WHERE [TargetFileName] = @TargetFileName AND [Type] = @Type AND [Source] = @Source AND [Result] = @Result AND [From] = @From AND [To] = @To;";
 
             int Count = Convert.ToInt32(NIM_Engine.LocalDB.ExecuteScalar(
-                CheckSql,
-                SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(item.TargetFileName)),
-                SqliteSql.Parameter("@type", SQLSafeCodec.Encode(item.Type)),
-                SqliteSql.Parameter("@source", SQLSafeCodec.Encode(item.Source)),
-                SqliteSql.Parameter("@result", SQLSafeCodec.Encode(item.Result)),
-                SqliteSql.Parameter("@from", item.From),
-                SqliteSql.Parameter("@to", item.To)));
+                CheckSQL,
+                SQLiteBuilder.Parameter("@TargetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
+                SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Item.Type)),
+                SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Item.Source)),
+                SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Item.Result)),
+                SQLiteBuilder.Parameter("@From", Item.From),
+                SQLiteBuilder.Parameter("@To", Item.To)));
             return Count > 0;
         }
 
@@ -409,30 +279,18 @@ WHERE
         {
             if (!CheckSame(Item))
             {
-                const string sql = @"INSERT INTO AdvancedDictionary
-([TargetFileName], [Type], [Source], [Result], [From], [To], [ExactMatch], [IgnoreCase], [Regex])
-VALUES (
-@targetFileName,
-@type,
-@source,
-@result,
-@from,
-@to,
-@exactMatch,
-@ignoreCase,
-@regex
-);";
+                const string SQLOrder = "INSERT INTO AdvancedDictionary ([TargetFileName], [Type], [Source], [Result], [From], [To], [ExactMatch], [IgnoreCase], [Regex]) VALUES (@TargetFileName, @Type, @Source, @Result, @From, @To, @ExactMatch, @IgnoreCase, @Regex);";
                 int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                    sql,
-                    SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
-                    SqliteSql.Parameter("@type", SQLSafeCodec.Encode(Item.Type)),
-                    SqliteSql.Parameter("@source", SQLSafeCodec.Encode(Item.Source)),
-                    SqliteSql.Parameter("@result", SQLSafeCodec.Encode(Item.Result)),
-                    SqliteSql.Parameter("@from", Item.From),
-                    SqliteSql.Parameter("@to", Item.To),
-                    SqliteSql.Parameter("@exactMatch", Item.ExactMatch),
-                    SqliteSql.Parameter("@ignoreCase", Item.IgnoreCase),
-                    SqliteSql.Parameter("@regex", SQLSafeCodec.Encode(Item.Regex)));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@TargetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
+                    SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Item.Type)),
+                    SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Item.Source)),
+                    SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Item.Result)),
+                    SQLiteBuilder.Parameter("@From", Item.From),
+                    SQLiteBuilder.Parameter("@To", Item.To),
+                    SQLiteBuilder.Parameter("@ExactMatch", Item.ExactMatch),
+                    SQLiteBuilder.Parameter("@IgnoreCase", Item.IgnoreCase),
+                    SQLiteBuilder.Parameter("@Regex", SQLSafeCodec.Encode(Item.Regex)));
                 if (State != 0)
                 {
                     return true;
@@ -445,53 +303,44 @@ VALUES (
             }
         }
 
-        public static void DeleteItem(AdvancedDictionaryItem item)
+        public static void DeleteItem(AdvancedDictionaryItem Item)
         {
-            const string sql = @"DELETE FROM AdvancedDictionary WHERE
-TargetFileName = @targetFileName AND
-Type = @type AND
-Source = @source AND
-Result = @result AND
-[From] = @from AND
-[To] = @to AND
-ExactMatch = @exactMatch AND
-IgnoreCase = @ignoreCase AND
-Regex = @regex;";
+            const string SQLOrder = "DELETE FROM AdvancedDictionary WHERE TargetFileName = @TargetFileName AND Type = @Type AND Source = @Source AND Result = @Result AND [From] = @From AND [To] = @To AND ExactMatch = @ExactMatch AND IgnoreCase = @IgnoreCase AND Regex = @Regex;";
             NIM_Engine.LocalDB.ExecuteNonQuery(
-                sql,
-                SqliteSql.Parameter("@targetFileName", SQLSafeCodec.Encode(item.TargetFileName)),
-                SqliteSql.Parameter("@type", SQLSafeCodec.Encode(item.Type)),
-                SqliteSql.Parameter("@source", SQLSafeCodec.Encode(item.Source)),
-                SqliteSql.Parameter("@result", SQLSafeCodec.Encode(item.Result)),
-                SqliteSql.Parameter("@from", item.From),
-                SqliteSql.Parameter("@to", item.To),
-                SqliteSql.Parameter("@exactMatch", item.ExactMatch),
-                SqliteSql.Parameter("@ignoreCase", item.IgnoreCase),
-                SqliteSql.Parameter("@regex", SQLSafeCodec.Encode(item.Regex)));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@TargetFileName", SQLSafeCodec.Encode(Item.TargetFileName)),
+                SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Item.Type)),
+                SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Item.Source)),
+                SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Item.Result)),
+                SQLiteBuilder.Parameter("@From", Item.From),
+                SQLiteBuilder.Parameter("@To", Item.To),
+                SQLiteBuilder.Parameter("@ExactMatch", Item.ExactMatch),
+                SQLiteBuilder.Parameter("@IgnoreCase", Item.IgnoreCase),
+                SQLiteBuilder.Parameter("@Regex", SQLSafeCodec.Encode(Item.Regex)));
         }
 
         public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(int From, int To, int PageNo)
         {
-            const string Where = SqliteSql.LanguageFilter;
+            const string Where = SQLiteBuilder.LanguageFilter;
 
             int MaxPage = P_SQL_Pagination.GetPageCount(
                 "AdvancedDictionary",
                 Where,
-                SqliteSql.Parameter("@from", From),
-                SqliteSql.Parameter("@to", To));
+                SQLiteBuilder.Parameter("@From", From),
+                SQLiteBuilder.Parameter("@To", To));
 
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
                 PageNo,
                 NIM_Engine.Config.DefPageSize,
                 Where,
-                SqliteSql.Parameter("@from", From),
-                SqliteSql.Parameter("@to", To));
+                SQLiteBuilder.Parameter("@From", From),
+                SQLiteBuilder.Parameter("@To", To));
 
             List<AdvancedDictionaryItem> Items = new List<AdvancedDictionaryItem>();
             for (int i = 0; i < NTable.Count; i++)
             {
-                var Row = NTable[i]; // row 是 Dictionary<string, object>
+                var Row = NTable[i]; // row is Dictionary<string, object>
 
                 Items.Add(new AdvancedDictionaryItem(
                     Row["Rowid"],
@@ -510,30 +359,30 @@ Regex = @regex;";
             return new P_SQL_Page<List<AdvancedDictionaryItem>>(Items, PageNo, MaxPage);
         }
 
-        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(string SourceText,int From,int To, int PageNo)
+        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(string SourceText, int From, int To, int PageNo)
         {
-            const string Where = SqliteSql.SourceLanguageFilter;
+            const string Where = SQLiteBuilder.SourceLanguageFilter;
 
             int MaxPage = P_SQL_Pagination.GetPageCount(
                 "AdvancedDictionary",
                 Where,
-                SqliteSql.Parameter("@source", SQLSafeCodec.Encode(SourceText)),
-                SqliteSql.Parameter("@from", From),
-                SqliteSql.Parameter("@to", To));
+                SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(SourceText)),
+                SQLiteBuilder.Parameter("@From", From),
+                SQLiteBuilder.Parameter("@To", To));
 
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
                 PageNo,
                 NIM_Engine.Config.DefPageSize,
                 Where,
-                SqliteSql.Parameter("@source", SQLSafeCodec.Encode(SourceText)),
-                SqliteSql.Parameter("@from", From),
-                SqliteSql.Parameter("@to", To));
+                SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(SourceText)),
+                SQLiteBuilder.Parameter("@From", From),
+                SQLiteBuilder.Parameter("@To", To));
 
             List<AdvancedDictionaryItem> Items = new List<AdvancedDictionaryItem>();
-            for (int i = 0; i < NTable.Count; i++)
+            for (int I = 0; I < NTable.Count; I++)
             {
-                var Row = NTable[i];
+                var Row = NTable[I];
 
                 Items.Add(new AdvancedDictionaryItem(
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["TargetFileName"])),
@@ -553,10 +402,10 @@ Regex = @regex;";
 
         public static bool DeleteByRowid(int Rowid)
         {
-            const string SqlOrder = "DELETE FROM AdvancedDictionary WHERE Rowid = @rowid;";
+            const string SQLOrder = "DELETE FROM AdvancedDictionary WHERE Rowid = @Rowid;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@rowid", Rowid));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@Rowid", Rowid));
             if (State != 0)
             {
                 return true;

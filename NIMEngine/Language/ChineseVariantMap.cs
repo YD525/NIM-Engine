@@ -15,11 +15,10 @@ namespace NIMEngine.Language
 
         public static void Init()
         {
-            const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
+            const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                CheckTableSql,
-                SqliteSql.Parameter("@tableName", "ChineseVariantMap"));
+                CheckTableSQL,
+                SQLiteBuilder.Parameter("@TableName", "ChineseVariantMap"));
 
             if (Result == null || Result == DBNull.Value)
             {
@@ -33,23 +32,18 @@ namespace NIMEngine.Language
 
         private static void CreateNewTable()
         {
-            string SqlOrder = @"
-            CREATE TABLE [ChineseVariantMap](
-            [Simplified] TEXT, 
-            [Traditional] TEXT, 
-            [MatchType] INT
-            );";
+            string SQLOrder = "CREATE TABLE [ChineseVariantMap]([Simplified] TEXT, [Traditional] TEXT, [MatchType] INT);";
 
-            NIM_Engine.LocalDB.ExecuteNonQuery(SqlOrder);
+            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
         }
 
         private static void ReadRamChars()
         {
             RamWords.Clear();
 
-            string SqlOrder = "Select Traditional From ChineseVariantMap Where MatchType = 1;";
+            string SQLOrder = "SELECT Traditional FROM ChineseVariantMap WHERE MatchType = 1;";
 
-            List<Dictionary<string, object>> GetResult = NIM_Engine.LocalDB.ExecuteQuery(SqlOrder);
+            List<Dictionary<string, object>> GetResult = NIM_Engine.LocalDB.ExecuteQuery(SQLOrder);
 
             for (int i = 0; i < GetResult.Count; i++)
             {
@@ -121,9 +115,10 @@ namespace NIMEngine.Language
 
             if (ZHHelper.ContainsZH(Line))
             {
-                foreach (var GetWord in new List<string>(ChineseVariantMap.RamWords))
+                List<string> WordList = new List<string>(ChineseVariantMap.RamWords);
+                for (int i = 0; i < WordList.Count; i++)
                 {
-                    if (Line.Contains(GetWord))
+                    if (Line.Contains(WordList[i]))
                     {
                         return ZHType.Traditional;
                     }
@@ -131,14 +126,11 @@ namespace NIMEngine.Language
 
                 SetType = ZHType.Simplified;
 
-                const string SqlOrder = @"
-SELECT 1 FROM ChineseVariantMap
-WHERE MatchType = 0 AND instr(@line, Traditional) > 0
-LIMIT 1;";
+                const string SQLOrder = "SELECT 1 FROM ChineseVariantMap WHERE MatchType = 0 AND instr(@Line, Traditional) > 0 LIMIT 1;";
 
                 var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                    SqlOrder,
-                    SqliteSql.Parameter("@line", Line));
+                    SQLOrder,
+                    SQLiteBuilder.Parameter("@Line", Line));
 
                 if (Result != null)
                 {
@@ -178,7 +170,7 @@ LIMIT 1;";
             return new ChineseVariantMap().SimplifiedToTraditionalByReq(ConvertJson, ProxyCenter.CurrentProxy);
         }
         //https://docs.zhconvert.org/license/
-        public string SimplifiedToTraditionalByReq(ZHConvertJson Convert,WebProxy Proxy)
+        public string SimplifiedToTraditionalByReq(ZHConvertJson Convert, WebProxy Proxy)
         {
             try
             {
@@ -236,18 +228,18 @@ LIMIT 1;";
         }
 
         /// <summary>Parses a bounded conversion response and validates its required text field.</summary>
-        /// <param name="json">The untrusted provider response.</param>
-        /// <param name="result">Receives the validated response, or <c>null</c> on failure.</param>
+        /// <param name="Json">The untrusted provider response.</param>
+        /// <param name="Result">Receives the validated response, or <c>null</c> on failure.</param>
         /// <returns><c>true</c> when the provider reports success with non-empty converted text.</returns>
-        internal static bool TryParseResponse(string json, out ZHConvertReturnJson result)
+        internal static bool TryParseResponse(string Json, out ZHConvertReturnJson Result)
         {
             return JsonPayload.TryDeserialize(
-                json,
-                value => value != null &&
-                    value.code == 0 &&
-                    value.data != null &&
-                    !string.IsNullOrWhiteSpace(value.data.text),
-                out result);
+                Json,
+                Value => Value != null &&
+                    Value.code == 0 &&
+                    Value.data != null &&
+                    !string.IsNullOrWhiteSpace(Value.data.text),
+                out Result);
         }
 
         public string SimplifiedToTraditional(ZHConvertJson Convert)

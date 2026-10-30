@@ -18,12 +18,12 @@ namespace NIMEngine.Additional
             public int B = 0;
 
             public FontColor(int FileUniqueKey, string Key, int R, int G, int B)
-            { 
-               this.FileUniqueKey = FileUniqueKey;
-               this.Key = Key;
-               this.R = R;
-               this.G = G;
-               this.B = B;
+            {
+                this.FileUniqueKey = FileUniqueKey;
+                this.Key = Key;
+                this.R = R;
+                this.G = G;
+                this.B = B;
             }
 
             public FontColor(object FileUniqueKey, object Key, object R, object G, object B)
@@ -38,26 +38,18 @@ namespace NIMEngine.Additional
         public static void Init()
         {
             string TableName = "FontColors";
-            string CreateSql = @"
-CREATE TABLE [FontColors](
-  [FileUniqueKey] INT, 
-  [Key] TEXT, 
-  [R] INT, 
-  [G] INT, 
-  [B] INT
-);";
+            string CreateSQL = @"CREATE TABLE [FontColors]([FileUniqueKey] INT,[Key] TEXT, [R] INT, [G] INT, [B] INT);";
 
             // Check if table exists
-            const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
+            const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
-                CheckTableSql,
-                SqliteSql.Parameter("@tableName", TableName));
+                CheckTableSQL,
+                SQLiteBuilder.Parameter("@TableName", TableName));
 
             if (Result != null && Result != DBNull.Value)
             {
                 // Table exists, check structure
-                string QuotedTableName = SqliteSql.QuoteIdentifier(TableName);
+                string QuotedTableName = SQLiteBuilder.QuoteIdentifier(TableName);
                 List<Dictionary<string, object>> Columns =
                     NIM_Engine.LocalDB.ExecuteQuery("PRAGMA table_info(" + QuotedTableName + ");");
                 var ExistingCols = new HashSet<string>(
@@ -73,24 +65,23 @@ CREATE TABLE [FontColors](
                 if (StructureChanged)
                 {
                     NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
-                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                    NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
             }
             else
             {
                 // Create if not exists
-                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSql);
+                NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
             }
         }
 
         public static FontColor FindColor(int FileUniqueKey, string Key)
         {
-            const string SqlOrder =
-                "SELECT * FROM FontColors WHERE FileUniqueKey = @fileUniqueKey AND [Key] = @key;";
+            const string SQLOrder = "SELECT * FROM FontColors WHERE FileUniqueKey = @FileUniqueKey AND [Key] = @Key;";
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@key", Key));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@Key", Key));
             if (NTable.Count > 0)
             {
                 var Row = NTable[0]; // Dictionary<string, object>
@@ -109,12 +100,12 @@ CREATE TABLE [FontColors](
 
         public static bool DeleteColor(int FileUniqueKey, string Key)
         {
-            const string SqlOrder =
-                "DELETE FROM FontColors WHERE FileUniqueKey = @fileUniqueKey AND [Key] = @key;";
+            const string SQLOrder =
+                "DELETE FROM FontColors WHERE FileUniqueKey = @FileUniqueKey AND [Key] = @Key;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                SqlOrder,
-                SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
-                SqliteSql.Parameter("@key", Key));
+                SQLOrder,
+                SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                SQLiteBuilder.Parameter("@Key", Key));
             if (State != 0)
             {
                 return true;
@@ -123,27 +114,25 @@ CREATE TABLE [FontColors](
             return false;
         }
 
-        public static bool SetColor(int FileUniqueKey, string Key,int R,int G,int B)
+        public static bool SetColor(int FileUniqueKey, string Key, int R, int G, int B)
         {
             if ((R == 255 && G == 255 && B == 255) == false)
             {
                 int GetRowID = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
-                    "SELECT Rowid FROM FontColors WHERE [FileUniqueKey] = @fileUniqueKey AND [Key] = @key;",
-                    SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
-                    SqliteSql.Parameter("@key", Key)));
+                    "SELECT Rowid FROM FontColors WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key;",
+                    SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                    SQLiteBuilder.Parameter("@Key", Key)));
 
                 if (GetRowID < 0)
                 {
-                    const string SqlOrder = @"
-INSERT INTO FontColors ([FileUniqueKey], [Key], [R], [G], [B])
-VALUES (@fileUniqueKey, @key, @red, @green, @blue);";
+                    const string SQLOrder = @"INSERT INTO FontColors ([FileUniqueKey], [Key], [R], [G], [B]) VALUES (@FileUniqueKey, @Key, @Red, @Green, @Blue);";
                     int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                        SqlOrder,
-                        SqliteSql.Parameter("@fileUniqueKey", FileUniqueKey),
-                        SqliteSql.Parameter("@key", Key),
-                        SqliteSql.Parameter("@red", R),
-                        SqliteSql.Parameter("@green", G),
-                        SqliteSql.Parameter("@blue", B));
+                        SQLOrder,
+                        SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
+                        SQLiteBuilder.Parameter("@Key", Key),
+                        SQLiteBuilder.Parameter("@Red", R),
+                        SQLiteBuilder.Parameter("@Green", G),
+                        SQLiteBuilder.Parameter("@Blue", B));
                     if (State != 0)
                     {
                         return true;
@@ -151,16 +140,13 @@ VALUES (@fileUniqueKey, @key, @red, @green, @blue);";
                 }
                 else
                 {
-                    const string SqlOrder = @"
-UPDATE FontColors
-SET [R] = @red, [G] = @green, [B] = @blue
-WHERE Rowid = @rowid;";
+                    const string SQLOrder = @"UPDATE FontColors SET [R] = @Red, [G] = @Green, [B] = @Blue WHERE Rowid = @Rowid;";
                     int State = NIM_Engine.LocalDB.ExecuteNonQuery(
-                        SqlOrder,
-                        SqliteSql.Parameter("@red", R),
-                        SqliteSql.Parameter("@green", G),
-                        SqliteSql.Parameter("@blue", B),
-                        SqliteSql.Parameter("@rowid", GetRowID));
+                        SQLOrder,
+                        SQLiteBuilder.Parameter("@Red", R),
+                        SQLiteBuilder.Parameter("@Green", G),
+                        SQLiteBuilder.Parameter("@Blue", B),
+                        SQLiteBuilder.Parameter("@Rowid", GetRowID));
                     if (State != 0)
                     {
                         return true;
