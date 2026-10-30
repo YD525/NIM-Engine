@@ -78,7 +78,7 @@ namespace NIMEngine.Engine.ADO
 
                 for (int i = 0; i < MachineData.Count; i++)
                 {
-                    var Item = ManualData[i];
+                    var Item = MachineData[i];//Almost wrote a bug there—haha!
 
                     string GenKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
 
