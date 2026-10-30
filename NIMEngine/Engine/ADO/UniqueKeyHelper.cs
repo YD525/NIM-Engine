@@ -13,27 +13,27 @@ namespace NIMEngine.Engine
         public string FileName = "";
         public string FileExtension = "";
         public string UpdateTime = "";
-        public string CreatTime = "";
+        public string CreateTime = "";
 
         public UniqueKeyItem() { }
 
-        public UniqueKeyItem(object Rowid,object OriginalKey, object FileName, object FileExtension, object UpdateTime, object CreatTime)
+        public UniqueKeyItem(object Rowid, object OriginalKey, object FileName, object FileExtension, object UpdateTime, object CreateTime)
         {
             this.Rowid = P_Convert.ObjToInt(Rowid);
             this.OriginalKey = P_Convert.ObjToStr(OriginalKey);
             this.FileName = P_Convert.ObjToStr(FileName);
             this.FileExtension = P_Convert.ObjToStr(FileExtension);
             this.UpdateTime = P_Convert.ObjToStr(UpdateTime);
-            this.CreatTime = P_Convert.ObjToStr(CreatTime);
+            this.CreateTime = P_Convert.ObjToStr(CreateTime);
         }
 
-        public UniqueKeyItem(string OriginalKey, string FileName, string FileExtension, DateTime UpdateTime, DateTime CreatTime)
+        public UniqueKeyItem(string OriginalKey, string FileName, string FileExtension, DateTime UpdateTime, DateTime CreateTime)
         {
             this.OriginalKey = P_Convert.ObjToStr(OriginalKey);
             this.FileName = P_Convert.ObjToStr(FileName);
             this.FileExtension = P_Convert.ObjToStr(FileExtension);
             this.UpdateTime = P_Convert.DateTimeToStr(UpdateTime);
-            this.CreatTime = P_Convert.DateTimeToStr(CreatTime);
+            this.CreateTime = P_Convert.DateTimeToStr(CreateTime);
         }
     }
 
@@ -42,10 +42,10 @@ namespace NIMEngine.Engine
         public static void Init()
         {
             const string CheckTableSql =
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @tableName;";
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
             var Result = NIM_Engine.LocalDB.ExecuteScalar(
                 CheckTableSql,
-                SqliteSql.Parameter("@tableName", "UniqueKeys"));
+                SqliteSql.Parameter("@TableName", "UniqueKeys"));
 
             if (Result == null || Result == DBNull.Value)
             {
@@ -55,7 +55,7 @@ CREATE TABLE [UniqueKeys](
     [FileName] TEXT,
     [FileExtension] TEXT,
     [UpdateTime] TEXT,
-    [CreatTime] TEXT
+    [CreateTime] TEXT
 );";
                 NIM_Engine.LocalDB.ExecuteNonQuery(CreateTableSql);
             }
@@ -63,10 +63,10 @@ CREATE TABLE [UniqueKeys](
 
         public static string RowidToOriginalKey(int RowID)
         {
-            const string SqlOrder = "SELECT OriginalKey FROM UniqueKeys WHERE Rowid = @rowid;";
+            const string SqlOrder = "SELECT OriginalKey FROM UniqueKeys WHERE Rowid = @Rowid;";
             string GetOriginalKey = SQLSafeCodec.Decode(P_Convert.ObjToStr(NIM_Engine.LocalDB.ExecuteScalar(
                 SqlOrder,
-                SqliteSql.Parameter("@rowid", RowID))));
+                SqliteSql.Parameter("@Rowid", RowID))));
             return GetOriginalKey;
         }
 
@@ -109,7 +109,7 @@ CREATE TABLE [UniqueKeys](
             }
         }
 
-      
+
         /// <summary>
         /// Get the total number of records in the UniqueKeys table.
         /// </summary>
@@ -128,7 +128,7 @@ CREATE TABLE [UniqueKeys](
         /// <param name="FilePath">Full path to the file</param>
         /// <param name="CanSkipFuzzyMatching">Whether to skip fuzzy matching</param>
         /// <returns>Rowid of the added or matched record. -1 if nothing added.</returns>
-        public static int AddItemByReturn(ref UniqueKeyItem GenUniqueKeyItem, string FilePath,bool CanSkipFuzzyMatching = false)
+        public static int AddItemByReturn(ref UniqueKeyItem GenUniqueKeyItem, string FilePath, bool CanSkipFuzzyMatching = false)
         {
             string SourceOriginalKey = GetFileName(FilePath);
 
@@ -170,24 +170,24 @@ CREATE TABLE [UniqueKeys](
                 //This is the new file
 
                 SqlOrder = @"
-INSERT INTO UniqueKeys (OriginalKey, FileName, FileExtension, UpdateTime, CreatTime)
-VALUES (@originalKey, @fileName, @fileExtension, @updateTime, @createTime);";
+INSERT INTO UniqueKeys (OriginalKey, FileName, FileExtension, UpdateTime, CreateTime)
+VALUES (@OriginalKey, @FileName, @FileExtension, @UpdateTime, @CreateTime);";
 
                 int State = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
-                    SqliteSql.Parameter("@originalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey)),
-                    SqliteSql.Parameter("@fileName", SQLSafeCodec.Encode(GenUniqueKeyItem.FileName)),
-                    SqliteSql.Parameter("@fileExtension", GenUniqueKeyItem.FileExtension),
-                    SqliteSql.Parameter("@updateTime", GenUniqueKeyItem.UpdateTime),
-                    SqliteSql.Parameter("@createTime", GenUniqueKeyItem.CreatTime)));
+                    SqliteSql.Parameter("@OriginalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey)),
+                    SqliteSql.Parameter("@FileName", SQLSafeCodec.Encode(GenUniqueKeyItem.FileName)),
+                    SqliteSql.Parameter("@FileExtension", GenUniqueKeyItem.FileExtension),
+                    SqliteSql.Parameter("@UpdateTime", GenUniqueKeyItem.UpdateTime),
+                    SqliteSql.Parameter("@CreateTime", GenUniqueKeyItem.CreateTime)));
 
                 if (State != 0)
                 {
                     int NewRowid = P_Convert.ObjToInt(
                     NIM_Engine.LocalDB.ExecuteScalar(
-                        "SELECT Rowid FROM UniqueKeys WHERE OriginalKey = @originalKey;",
+                        "SELECT Rowid FROM UniqueKeys WHERE OriginalKey = @OriginalKey;",
                         SqliteSql.Parameter(
-                            "@originalKey",
+                            "@OriginalKey",
                             SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey))));
                     return NewRowid;
                 }
@@ -210,14 +210,14 @@ VALUES (@originalKey, @fileName, @fileExtension, @updateTime, @createTime);";
         {
             const string SqlOrder = @"
 UPDATE UniqueKeys
-SET FileName = @fileName, FileExtension = @fileExtension, UpdateTime = @updateTime
-WHERE OriginalKey = @originalKey;";
+SET FileName = @FileName, FileExtension = @FileExtension, UpdateTime = @UpdateTime
+WHERE OriginalKey = @OriginalKey;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                 SqlOrder,
-                SqliteSql.Parameter("@fileName", SQLSafeCodec.Encode(KeyItem.FileName)),
-                SqliteSql.Parameter("@fileExtension", KeyItem.FileExtension),
-                SqliteSql.Parameter("@updateTime", KeyItem.UpdateTime),
-                SqliteSql.Parameter("@originalKey", SQLSafeCodec.Encode(OriginalKey)));
+                SqliteSql.Parameter("@FileName", SQLSafeCodec.Encode(KeyItem.FileName)),
+                SqliteSql.Parameter("@FileExtension", KeyItem.FileExtension),
+                SqliteSql.Parameter("@UpdateTime", KeyItem.UpdateTime),
+                SqliteSql.Parameter("@OriginalKey", SQLSafeCodec.Encode(OriginalKey)));
             if (State != 0)
             {
                 return true;
@@ -237,11 +237,11 @@ WHERE OriginalKey = @originalKey;";
         {
             Rowid = 0;
 
-            string SqlOrder = "SELECT Rowid FROM UniqueKeys WHERE [OriginalKey] = @originalKey;";
+            string SqlOrder = "SELECT Rowid FROM UniqueKeys WHERE [OriginalKey] = @OriginalKey;";
 
             int GetRowid = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
                 SqlOrder,
-                SqliteSql.Parameter("@originalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey))));
+                SqliteSql.Parameter("@OriginalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey))));
 
             if (GetRowid > 0)
             {
@@ -249,19 +249,17 @@ WHERE OriginalKey = @originalKey;";
 
                 SqlOrder = @"
 UPDATE UniqueKeys
-SET FileName = @fileName,
-    FileExtension = @fileExtension,
-    UpdateTime = @updateTime,
-    CreatTime = @createTime
-WHERE [OriginalKey] = @originalKey;";
+SET FileName = @FileName,
+    FileExtension = @FileExtension,
+    UpdateTime = @UpdateTime
+WHERE [OriginalKey] = @OriginalKey;";
 
                 int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                     SqlOrder,
-                    SqliteSql.Parameter("@fileName", SQLSafeCodec.Encode(GenUniqueKeyItem.FileName)),
-                    SqliteSql.Parameter("@fileExtension", GenUniqueKeyItem.FileExtension),
-                    SqliteSql.Parameter("@updateTime", GenUniqueKeyItem.UpdateTime),
-                    SqliteSql.Parameter("@createTime", GenUniqueKeyItem.CreatTime),
-                    SqliteSql.Parameter("@originalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey)));
+                    SqliteSql.Parameter("@FileName", SQLSafeCodec.Encode(GenUniqueKeyItem.FileName)),
+                    SqliteSql.Parameter("@FileExtension", GenUniqueKeyItem.FileExtension),
+                    SqliteSql.Parameter("@UpdateTime", GenUniqueKeyItem.UpdateTime),
+                    SqliteSql.Parameter("@OriginalKey", SQLSafeCodec.Encode(GenUniqueKeyItem.OriginalKey)));
 
                 return true;
             }
@@ -276,10 +274,10 @@ WHERE [OriginalKey] = @originalKey;";
         /// <returns>The matching UniqueKeyItem if found; otherwise, null.</returns>
         public UniqueKeyItem QueryUniqueKey(int Rowid)
         {
-            const string SqlOrder = "SELECT Rowid, * FROM UniqueKeys WHERE Rowid = @rowid;";
+            const string SqlOrder = "SELECT Rowid, * FROM UniqueKeys WHERE Rowid = @Rowid;";
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SqlOrder,
-                SqliteSql.Parameter("@rowid", Rowid));
+                SqliteSql.Parameter("@Rowid", Rowid));
 
             if (NTable.Count > 0)
             {
@@ -290,7 +288,7 @@ WHERE [OriginalKey] = @originalKey;";
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["FileName"])),
                     Row["FileExtension"],
                     Row["UpdateTime"],
-                    Row["CreatTime"]
+                    Row["CreateTime"]
                 );
             }
 
@@ -309,17 +307,17 @@ WHERE [OriginalKey] = @originalKey;";
             List<UniqueKeyItem> UniqueKeyItems = new List<UniqueKeyItem>();
 
             const string SqlOrder =
-                "SELECT Rowid, * FROM UniqueKeys ORDER BY Rowid DESC LIMIT @limit;";
+                "SELECT Rowid, * FROM UniqueKeys ORDER BY Rowid DESC LIMIT @Limit;";
 
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SqlOrder,
-                SqliteSql.Parameter("@limit", Limit));
+                SqliteSql.Parameter("@Limit", Limit));
 
             if (NTable.Count > 0)
             {
-                for (int i = 0; i < NTable.Count; i++)
+                for (int I = 0; I < NTable.Count; I++)
                 {
-                    var Row = NTable[i]; // Dictionary<string, object>
+                    var Row = NTable[I]; // Dictionary<string, object>
 
                     UniqueKeyItems.Add(new UniqueKeyItem(
                         Row["Rowid"],
@@ -327,7 +325,7 @@ WHERE [OriginalKey] = @originalKey;";
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["FileName"])),
                         Row["FileExtension"],
                         Row["UpdateTime"],
-                        Row["CreatTime"]
+                        Row["CreateTime"]
                     ));
                 }
             }
@@ -348,9 +346,9 @@ WHERE [OriginalKey] = @originalKey;";
 
             if (NTable.Count > 0)
             {
-                for (int i = 0; i < NTable.Count; i++)
+                for (int I = 0; I < NTable.Count; I++)
                 {
-                    var Row = NTable[i]; // Dictionary<string, object>
+                    var Row = NTable[I]; // Dictionary<string, object>
 
                     UniqueKeyItems.Add(new UniqueKeyItem(
                         Row["Rowid"],
@@ -358,7 +356,7 @@ WHERE [OriginalKey] = @originalKey;";
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["FileName"])),
                         Row["FileExtension"],
                         Row["UpdateTime"],
-                        Row["CreatTime"]
+                        Row["CreateTime"]
                     ));
                 }
             }
@@ -373,10 +371,10 @@ WHERE [OriginalKey] = @originalKey;";
         /// <returns>True if a record was deleted; otherwise, false.</returns>
         public bool DeleteUniqueKeyByRowid(int Rowid)
         {
-            const string SqlOrder = "DELETE FROM UniqueKeys WHERE Rowid = @rowid;";
+            const string SqlOrder = "DELETE FROM UniqueKeys WHERE Rowid = @Rowid;";
             int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                 SqlOrder,
-                SqliteSql.Parameter("@rowid", Rowid));
+                SqliteSql.Parameter("@Rowid", Rowid));
             if (State != 0)
             {
                 return true;
@@ -387,6 +385,6 @@ WHERE [OriginalKey] = @originalKey;";
 
     public static class AITranslationMemoryR
     {
-        public static int Optimization(this AITranslationMemory A, params object[] Any){ return 1; }
+        public static int Optimization(this AITranslationMemory A, params object[] Any) { return 1; }
     }
 }

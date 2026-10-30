@@ -386,15 +386,15 @@ namespace NIMEngine
                     if (new FileInfo(SetFullPath).Length > JsonPayload.MaximumDocumentBytes)
                         throw new InvalidDataException("The engine configuration exceeds the JSON size limit.");
                     var DecryptedBytes = XORDecrypt(File.ReadAllBytes(SetFullPath));
-                    EngineConfigJson loadedConfig;
+                    EngineConfigJson LoadedConfig;
                     if (!JsonPayload.TryDeserialize(
                         Encoding.UTF8.GetString(DecryptedBytes),
                         value => value != null,
-                        out loadedConfig))
+                        out LoadedConfig))
                     {
                         throw new InvalidDataException("The engine configuration is invalid.");
                     }
-                    Config = loadedConfig;
+                    Config = LoadedConfig;
 
                     SetDefaultModel();
                 }
