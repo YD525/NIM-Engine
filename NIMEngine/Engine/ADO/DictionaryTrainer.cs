@@ -201,12 +201,15 @@ namespace NIMEngine.Engine.ADO
                 }
             }
 
+            private object CancelLock = new object();
+
             /// <summary>
             /// Removes the specified training item from PendingItems.
             /// </summary>
             /// <param name="item">The training item to remove.</param>
             public void Cancel(string Key)
             {
+                lock(CancelLock)
                 PendingItems.Remove(Key);
             }
 
@@ -245,9 +248,7 @@ namespace NIMEngine.Engine.ADO
                 }
             
                 return null;
-            }
-
-           
+            }   
         }
     }
 }
