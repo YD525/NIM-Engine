@@ -53,7 +53,7 @@ namespace NIMEngine.Engine.ADO
 
         public class ModTrainingSession
         {
-            public List<DictionaryTrainingItem> PendingItems = new List<DictionaryTrainingItem>();
+            public Dictionary<string, object> PendingItems = new Dictionary<string, object>();
 
             public ModTrainingSession(int FileUniqueKey)
             {
@@ -67,33 +67,123 @@ namespace NIMEngine.Engine.ADO
             private void CollectTrainableItems(int FileUniqueKey)
             {
                 // TODO: Implement logic to filter and collect data available for training.
-
-
                 //The first step is to implement retrieval methods for the two tables.
+
                 var ManualData = LocalDBCache.GetItemsByFileKey(FileUniqueKey);
                 var MachineData = CloudDBCache.GetItemsByFileKey(FileUniqueKey);
 
                 //First, data translated manually by users should be given higher priority than data translated by AI.
                 //If a user consents to saving a manually translated record to the database, and an AI-translated record for the same item already exists, the AI-translated record should be automatically removed—since one version (the manual one) has already been adopted.
+                Dictionary<string, object> Data = new Dictionary<string, object>();
 
+                for (int i = 0; i < MachineData.Count; i++)
+                {
+                    var Item = ManualData[i];
+
+                    string GenKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
+
+                    if (!Data.ContainsKey(GenKey))
+                    {
+                        Data.Add(GenKey, Item);
+                    }
+                }
+
+                for (int i = 0; i < ManualData.Count; i++)
+                {
+                    var Item = ManualData[i];
+
+                    string GenKey = Item.Source + "_" + Item.To.ToString() + "_Manual";
+                    string MachineKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
+
+                    if (!Data.ContainsKey(GenKey))
+                    {
+                        CloudTranslationItem CacheCloudItem = null;
+
+                        if (Data.ContainsKey(MachineKey))
+                        {
+                            //This record exists in the cloud-based translation history.
+                            //Set
+                            CacheCloudItem = (CloudTranslationItem)Data[MachineKey];
+                            //Remove
+                            Data.Remove(MachineKey);
+                        }
+
+                        Data.Add(GenKey, Item);
+
+                        //Ensure that cloud translation records are assigned a lower priority than manual translation records.
+                        if (CacheCloudItem != null)
+                        {
+                            Data.Add(MachineKey, CacheCloudItem);
+                        }
+                    }
+                }
+
+                this.PendingItems = Data;
             }
 
             /// <summary>
             /// Applies the confirmed training item to the database.
             /// </summary>
             /// <param name="item">The training item to apply.</param>
-            public void ApplyToAdvancedDictionary(DictionaryTrainingItem item)
+            public void ApplyToAdvancedDictionary(string Key)
             {
                 // TODO: Implement logic to write the confirmed training data to the database.
+                if (PendingItems.ContainsKey(Key))
+                {
+                    if (PendingItems[Key] is LocalTranslationItem)
+                    {
+                        var Item = (LocalTranslationItem)PendingItems[Key];
+                        //Implement addition to the advanced dictionary
+                    }
+                    else
+                    {
+                        var Item = (CloudTranslationItem)PendingItems[Key];
+                        //Implement addition to the advanced dictionary
+                    }
+                }
+            }
+
+            public void ApplyAll()
+            {
+                //must use `new` here to prevent multiple threads from accessing the same object.
+                foreach (var GetItem in new Dictionary<string, object>(PendingItems))
+                {
+                    if (GetItem.Value is LocalTranslationItem)
+                    {
+                        var Item = (LocalTranslationItem)GetItem.Value;
+                        //Implement addition to the advanced dictionary
+                    }
+                    else
+                    {
+                        var Item = (CloudTranslationItem)GetItem.Value;
+                        //Implement addition to the advanced dictionary
+                    }
+                }
             }
 
             /// <summary>
             /// Removes the specified training item from PendingItems.
             /// </summary>
             /// <param name="item">The training item to remove.</param>
-            public void Cancel(DictionaryTrainingItem Item)
+            public void Cancel(string Key)
             {
-                PendingItems.Remove(Item);
+                PendingItems.Remove(Key);
+            }
+
+            /// <summary>
+            /// Convert an object into a specified instance
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <param name="Any"></param>
+            /// <returns></returns>
+            public T To <T>(object Any) where T : class
+            {
+                if (Any is T)
+                { 
+                   return (T)Any;
+                }
+            
+                return null;
             }
         }
     }
