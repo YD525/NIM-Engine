@@ -68,6 +68,7 @@
     <Compile Include="Common\PConvert.cs" />
     <Compile Include="Common\PString.cs" />
     <Compile Include="Common\JsonPayload.cs" />
+    <Compile Include="Engine\ADO\DictionaryTrainer.cs" />
     <Compile Include="Engine\ADO\HistoryDBCache.cs" />
     <Compile Include="Engine\ADO\WordAutoComplete.cs" />
     <Compile Include="Engine\ADO\Pagination.cs" />
