@@ -560,7 +560,8 @@ namespace NIMEngine.Tests
                         hostileKey,
                         (int)Languages.German,
                         hostileSource,
-                        hostileResult),
+                        hostileResult,
+                        "testmodel"),
                     "The cloud cache must store hostile values as data.");
                 AssertEqual(
                     hostileResult,

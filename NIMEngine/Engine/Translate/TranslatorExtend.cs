@@ -1,4 +1,5 @@
-﻿using NIMEngine.ADO;
+﻿using System.Collections.Generic;
+using NIMEngine.ADO;
 using NIMEngine.Memory;
 
 namespace NIMEngine.Translate
@@ -165,7 +166,7 @@ namespace NIMEngine.Translate
         {
             Translator.GetBatchCore().TranslatedCount = Translator.CalcTranslatedCount(Addition);
         }
-        public static bool SetCloudData(this Translator Translator,int FileUniqueKey, string Key, string SourceText, string TransText)
+        public static bool SetCloudData(this Translator Translator,int FileUniqueKey, string Key, string SourceText, string TransText,List<string>Models)
         {
             if (TransText.Trim().Length <= 0)
             {
@@ -179,7 +180,7 @@ namespace NIMEngine.Translate
                 return true;
             }
 
-            var GetState = CloudDBCache.AddCache(FileUniqueKey, Key, (int)Translator.To, SourceText, TransText);
+            var GetState = CloudDBCache.AddCache(FileUniqueKey, Key, (int)Translator.To, SourceText, TransText,CloudDBCache.ModelsToLine(Models));
 
             Translator.CalcTranslatedCount(0);
 

@@ -16,7 +16,7 @@ namespace NIMEngine.Platform
         int CustomID { get; set; }
         void Init(int CustomID,AITranslationMemory AIMemory, EngineConfigJson Config, WebProxy Proxy);
         string Model { get; set; }
-        string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call);
+        string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call);
     }
 
     public interface I_Local_AI_TranslationNode
@@ -26,7 +26,7 @@ namespace NIMEngine.Platform
         int LocalPort { get; set; }
         int CustomID { get; set; }
         void Init(int CustomID, AITranslationMemory AIMemory, EngineConfigJson Config);
-        string QuickTrans(List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call);
+        string QuickTrans(List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call);
     }
 
     public interface I_TranslationNode

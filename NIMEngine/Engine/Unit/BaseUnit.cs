@@ -2,9 +2,23 @@
 using System.Collections.Generic;
 using NIMEngine.Events;
 using NIMEngine.Translate;
+using System.Runtime.InteropServices;
 
 namespace NIMEngine.Unit
 {
+    public class TranslatedGroup
+    {
+        public string Model = "";
+        public List<BaseUnit> Units;
+       
+        public TranslatedGroup(string Model, List<BaseUnit> Units)
+        {
+            this.Model = Model;
+            this.Units = Units;
+        }
+    }
+
+
     public class BaseUnit
     {
         public int FileUniqueKey = 0;

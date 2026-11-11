@@ -37,7 +37,7 @@ namespace NIMEngine.Platform
             this.Model = NIM_Engine.Config.GetPlatformData(this.CustomID).Model;
         }
 
-        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call)
+        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam,ref string UseModel, ref AICall Call)
         {
             var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
@@ -66,11 +66,11 @@ namespace NIMEngine.Platform
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang, ToLang, GetSource, Related, CustomWords, AIParam);
 
             string Send = GetTransSource;
-            string Recv = "";
+            string Response = "";
 
-            var Result = CallAI(ApiKey,Send, ref Recv);
+            var Result = CallAI(ApiKey,Send, ref Response,ref UseModel);
 
-            Call = new AICall(PlatformType.CustomPlatform, Send, Recv,this.CustomID);
+            Call = new AICall(PlatformType.CustomPlatform, Send, Response, this.CustomID);
 
             if (Result != null)
             {
@@ -128,13 +128,15 @@ namespace NIMEngine.Platform
             return string.Empty;
         }
 
-        public string CallAI(string ApiKey,string Send,ref string Recv)
+        public string CallAI(string ApiKey,string Send,ref string Response, ref string UseModel)
         {
             CustomReqCore Core = new CustomReqCore();
 
             var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetModel(Model);
+            UseModel = Model;
+
             Core.SetApiKey(ApiKey);
             Core.SetUrl(InFo.Url);
             Core.SetHeader(InFo.Header);
@@ -171,7 +173,7 @@ namespace NIMEngine.Platform
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
 
-            Recv = GetResult;
+            Response = GetResult;
 
             if (GetResult.Trim().Length > 0)
             {

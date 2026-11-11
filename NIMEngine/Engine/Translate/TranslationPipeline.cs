@@ -159,9 +159,10 @@ namespace NIMEngine.Translate
             TranslationRequest request,
             CancellationToken cancellationToken)
         {
+            List<string> models = new List<string>();
             cancellationToken.ThrowIfCancellationRequested();
             return Task.Run(
-                () => _translator.TranslateCore(request.Parameters, cancellationToken),
+                () => _translator.TranslateCore(request.Parameters, cancellationToken,ref models),
                 cancellationToken);
         }
     }
