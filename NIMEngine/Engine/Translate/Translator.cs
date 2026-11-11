@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using NIMEngine.ADO;
@@ -191,7 +192,7 @@ namespace NIMEngine.Translate
             return pipeline.TranslateAsync(request, cancellationToken);
         }
 
-        internal UnitGroup TranslateCore(TransParam Params, CancellationToken CancelToken)
+        internal UnitGroup TranslateCore(TransParam Params, CancellationToken CancelToken,ref List<string>Models)
         {
             if (this.From == this.To)
             {
@@ -211,6 +212,7 @@ namespace NIMEngine.Translate
                 List<BaseUnit> Units = new List<BaseUnit>();
 
                 var GetFrist = SetUnitGroup.GetFrist();
+                List<string> UseModels = new List<string>();
 
                 Units.AddRange(ChunkTranslationUnit(GetFrist, ref Chunks));
 
@@ -261,48 +263,65 @@ namespace NIMEngine.Translate
                     NewUnitGroup = null;
                 }
 
-                List<BaseUnit> BaseUnits = new List<BaseUnit>();
+                List<TranslatedGroup> TranslatedGroups = new List<TranslatedGroup>();
 
                 foreach (var GetGroup in UnitGroups)
                 {
-                    var ResultGroup = Core.CallOnce(CancelToken, this,
-                       Params.Preprocessor, GetGroup, From, To, AIParam, Params.CanSleep, false, false);
+                    string UseModel = "";
+                    var Result = Core.CallOnce(CancelToken, this,
+                       Params.Preprocessor, GetGroup, From, To, AIParam, Params.CanSleep, false, false,ref UseModel);
 
-                    BaseUnits.AddRange(ResultGroup.Units);
+                    TranslatedGroups.Add(new TranslatedGroup(UseModel,Result.Units));
                 }
 
                 if (Chunks.Count > 0)
                 {
                     for (int i = 0; i < Chunks.Count; i++)
                     {
-                        foreach (var GetUnit in BaseUnits)
+                        foreach (var GetGroup in TranslatedGroups)
                         {
-                            if (Chunks[i].Key.Equals(GetUnit.Key))
+                            foreach (var GetUnit in GetGroup.Units)
                             {
-                                MergeLine += GetUnit.Translated + "\n";
-
-                                for (int j = i + 1; j < Chunks.Count; j++)
+                                if (Chunks[i].Key.Equals(GetUnit.Key))
                                 {
-                                    if (Chunks[j].IsCode)
-                                    {
-                                        MergeLine += Chunks[j].Data;
-                                    }
-                                    else
-                                    {
-                                        break;
-                                    }
-                                }
+                                    MergeLine += GetUnit.Translated + "\n";
 
-                                break;
+                                    for (int j = i + 1; j < Chunks.Count; j++)
+                                    {
+                                        if (Chunks[j].IsCode)
+                                        {
+                                            MergeLine += Chunks[j].Data;
+                                        }
+                                        else
+                                        {
+                                            break;
+                                        }
+                                    }
+
+                                    break;
+                                }
+                            }
+
+                            if (!UseModels.Contains(GetGroup.Model))
+                            { 
+                              UseModels.Add(GetGroup.Model);
                             }
                         }
                     }
                 }
                 else
                 {
-                    foreach (var GetUnit in BaseUnits)
+                    foreach (var GetGroup in TranslatedGroups)
                     {
-                        MergeLine += GetUnit.Translated;
+                        foreach (var GetUnit in GetGroup.Units)
+                        {
+                            MergeLine += GetUnit.Translated;
+                        }
+
+                        if (!UseModels.Contains(GetGroup.Model))
+                        {
+                            UseModels.Add(GetGroup.Model);
+                        }
                     }
                 }
                 UnitGroup ReturnItem = new UnitGroup();
@@ -310,14 +329,24 @@ namespace NIMEngine.Translate
 
                 ReturnItem.Units.Add(SingleUnit);
 
-                CloudDBCache.AddCache(SingleUnit.FileUniqueKey, SingleUnit.Key, (int)To, SingleUnit.Original, SingleUnit.Translated);
+                CloudDBCache.AddCache(SingleUnit.FileUniqueKey, SingleUnit.Key, (int)To, SingleUnit.Original, SingleUnit.Translated, CloudDBCache.ModelsToLine(UseModels));
+
+                Models = UseModels;
 
                 return ReturnItem;
             }
             else
             {
-                return Core.CallOnce(CancelToken, this,
-                    Params.Preprocessor, SetUnitGroup, From, To, AIParam, Params.CanSleep, true, true);
+                string UseModel = "";
+                Models = new List<string>();
+
+
+                var Result = Core.CallOnce(CancelToken, this,
+                    Params.Preprocessor, SetUnitGroup, From, To, AIParam, Params.CanSleep, true, true,ref UseModel);
+
+                Models.Add(UseModel);
+
+                return Result;
             }
         }
 

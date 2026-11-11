@@ -33,7 +33,7 @@ namespace NIMEngine.Unit
         /// <param name="Item"></param>
         /// <param name="TranslatorRef"></param>
         /// <param name="UnitGroups"></param>
-        public static void UpdateCloudData(this UnitGroup Item,Translator TranslatorRef,Dictionary<string, UnitSequence> Sequences)
+        public static void UpdateCloudData(this UnitGroup Item,Translator TranslatorRef,Dictionary<string, UnitSequence> Sequences,List<string>Models)
         {
             lock (TranslatorRef.TransDataLocker)
             {
@@ -48,7 +48,7 @@ namespace NIMEngine.Unit
                         {
                             string Source = GetUnit.GetRealOriginal();
                            
-                            TranslatorRef.SetCloudData(GetUnit.FileUniqueKey,GetUnit.Key, Source, GetUnit.Translated);
+                            TranslatorRef.SetCloudData(GetUnit.FileUniqueKey,GetUnit.Key, Source, GetUnit.Translated,Models);
                         }
                     }
                     catch

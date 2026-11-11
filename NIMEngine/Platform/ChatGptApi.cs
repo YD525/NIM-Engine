@@ -50,7 +50,7 @@ namespace NIMEngine.Platform
 
             this.ProxyRef = Proxy;
         }
-        public ChatGptRootobject CallAI(string ApiKey, string Msg,ref string Recv)
+        public ChatGptRootobject CallAI(string ApiKey, string Msg,ref string Response,ref string UseModel)
         {
             this.Model = NIM_Engine.Config.GetPlatformData(ChatGptApi.Type).Model;
             int GetCount = Msg.Length; 
@@ -58,7 +58,7 @@ namespace NIMEngine.Platform
             NChatGptItem.model = Model;
             NChatGptItem.messages = new List<ChatGptMessage>();
             NChatGptItem.messages.Add(new ChatGptMessage("user", Msg));
-            var GetResult = CallAI(ApiKey, NChatGptItem,ref Recv);
+            var GetResult = CallAI(ApiKey, NChatGptItem,ref Response, ref UseModel);
             return GetResult;
         }
         public void GetModes(string ApiKey)
@@ -85,10 +85,12 @@ namespace NIMEngine.Platform
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
         }
-        public ChatGptRootobject CallAI(string ApiKey, ChatGptItem Item,ref string Recv)
+        public ChatGptRootobject CallAI(string ApiKey, ChatGptItem Item,ref string Response,ref string UseModel)
         {
             //GetModes();
             string GetJson = JsonConvert.SerializeObject(Item);
+            UseModel = Item.model;
+
             WebHeaderCollection Headers = new WebHeaderCollection();
             Headers.Add("Authorization", string.Format("Bearer {0}", ApiKey));
             HttpItem Http = new HttpItem()
@@ -113,9 +115,10 @@ namespace NIMEngine.Platform
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
 
-            Recv = GetResult;
-            ChatGptRootobject result;
-            return TryParseResponse(GetResult, out result) ? result : null;
+            Response = GetResult;
+
+            ChatGptRootobject Result;
+            return TryParseResponse(GetResult, out Result) ? Result : null;
         }
 
         /// <summary>Parses a bounded ChatGPT response and validates the required translation fields.</summary>
@@ -135,7 +138,7 @@ namespace NIMEngine.Platform
                 out result);
         }
         //"Important: When translating, strictly keep any text inside angle brackets (< >) or square brackets ([ ]) unchanged. Do not modify, translate, or remove them.\n\n"
-        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang,bool UseAIMemory,int AIMemoryCountLimit, string AIParam, ref AICall Call)
+        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang,bool UseAIMemory,int AIMemoryCountLimit, string AIParam,ref string UseModel, ref AICall Call)
         {
             List<string> Related = new List<string>();
 
@@ -159,10 +162,10 @@ namespace NIMEngine.Platform
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang, ToLang, TransSource,Related, CustomWords, AIParam);
 
             string Send = GetTransSource;
-            string Recv = "";
-            var GetResult = CallAI(ApiKey, Send, ref Recv);
+            string Response = "";
+            var GetResult = CallAI(ApiKey, Send, ref Response,ref UseModel);
 
-            Call = new AICall(PlatformType.ChatGpt, Send, Recv,0);
+            Call = new AICall(PlatformType.ChatGpt, Send, Response, 0);
 
             if (GetResult != null)
             {

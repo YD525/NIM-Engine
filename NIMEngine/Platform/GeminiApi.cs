@@ -96,7 +96,7 @@ namespace NIMEngine.Platform
             this.ProxyRef = Proxy;
         }
 
-        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call)
+        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam,ref string UseModel, ref AICall Call)
         {
             List<string> Related = new List<string>();
 
@@ -120,10 +120,10 @@ namespace NIMEngine.Platform
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang, ToLang, TransSource,Related, CustomWords, AIParam);
 
             string Send = GetTransSource;
-            string Recv = "";
-            var GetResult = CallAI(ApiKey,Send, ref Recv);
+            string Response = "";
+            var GetResult = CallAI(ApiKey,Send, ref Response,ref UseModel);
 
-            Call = new AICall(PlatformType.Gemini, Send, Recv,0);
+            Call = new AICall(PlatformType.Gemini, Send, Response, 0);
 
             if (GetResult != null)
             {
@@ -156,20 +156,21 @@ namespace NIMEngine.Platform
             return string.Empty;
         }
 
-        public GeminiRootobject CallAI(string ApiKey,string Msg, ref string Recv)
+        public GeminiRootobject CallAI(string ApiKey,string Msg, ref string Response,ref string UseModel)
         {
             int GetCount = Msg.Length;
             GeminiItem NGeminiItem = new GeminiItem();
             NGeminiItem.contents.Add(new GeminiContent());
             NGeminiItem.contents[0].parts.Add(new GeminiPart());
             NGeminiItem.contents[0].parts[0].text = Msg;
-            var GetResult = CallAI(ApiKey,NGeminiItem,ref Recv);
+            var GetResult = CallAI(ApiKey,NGeminiItem,ref Response,ref UseModel);
             return GetResult;
         }
 
-        public GeminiRootobject CallAI(string ApiKey,GeminiItem Item, ref string Recv)
+        public GeminiRootobject CallAI(string ApiKey,GeminiItem Item, ref string Response, ref string UseModel)
         {
             this.Model = NIM_Engine.Config.GetPlatformData(GeminiApi.Type).Model;
+            UseModel = this.Model;
 
             string GetJson = JsonConvert.SerializeObject(Item);
             WebHeaderCollection Headers = new WebHeaderCollection();
@@ -195,9 +196,10 @@ namespace NIMEngine.Platform
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
 
-            Recv = GetResult;
-            GeminiRootobject result;
-            return TryParseResponse(GetResult, out result) ? result : null;
+            Response = GetResult;
+
+            GeminiRootobject Result;
+            return TryParseResponse(GetResult, out Result) ? Result : null;
         }
 
         /// <summary>Parses a bounded Gemini response and validates the required translation fields.</summary>

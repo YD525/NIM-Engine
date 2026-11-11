@@ -40,7 +40,7 @@ namespace NIMEngine.Platform.LocalAI
                 LMStudio.CurrentModel = GetCurrentModelName();
             }
         }
-        public OpenAIResponse CallAI(string Msg,ref string Recv)
+        public OpenAIResponse CallAI(string Msg,ref string Response,ref string UseModel)
         {
             if (CurrentModel == string.Empty)
             {
@@ -56,7 +56,7 @@ namespace NIMEngine.Platform.LocalAI
             OpenAIItem NOpenAIItem = new OpenAIItem(CurrentModel);
             NOpenAIItem.store = true;
             NOpenAIItem.messages.Add(new OpenAIMessage("user", Msg));
-            var GetResult = CallAI(NOpenAIItem,ref Recv);
+            var GetResult = CallAI(NOpenAIItem,ref Response,ref UseModel);
             return GetResult;
         }
 
@@ -87,12 +87,14 @@ namespace NIMEngine.Platform.LocalAI
         }
 
         public static object SingleLock = new object();
-        public OpenAIResponse CallAI(OpenAIItem Item,ref string Recv)
+        public OpenAIResponse CallAI(OpenAIItem Item,ref string Response,ref string UseModel)
         {
             lock (SingleLock)
             {
                 string GenUrl = "http://localhost" + ":" + LocalPort + "/v1/chat/completions";
                 string GetJson = JsonConvert.SerializeObject(Item);
+                UseModel = Item.model;
+
                 WebHeaderCollection Headers = new WebHeaderCollection();
                 //Headers.Add("Authorization", string.Format("Bearer {0}", DeFine.GlobalLocalSetting.LMKey));
                 HttpItem Http = new HttpItem()
@@ -116,10 +118,10 @@ namespace NIMEngine.Platform.LocalAI
                 catch { }
 
                 string GetResult = HttpTransport.GetHtml(Http).Html;
-                Recv = GetResult;
+                Response = GetResult;
 
-                OpenAIResponse result;
-                return TryParseResponse(GetResult, out result) ? result : null;
+                OpenAIResponse Result;
+                return TryParseResponse(GetResult, out Result) ? Result : null;
             }
         }
 
@@ -156,7 +158,7 @@ namespace NIMEngine.Platform.LocalAI
                 out result);
         }
         //"Important: When translating, strictly keep any text inside angle brackets (< >) or square brackets ([ ]) unchanged. Do not modify, translate, or remove them.\n\n"
-        public string QuickTrans(List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam,ref AICall Call)
+        public string QuickTrans(List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam,ref string UseModel,ref AICall Call)
         {
             List<string> Related = new List<string>();
 
@@ -180,10 +182,10 @@ namespace NIMEngine.Platform.LocalAI
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang,ToLang,TransSource,Related,CustomWords, AIParam);
             
             string Send = GetTransSource;
-            string Recv = "";
-            var GetResult = CallAI(Send,ref Recv);
+            string Response = "";
+            var GetResult = CallAI(Send,ref Response,ref UseModel);
 
-            Call = new AICall(PlatformType.LMLocalAI, Send,Recv,0);
+            Call = new AICall(PlatformType.LMLocalAI, Send, Response, 0);
 
             if (GetResult != null)
             {

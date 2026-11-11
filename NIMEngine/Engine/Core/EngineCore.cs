@@ -260,7 +260,7 @@ public class EngineCore
     }
 
     public UnitGroup CallOnce(CancellationToken CancelToken, Translator TranslatorRef, TranslationPreprocessor Preprocessor, UnitGroup Item,
-        Languages From, Languages To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate)
+        Languages From, Languages To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate,ref string UseModel)
     {
         if (!Item.ApplyStateChange(TranslatorRef.ID, UnitTranslationState.Preparing).CanDo(-1))
         {
@@ -300,7 +300,7 @@ public class EngineCore
                 string SetType = "";
 
                 GetTrans = CurrentEngine.Call(TranslatorRef.ID, CancelToken, TranslatorRef, ref Item, ref Sequences, From, To,
-                true, NIMEngine.NIM_Engine.Config.ContextLimit, AIParam, ref SetType);
+                true, NIMEngine.NIM_Engine.Config.ContextLimit, AIParam, ref SetType,ref UseModel);
 
                 CancelToken.ThrowIfCancellationRequested();
 
@@ -375,7 +375,7 @@ public class EngineCore
 
                 if (CanUpdate)
                 {
-                    Item.UpdateCloudData(TranslatorRef, Sequences);
+                    Item.UpdateCloudData(TranslatorRef, Sequences,new List<string>() { UseModel });
                 }
 
                 if (!Item.ApplyStateChange(TranslatorRef.ID, UnitTranslationState.Completed).CanDo(-1))
@@ -458,7 +458,7 @@ public class EngineCore
         }
 
         public string Call(string TranslatorID, CancellationToken CancelToken, Translator TranslatorRef, ref UnitGroup Source, ref Dictionary<string, UnitSequence> Sequences,
-           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string SetType)
+           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string SetType,ref string UseModel)
         {
             bool ForceReplace = true;
             bool ForceReplaceProtected = true;
@@ -596,7 +596,7 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        GetData = SetLM.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetLM.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -632,7 +632,7 @@ public class EngineCore
                     {
                         CancelToken.ThrowIfCancellationRequested();
                         CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetChatGpt.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetChatGpt.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -670,7 +670,7 @@ public class EngineCore
                     {
                         CancelToken.ThrowIfCancellationRequested();
                         CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetGemini.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetGemini.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel,ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -708,7 +708,7 @@ public class EngineCore
                     {
                         CancelToken.ThrowIfCancellationRequested();
                         CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetDeepSeek.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetDeepSeek.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -746,7 +746,7 @@ public class EngineCore
                     {
                         CancelToken.ThrowIfCancellationRequested();
                         CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetCustomAI.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetCustomAI.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -782,7 +782,7 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        GetData = SetCustomLocal.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
+                        GetData = SetCustomLocal.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref UseModel, ref Call).Trim();
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)

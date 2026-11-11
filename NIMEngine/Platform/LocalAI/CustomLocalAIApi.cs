@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Text;
+using System.Web.UI;
 using NIMEngine.Common;
 using NIMEngine.Engine;
 using NIMEngine.Language;
@@ -35,7 +36,7 @@ namespace NIMEngine.Platform.LocalAI
             this.ConfigRef = Config;
         }
 
-        public string QuickTrans(List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call)
+        public string QuickTrans(List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call)
         {
             var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
@@ -63,11 +64,12 @@ namespace NIMEngine.Platform.LocalAI
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang, ToLang, TransSource,Related, CustomWords, AIParam);
 
             string Send = GetTransSource;
-            string Recv = "";
+            string Response = "";
+            string CurrentModel = "";
 
-            var Result = CallAI(Send, ref Recv);
+            var Result = CallAI(Send, ref Response, ref CurrentModel);
 
-            Call = new AICall(PlatformType.CustomPlatform, Send, Recv, this.CustomID);
+            Call = new AICall(PlatformType.CustomPlatform, Send, Response, this.CustomID);
 
             if (Result != null)
             {
@@ -127,13 +129,15 @@ namespace NIMEngine.Platform.LocalAI
             return string.Empty;
         }
 
-        public string CallAI(string Send, ref string Recv)
+        public string CallAI(string Send, ref string Response, ref string UseModel)
         {
             CustomReqCore Core = new CustomReqCore();
 
             var InFo = NIM_Engine.Config.GetPlatformData(CustomID).CustomInFo;
 
             Core.SetModel(Model);
+            UseModel = Model;
+
             Core.SetUrl(InFo.Url);
             Core.SetHeader(InFo.Header);
             Core.SetPayLoad(InFo.PayLoad, InFo.PayLoadEncode);
@@ -168,7 +172,7 @@ namespace NIMEngine.Platform.LocalAI
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
 
-            Recv = GetResult;
+            Response = GetResult;
 
             if (GetResult.Trim().Length > 0)
             {

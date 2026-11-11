@@ -15,14 +15,16 @@ namespace NIMEngine.ADO
         public int To = 0;
         public string Source = "";
         public string Result = "";
+        public string Model = "";
 
-        public CloudTranslationItem(object FileUniqueKey, object Key, object To, object Source, object Result)
+        public CloudTranslationItem(object FileUniqueKey, object Key, object To, object Source, object Result,object Model)
         {
             this.FileUniqueKey = P_Convert.ObjToInt(FileUniqueKey);
             this.Key = P_Convert.ObjToStr(Key);
             this.To = P_Convert.ObjToInt(To);
             this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
+            this.Model = P_Convert.ObjToStr(Model);
         }
     }
 
@@ -31,7 +33,7 @@ namespace NIMEngine.ADO
         public static void Init()
         {
             string TableName = "CloudTranslation";
-            string CreateSQL = "CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [Source] TEXT, [Result] TEXT);";
+            string CreateSQL = "CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [Source] TEXT, [Result] TEXT,[Model] TEXT);";
 
             // Check if table exists
             const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
@@ -108,8 +110,11 @@ namespace NIMEngine.ADO
             }
             catch { return string.Empty; }
         }
-
-        public static bool AddCache(int FileUniqueKey, string Key, int To, string Source, string Result)
+        public static string ModelsToLine(List<string>Models)
+        {
+            return string.Join(",", Models);
+        }
+        public static bool AddCache(int FileUniqueKey, string Key, int To, string Source, string Result,string Model)
         {
             try
             {
@@ -122,14 +127,15 @@ namespace NIMEngine.ADO
 
                 if (GetRowID <= 0)
                 {
-                    const string SQLOrder = "INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result);";
+                    const string SQLOrder = "INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result],[Model]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result,@Model);";
                     int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                         SQLOrder,
                         SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                         SQLiteBuilder.Parameter("@Key", Key),
                         SQLiteBuilder.Parameter("@To", To),
                         SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
-                        SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Result)));
+                        SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Result)),
+                        SQLiteBuilder.Parameter("@Model", Model));
 
                     if (State != 0)
                     {
@@ -169,7 +175,8 @@ namespace NIMEngine.ADO
                             Row["Key"],
                             Row["To"],
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
-                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
+                            P_Convert.ObjToStr(Row["Model"])
                         ));
                     }
                 }
@@ -200,7 +207,8 @@ namespace NIMEngine.ADO
                         Row["Key"],
                         Row["To"],
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
-                        SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                        SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
+                        P_Convert.ObjToStr(Row["Model"])
                     );
                 }
 
@@ -237,7 +245,8 @@ namespace NIMEngine.ADO
                             Row["Key"],
                             Row["To"],
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
-                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
+                            P_Convert.ObjToStr(Row["Model"])
                         ));
                     }
                 }
@@ -325,7 +334,8 @@ namespace NIMEngine.ADO
                             Row["Key"],
                             Row["To"],
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
-                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
+                            SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
+                            P_Convert.ObjToStr(Row["Model"])
                 ));
             }
 

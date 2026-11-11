@@ -92,7 +92,7 @@ namespace NIMEngine.Platform
 
             this.ProxyRef = Proxy;
         }
-        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang,bool UseAIMemory,int AIMemoryCountLimit, string AIParam, ref AICall Call)
+        public string QuickTrans(string ApiKey,List<ReplaceTag> CustomWords,UnitGroup Source, Languages FromLang, Languages ToLang,bool UseAIMemory,int AIMemoryCountLimit, string AIParam,ref string UseModel, ref AICall Call)
         {
             List<string> Related = new List<string>();
 
@@ -116,10 +116,10 @@ namespace NIMEngine.Platform
             var GetTransSource = AIPrompt.GenerateTranslationPrompt(FromLang, ToLang, TransSource,Related, CustomWords, AIParam);
 
             string Send = GetTransSource;
-            string Recv = "";
-            var GetResult = CallAI(ApiKey,Send, ref Recv);
+            string Response = "";
+            var GetResult = CallAI(ApiKey,Send, ref Response,ref UseModel);
 
-            Call = new AICall(PlatformType.DeepSeek, Send, Recv,0);
+            Call = new AICall(PlatformType.DeepSeek, Send, Response, 0);
 
             if (GetResult != null)
             {
@@ -145,7 +145,7 @@ namespace NIMEngine.Platform
             return string.Empty;
         }
 
-        public DeepSeekRootobject CallAI(string ApiKey,string Msg, ref string Recv)
+        public DeepSeekRootobject CallAI(string ApiKey,string Msg, ref string Response,ref string UseModel)
         {
             this.Model = NIM_Engine.Config.GetPlatformData(DeepSeekApi.Type).Model;
             int GetCount = Msg.Length;
@@ -154,13 +154,15 @@ namespace NIMEngine.Platform
             NDeepSeekItem.messages = new List<DeepSeekMessage>();
             NDeepSeekItem.messages.Add(new DeepSeekMessage("user", Msg));
             NDeepSeekItem.stream = false;
-            var GetResult = CallAI(ApiKey,NDeepSeekItem,ref Recv);
+            var GetResult = CallAI(ApiKey,NDeepSeekItem,ref Response,ref UseModel);
             return GetResult;
         }
 
-        public DeepSeekRootobject CallAI(string ApiKey,DeepSeekItem Item, ref string Recv)
+        public DeepSeekRootobject CallAI(string ApiKey,DeepSeekItem Item, ref string Response,ref string UseModel)
         {
             string GetJson = JsonConvert.SerializeObject(Item);
+            UseModel = Item.model;
+
             WebHeaderCollection Headers = new WebHeaderCollection();
             Headers.Add("Authorization", string.Format("Bearer {0}", ApiKey));
             HttpItem Http = new HttpItem()
@@ -185,9 +187,10 @@ namespace NIMEngine.Platform
 
             string GetResult = HttpTransport.GetHtml(Http).Html;
 
-            Recv = GetResult;
-            DeepSeekRootobject result;
-            return TryParseResponse(GetResult, out result) ? result : null;
+            Response = GetResult;
+
+            DeepSeekRootobject Result;
+            return TryParseResponse(GetResult, out Result) ? Result : null;
         }
 
         /// <summary>Parses a bounded DeepSeek response and validates the required translation fields.</summary>
