@@ -1,4 +1,5 @@
-﻿using NIMEngine.ADO;
+﻿using System.Collections.Generic;
+using NIMEngine.ADO;
 using NIMEngine.Memory;
 
 namespace NIMEngine.Translate
