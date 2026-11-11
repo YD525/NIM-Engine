@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using NIMEngine.Events;
 using NIMEngine.Translate;
-using System.Runtime.InteropServices;
 
 namespace NIMEngine.Unit
 {
