@@ -137,19 +137,19 @@ namespace NIMEngine.Translate
             NQueryTransItem.TransText = TransText;
             return NQueryTransItem;
         }
-        public static bool AutoSetLink(this Translator Translator, string Key, string SourceText, P_String TransText)
+        public static bool SyncLink(this Translator Translator, string Key, string Original, P_String Translated)
         {
             int FileUniqueKey = Translator.GetFileUniqueKey();
 
             var Link = Translator.GetLink();
 
-            if (TransText.String.Trim().Length > 0)
+            if (Translated.String.Trim().Length > 0)
             {
-                Link[Key] = TransText;
+                Link[Key] = Translated;
             }
             else
             {
-                Link.Remove(Key);
+                Link[Key] = Translated;
 
                 CloudDBCache.DeleteCache(FileUniqueKey, Key, Translator.To);
                 LocalDBCache.DeleteCache(FileUniqueKey, Key, Translator.To);
@@ -157,7 +157,7 @@ namespace NIMEngine.Translate
                 return true;
             }
 
-            var GetState = LocalDBCache.UpdateLocalTransItem(FileUniqueKey, Key, (int)Translator.To, SourceText, TransText.String, 0);
+            var GetState = LocalDBCache.UpdateLocalTransItem(FileUniqueKey, Key, (int)Translator.To, Original, Translated.String, 0);
 
             return GetState;
         }
