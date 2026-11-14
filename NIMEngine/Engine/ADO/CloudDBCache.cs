@@ -52,7 +52,7 @@ namespace NIMEngine.ADO
                     StringComparer.OrdinalIgnoreCase
                 );
 
-                string[] ExpectedCols = { "FileUniqueKey", "Key", "To", "Source", "Result" };
+                string[] ExpectedCols = { "FileUniqueKey", "Key", "To", "Source", "Result", "Model" };
                 bool StructureChanged =
                     ExistingCols.Count != ExpectedCols.Length ||
                     ExpectedCols.Any(C => !ExistingCols.Contains(C));
