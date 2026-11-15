@@ -39,6 +39,16 @@ namespace NIMEngine
         public int Init = 0;
 
         #endregion
+
+        #region PluginConfig
+
+        /// <summary>
+        /// Loaded plugins:UniqueKey = plugin file path, value = enabled switch (true = enabled, false = disabled).
+        /// </summary>
+        public Dictionary<string, bool> Plugins { get; set; } = null;
+
+        #endregion
+
         #region RequestConfig
 
         /// <summary>

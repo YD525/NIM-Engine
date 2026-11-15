@@ -12,6 +12,8 @@ namespace NIMEngine.Plugin
         string Author { get; set; }
         string Description { get; set; }
 
+        bool Enabled { get; set; }
+
         void Init(string MethodName,ref object[] ParamsRef);
 
         void HandleEvent(string MethodName,ref object[] ParamsRef);

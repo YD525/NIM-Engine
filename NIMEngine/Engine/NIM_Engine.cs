@@ -9,6 +9,7 @@ using NIMEngine.Http;
 using NIMEngine.Language;
 using NIMEngine.Memory;
 using NIMEngine.Platform;
+using NIMEngine.Plugin;
 using NIMEngine.Translate;
 
 namespace NIMEngine
@@ -83,6 +84,9 @@ namespace NIMEngine
             CurrentPath = StartupPath;
 
             string GetFilePath = GetFullPath(@"\Engine.db");
+
+            StepAction?.Invoke(0);
+            PluginHub.Instance.Init();//Must be called first, before the first load.
 
             if (!File.Exists(GetFilePath))
             {
