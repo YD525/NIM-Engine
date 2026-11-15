@@ -156,6 +156,11 @@ namespace NIMEngine.Platform
         {
             if (LocalNodes.TryGetValue(Name, out var CurrentNode))
             {
+                if (PlatformConfigCache == null)
+                {
+                    GetAllNode();
+                }
+
                 List<string> Related = new List<string>();
 
                 bool CanTrans = false;
@@ -183,7 +188,7 @@ namespace NIMEngine.Platform
 
                 string Response = "";
 
-                CurrentNode.LocalPort = 1234;
+                CurrentNode.LocalPort = PlatformConfigCache[Name].LocalPort;
 
                 Response = CurrentNode.Call(SendPrompt,
                 out string AIResponseStr);
