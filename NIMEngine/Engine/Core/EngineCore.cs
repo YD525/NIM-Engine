@@ -439,17 +439,19 @@ public class EngineCore
                     PlatformCall Call = new PlatformCall();
                     bool Passed = false;
                     int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
 
+                    string ApiKey = "";
                     string GetData = null;
 
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
 
+                        ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
+
                         bool State = PlatformHub.CallNode(
-                            this.Name, 
-                            NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey(),
+                            this.Name,
+                            ApiKey,
                             NIM_Engine.Config,
                             Source, 
                             From, 
@@ -472,7 +474,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
 
                     TransText = GetData;
                     Call.Output();
@@ -544,19 +546,22 @@ public class EngineCore
                 if (PlatformHub.IsEnable(this.Name))
                 {
                     AICall Call = new AICall();
-
-                    string GetData = null;
+               
                     bool Passed = false;
                     int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
+
+                    string ApiKey = "";
+                    string GetData = null;
 
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
 
+                        ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
+
                         bool State = PlatformHub.CallAINode(
                             this.Name,
-                            NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey(),
+                            ApiKey,
                             NIM_Engine.Config,
                             CustomWords,
                             Source,
@@ -584,7 +589,7 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
 
                     TransText = GetData;
                     Call.Output();
