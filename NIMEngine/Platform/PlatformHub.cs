@@ -68,7 +68,7 @@ namespace NIMEngine.Platform
                     var Node = (I_AI_Node)Activator.CreateInstance(Kv.Value);
                     AINodes[Kv.Key] = Node;
                 }
-                catch (Exception Ex)
+                catch (Exception)
                 {
                     
                 }
@@ -87,7 +87,7 @@ namespace NIMEngine.Platform
                     var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv.Value);
                     LocalNodes[Kv.Key] = Node;
                 }
-                catch (Exception Ex)
+                catch (Exception)
                 {
                 }
             }
@@ -105,7 +105,7 @@ namespace NIMEngine.Platform
                     var Node = (I_Node)Activator.CreateInstance(Kv.Value);
                     Nodes[Kv.Key] = Node;
                 }
-                catch (Exception Ex)
+                catch (Exception)
                 {
                 }
             }

@@ -43,7 +43,7 @@ namespace NIMEngine.Plugin
 
                         I_Plugin Instance;
                         try { Instance = (I_Plugin)Activator.CreateInstance(T); }
-                        catch (Exception Ex) { continue; }
+                        catch (Exception) { continue; }
 
                         PluginEntry Entry = new PluginEntry
                         {
@@ -52,19 +52,15 @@ namespace NIMEngine.Plugin
                             IsLoaded = true
                         };
 
-                        lock (_Lock) 
-                        { 
-                            Plugins.Add(Entry); 
+                        lock (_Lock)
+                        {
+                            Plugins.Add(Entry);
                         }
-                      
-                        object[] Args = new object[] { "LoadNodes", null };
-                        try { Entry.Instance.Init("LoadNodes", ref Args); }
-                        catch (Exception Ex) { Entry.LastError = Ex; }
                     }
                 }
-                catch (Exception Ex)
+                catch (Exception)
                 {
-                    
+
                 }
             }
         }
