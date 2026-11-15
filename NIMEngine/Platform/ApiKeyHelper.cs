@@ -57,7 +57,7 @@ namespace NIMEngine.Platform
     public class PlatformApiKeys
     {
         private object ArrayQueryLock = new object();
-        public PlatformType Type = new PlatformType();
+        public string Name = "";
         private List<ApiKey> ApiKeys = new List<ApiKey>();
         public void AddKeys(List<string> Keys)
         {
@@ -120,31 +120,26 @@ namespace NIMEngine.Platform
     }
     public class KeyManage
     {
-        private Dictionary<int, PlatformApiKeys> KeysData = new Dictionary<int, PlatformApiKeys>();
+        private Dictionary<string, PlatformApiKeys> KeysData = new Dictionary<string, PlatformApiKeys>();
         public static int MaxErrorCount = 10;
         public void Init()
         {
             for (int i = 0; i < NIM_Engine.Config.PlatformConfigs.Count; i++)
             { 
-                int GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+                string GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
                 var GetConfig = NIM_Engine.Config.PlatformConfigs[GetKey];
 
                 PlatformApiKeys NPlatformApiKeys = new PlatformApiKeys();
-                NPlatformApiKeys.Type = GetConfig.Platform;
+                NPlatformApiKeys.Name = GetConfig.Name;
                 NPlatformApiKeys.AddKeys(GetConfig.ApiKeys);
 
-                KeysData.Add(GetKey, NPlatformApiKeys);
+                KeysData.Add(NPlatformApiKeys.Name, NPlatformApiKeys);
             }
         }
 
-        public PlatformApiKeys GetData(PlatformType Type)
+        public PlatformApiKeys GetData(string Name)
         {
-            return KeysData[(int)Type];
-        }
-
-        public PlatformApiKeys GetData(int CustomID)
-        {
-            return KeysData[CustomID];
+            return KeysData[Name];
         }
     }
 }

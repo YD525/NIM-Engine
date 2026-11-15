@@ -5,10 +5,10 @@ using NIMEngine.Additional;
 using NIMEngine.ADO;
 using NIMEngine.Engine;
 using NIMEngine.Engine.ADO;
+using NIMEngine.Http;
 using NIMEngine.Language;
 using NIMEngine.Memory;
 using NIMEngine.Platform;
-using NIMEngine.Request;
 using NIMEngine.Translate;
 
 namespace NIMEngine
@@ -17,7 +17,7 @@ namespace NIMEngine
     {
         //The engine allows the creation of multiple instances of the Translator, each capable of translating its own content, but sharing a single AIMemory. This improves context utilization.
         public static AITranslationMemory AIMemory = new AITranslationMemory();
-        public static string Version = "3.3.9.1";
+        public static string Version = "3.3.9.5";
 
         public static object QueryPlatformDataLock = new object();
 
@@ -48,15 +48,15 @@ namespace NIMEngine
 
             for (int i = 0; i < NIM_Engine.Config.PlatformConfigs.Count; i++)
             { 
-                int GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+                string GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
                 var GetConfig = NIM_Engine.Config.PlatformConfigs[GetKey];
 
-                if (GetConfig.ApiKeys.Count > 0 && GetConfig.Enable && GetConfig.Platform != PlatformType.LMLocalAI)
+                if (GetConfig.ApiKeys.Count > 0 && GetConfig.Enable && GetConfig.Name != "LocalAI")
                 {
                     AutoThread++;
                 }
                 
-                if (GetConfig.Platform == PlatformType.LMLocalAI && GetConfig.Enable)
+                if (GetConfig.Name == "LocalAI" && GetConfig.Enable)
                 {
                     LocalAIEnable = true;
                 }

@@ -29,7 +29,7 @@ namespace NIMEngine.P_Delegate
     public class PreTranslateCall
     {
         public string Key = "";
-        public PlatformType Platform = PlatformType.Null;
+        public string Name = "PreTranslate";
         public string SendString = "";
         public string ReceiveString = "";
         public List<ReplaceTag> ReplaceTags = new List<ReplaceTag>();
@@ -65,8 +65,7 @@ namespace NIMEngine.P_Delegate
 
     public class PlatformCall
     {
-        public PlatformType Platform = PlatformType.Null;
-        public int CustomID = 0;
+        public string Name = "";
         public Languages From = Languages.Null;
         public Languages To = Languages.Null;
         public string SendString = "";
@@ -74,14 +73,13 @@ namespace NIMEngine.P_Delegate
         public bool Success = false;
 
         public PlatformCall() { }
-        public PlatformCall(PlatformType Platform, Languages From, Languages To, string Send, string Recv, int CustomID)
+        public PlatformCall(string Name, Languages From, Languages To, string Send, string Receive)
         {
-            this.Platform = Platform;
-            this.CustomID = CustomID;
+            this.Name = Name;
             this.From = From;
             this.To = To;
             this.SendString = Send;
-            this.ReceiveString = Recv;
+            this.ReceiveString = Receive;
         }
 
         public void Output()
@@ -91,19 +89,17 @@ namespace NIMEngine.P_Delegate
     }
     public class AICall
     {
-        public PlatformType Platform = PlatformType.Null;
-        public int CustomID = 0;
+        public string Name = "";
         public string SendString = "";
         public string ReceiveString = "";
         public bool Success = false;
 
         public AICall() { }
-        public AICall(PlatformType Platform, string Send, string Recv, int CustomID)
+        public AICall(string Name, string Send, string Receive)
         {
-            this.Platform = Platform;
-            this.CustomID = CustomID;
+            this.Name = Name;
             SendString = Send;
-            ReceiveString = Recv;
+            ReceiveString = Receive;
         }
 
         public void Output()

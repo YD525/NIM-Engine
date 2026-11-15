@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using NIMEngine.ADO;
 using NIMEngine.Common;
-using NIMEngine.Request;
+using NIMEngine.Http;
 
 namespace NIMEngine.Language
 {
     public class ChineseVariantMap
     {
-        private static readonly HttpHelper HttpTransport = new HttpHelper();
+        private const string Host = "https://api.zhconvert.org";
+        private const string UserAgentStr = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36";
+        private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
         public static void Init()
         {
@@ -174,38 +177,10 @@ namespace NIMEngine.Language
         {
             try
             {
-                WebHeaderCollection Headers = new WebHeaderCollection();
-                Headers.Add("sec-ch-ua", "Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144");
-                Headers.Add("sec-ch-ua-mobile", "?0");
-                Headers.Add("Origin", "https://zhconvert.org");
-                Headers.Add("Sec-Fetch-Site", "same-site");
-                Headers.Add("Sec-Fetch-Mode", "cors");
-                Headers.Add("Sec-Fetch-Dest", "empty");
-                Headers.Add("Accept-Language", "en-GB,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7,zh;q=0.6");
+                string Json = JsonConvert.SerializeObject(Convert);
+                byte[] Body = Utf8NoBom.GetBytes(Json);
 
-                HttpItem Http = new HttpItem()
-                {
-                    URL = "https://api.zhconvert.org/convert",
-                    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
-                    Method = "Post",
-                    Header = Headers,
-                    Accept = "*/*",
-                    Postdata = JsonConvert.SerializeObject(Convert),
-                    Cookie = "",
-                    ContentType = "application/json",
-                    Referer = "https://zhconvert.org/",
-                    Encoding = Encoding.UTF8,
-                    MaximumResponseBytes = JsonPayload.MaximumDocumentBytes,
-                    WebProxy = Proxy
-                };
-
-                try
-                {
-                    Http.Header.Add("Accept-Encoding", "gzip, deflate, br, zstd");
-                }
-                catch { }
-
-                string GetResult = HttpTransport.GetHtml(Http).Html;
+                string GetResult = Send("POST", Host + "/convert", Body, Proxy, 60000);
 
                 ZHConvertReturnJson GetReturn;
                 if (!TryParseResponse(GetResult, out GetReturn))
@@ -225,6 +200,60 @@ namespace NIMEngine.Language
             catch { }
 
             return "";
+        }
+
+        private string Send(string Method, string Url, byte[] Body, WebProxy Proxy, int Timeout)
+        {
+            HttpWebRequest Req = (HttpWebRequest)WebRequest.Create(Url);
+            Req.Method = Method;
+            Req.UserAgent = UserAgentStr;
+            Req.Accept = "*/*";
+            Req.Referer = "https://zhconvert.org/";
+            Req.Timeout = Timeout;
+            Req.ReadWriteTimeout = Timeout;
+            Req.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            Req.Proxy = Proxy;
+
+            Req.Headers["sec-ch-ua"] = "Not(A:Brand\";v=\"8\", \"Chromium\";v=\"144\", \"Google Chrome\";v=\"144";
+            Req.Headers["sec-ch-ua-mobile"] = "?0";
+            Req.Headers["Origin"] = "https://zhconvert.org";
+            Req.Headers["Sec-Fetch-Site"] = "same-site";
+            Req.Headers["Sec-Fetch-Mode"] = "cors";
+            Req.Headers["Sec-Fetch-Dest"] = "empty";
+            Req.Headers["Accept-Language"] = "en-GB,en-US;q=0.9,en;q=0.8,zh-CN;q=0.7,zh;q=0.6";
+            Req.Headers["Accept-Encoding"] = "gzip, deflate";
+
+            if (Body != null)
+            {
+                Req.ContentType = "application/json";
+                Req.ContentLength = Body.Length;
+                using (Stream ReqStream = Req.GetRequestStream())
+                {
+                    ReqStream.Write(Body, 0, Body.Length);
+                }
+            }
+
+            try
+            {
+                using (HttpWebResponse Resp = (HttpWebResponse)Req.GetResponse())
+                using (Stream RespStream = Resp.GetResponseStream())
+                using (StreamReader Reader = new StreamReader(RespStream, Encoding.UTF8))
+                {
+                    return Reader.ReadToEnd();
+                }
+            }
+            catch (WebException ex) when (ex.Response != null)
+            {
+                string ErrBody;
+                using (ex.Response)
+                using (Stream ErrStream = ex.Response.GetResponseStream())
+                using (StreamReader Reader = new StreamReader(ErrStream, Encoding.UTF8))
+                {
+                    ErrBody = Reader.ReadToEnd();
+                }
+
+                throw new InvalidOperationException("ZHConvert HTTP error (" + Url + "): " + ErrBody, ex);
+            }
         }
 
         /// <summary>Parses a bounded conversion response and validates its required text field.</summary>
