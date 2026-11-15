@@ -7,16 +7,20 @@ using NIMEngine.Platform;
 
 namespace NIMEngine.Plugin.Official.NodePack
 {
-    public class NodePack
+    public class NodePack: IPlugin
     {
+        public string Name { get; set; } = "Node Pack";
+        public string Author { get; set; } = "NIM Engine";
+        public string Description { get; set; } = "Node extension pack that registers multiple translation platform nodes so the engine can use them.";
+
         /// <summary>
-        /// Plugin Init
+        /// Called by the engine when the plugin is loaded.
         /// </summary>
-        /// <param name="Type"></param>
-        /// <param name="ParamsRef">Params is a pointer.</param>
-        public void Init(int Type,object[] ParamsRef)
+        /// <param name="MethodName">Name of the feature currently being loaded.</param>
+        /// <param name="ParamsRef">Params is a pointer,Used to pass or return data.</param>
+        public void Init(string MethodName, object[] ParamsRef)
         {
-            if (Type == 10)
+            if (MethodName == "LoadNodes")
             {
                 //Type == 10 LoadNodes
 
@@ -29,6 +33,14 @@ namespace NIMEngine.Plugin.Official.NodePack
             
         }
 
+        /// <summary>
+        /// Called by the engine when an event occurs, so the plugin can handle it.
+        /// </summary>
+        /// <param name="MethodName">Name of the event method raised by the engine.</param>
+        /// <param name="ParamsRef">Params is a pointer,Used to pass or return data.</param>
+        public void HandleEvent(string MethodName,object[] ParamsRef)
+        { 
         
+        }
     }
 }
