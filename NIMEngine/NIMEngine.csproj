@@ -114,16 +114,9 @@
     <Compile Include="Language\UrduHelper.cs" />
     <Compile Include="Language\VietnameseHelper.cs" />
     <Compile Include="Platform\AIPrompt.cs" />
-    <Compile Include="Platform\Nodes\ChatGptApi.cs" />
-    <Compile Include="Platform\Nodes\ClaudeApi.cs" />
     <Compile Include="Platform\Nodes\HumanTranslationApi.cs" />
-    <Compile Include="Platform\Nodes\DeepLApi.cs" />
-    <Compile Include="Platform\Nodes\DeepSeekApi.cs" />
-    <Compile Include="Platform\Nodes\GeminiApi.cs" />
     <Compile Include="Platform\ApiKeyHelper.cs" />
     <Compile Include="Platform\ITranslationNode.cs" />
-    <Compile Include="Platform\LocalAI.cs" />
-    <Compile Include="Platform\Nodes\NanoGptApi.cs" />
     <Compile Include="Platform\PlatformHub.cs" />
     <Compile Include="Http\TimeHelper.cs" />
     <Compile Include="Plugin\IPlugin.cs" />

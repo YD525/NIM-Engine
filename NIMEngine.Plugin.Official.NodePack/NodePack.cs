@@ -7,7 +7,7 @@ using NIMEngine.Platform;
 
 namespace NIMEngine.Plugin.Official.NodePack
 {
-    public class NodePack: IPlugin
+    public class NodePack: I_Plugin
     {
         public string Name { get; set; } = "Node Pack";
         public string Author { get; set; } = "NIM Engine";
@@ -18,19 +18,34 @@ namespace NIMEngine.Plugin.Official.NodePack
         /// </summary>
         /// <param name="MethodName">Name of the feature currently being loaded.</param>
         /// <param name="ParamsRef">Params is a pointer,Used to pass or return data.</param>
-        public void Init(string MethodName, object[] ParamsRef)
+        public void Init(string MethodName, ref object[] ParamsRef)
         {
             if (MethodName == "LoadNodes")
             {
-                //Type == 10 LoadNodes
-
                 ParamsRef = new object[3];
 
-                ParamsRef[0] = new List<I_AI_Node>();
-                ParamsRef[1] = new List<I_Local_AI_Node>();
-                ParamsRef[2] = new List<I_Node>();
+                ParamsRef[0] = new List<KeyValuePair<string, Type>>()
+                {
+                    // Local_AI_Node
+                    new KeyValuePair<string,Type>("LocalAI",typeof(LocalAI))
+                };
+
+                ParamsRef[1] = new List<KeyValuePair<string, Type>>()
+                {
+                    // I_AI_Node
+                    new KeyValuePair<string,Type>("Claude",typeof(ClaudeApi)),
+                    new KeyValuePair<string,Type>("ChatGpt",typeof(ChatGptApi)),
+                    new KeyValuePair<string,Type>("Gemini",typeof(GeminiApi)),
+                    new KeyValuePair<string,Type>("NanoGpt",typeof(NanoGptApi)),
+                    new KeyValuePair<string,Type>("DeepSeek",typeof(DeepSeekApi))
+                }; 
+
+                ParamsRef[2] = new List<KeyValuePair<string, Type>>()
+                {
+                    // Node
+                    new KeyValuePair<string,Type>("DeepL",typeof(DeepLApi))
+                };
             }
-            
         }
 
         /// <summary>
@@ -38,9 +53,9 @@ namespace NIMEngine.Plugin.Official.NodePack
         /// </summary>
         /// <param name="MethodName">Name of the event method raised by the engine.</param>
         /// <param name="ParamsRef">Params is a pointer,Used to pass or return data.</param>
-        public void HandleEvent(string MethodName,object[] ParamsRef)
+        public void HandleEvent(string MethodName,ref object[] ParamsRef)
         { 
-        
+            
         }
     }
 }
