@@ -9,6 +9,8 @@ namespace NIMEngine.Plugin.Official.NodePack
 {
     public class NodePack: I_Plugin
     {
+        public bool Enabled { get; set; } = true;
+
         public string Name { get; set; } = "Node Pack";
         public string Author { get; set; } = "NIM Engine";
         public string Description { get; set; } = "Node extension pack that registers multiple translation platform nodes so the engine can use them.";

@@ -10,6 +10,7 @@ using NIMEngine.Engine;
 using NIMEngine.Language;
 using NIMEngine.Memory;
 using NIMEngine.P_Delegate;
+using NIMEngine.Plugin;
 using NIMEngine.Translate;
 using NIMEngine.Unit;
 
@@ -20,7 +21,6 @@ namespace NIMEngine.Platform
         public static ConcurrentDictionary<string, I_AI_Node> AINodes { get; private set; } = new ConcurrentDictionary<string, I_AI_Node>();
         public static ConcurrentDictionary<string, I_Local_AI_Node> LocalNodes { get; private set; } = new ConcurrentDictionary<string, I_Local_AI_Node>();
         public static ConcurrentDictionary<string, I_Node> Nodes { get; private set; } = new ConcurrentDictionary<string, I_Node>();
-
 
         public static ConcurrentDictionary<string, I_Interactive_Node> HumanNodes { get; private set; } = new ConcurrentDictionary<string, I_Interactive_Node>();
 
@@ -36,9 +36,82 @@ namespace NIMEngine.Platform
             // Enable TLS 1.2, older .NET Framework versions do not enable it by default.
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
+            var Results = PluginHub.Instance.Dispatch(0, "LoadNodes");
 
-            NIM_Engine.GetFullPath(NIM_Engine.PluginsPath);
+            if (Results.Executed)
+            {
+                foreach (var GetPluginResult in Results.Results)
+                {
+                    object[] Payload = GetPluginResult.Value; 
+                    if (Payload == null || Payload.Length < 3) continue; // invalid payload
+
+                    RegisterLocalAINodes(Payload[0]);
+                    RegisterAINodes(Payload[1]);
+                    RegisterNodes(Payload[2]);
+                }
+            }
+
+
+            //Also, remember to synchronize the NIM_Engine.Config.
         }
+
+        #region Register
+        private static void RegisterAINodes(object Raw)
+        {
+            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+
+            foreach (var Kv in List)
+            {
+                if (Kv.Value == null) continue;
+                try
+                {
+                    var Node = (I_AI_Node)Activator.CreateInstance(Kv.Value);
+                    AINodes[Kv.Key] = Node;
+                }
+                catch (Exception Ex)
+                {
+                    
+                }
+            }
+        }
+
+        private static void RegisterLocalAINodes(object Raw)
+        {
+            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+
+            foreach (var Kv in List)
+            {
+                if (Kv.Value == null) continue;
+                try
+                {
+                    var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv.Value);
+                    LocalNodes[Kv.Key] = Node;
+                }
+                catch (Exception Ex)
+                {
+                }
+            }
+        }
+
+        private static void RegisterNodes(object Raw)
+        {
+            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+
+            foreach (var Kv in List)
+            {
+                if (Kv.Value == null) continue;
+                try
+                {
+                    var Node = (I_Node)Activator.CreateInstance(Kv.Value);
+                    Nodes[Kv.Key] = Node;
+                }
+                catch (Exception Ex)
+                {
+                }
+            }
+        }
+
+        #endregion
 
         private static Dictionary<string, PlatformConfig> PlatformConfigCache = null;
 
