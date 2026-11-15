@@ -35,6 +35,9 @@ namespace NIMEngine.Platform
 
             // Enable TLS 1.2, older .NET Framework versions do not enable it by default.
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
+
+
+            NIM_Engine.GetFullPath(NIM_Engine.PluginsPath);
         }
 
         private static Dictionary<string, PlatformConfig> PlatformConfigCache = null;
