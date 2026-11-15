@@ -27,7 +27,7 @@ namespace NIMEngine.Tests
             EngineConfigJson previousConfig = NIM_Engine.Config;
             NIM_Engine.Config = new EngineConfigJson
             {
-                PlatformConfigs = new Dictionary<int, PlatformConfig>()
+                PlatformConfigs = new Dictionary<string, PlatformConfig>()
             };
             var provider = new InMemoryProvider();
             var store = new InMemoryStore();

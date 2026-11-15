@@ -30,7 +30,7 @@ namespace NIMEngine.Tests
 
             NIM_Engine.Config = new EngineConfigJson
             {
-                PlatformConfigs = new Dictionary<int, PlatformConfig>()
+                PlatformConfigs = new Dictionary<string, PlatformConfig>()
             };
             NIM_Engine.AIMemory = new AITranslationMemory();
             EngineEvents.SetBaseUnitStateChangedCallback = null;

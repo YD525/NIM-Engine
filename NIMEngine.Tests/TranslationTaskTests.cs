@@ -29,7 +29,7 @@ namespace NIMEngine.Tests
             NIM_Engine.Config = new EngineConfigJson
             {
                 MaxThreadCount = 2,
-                PlatformConfigs = new Dictionary<int, PlatformConfig>()
+                PlatformConfigs = new Dictionary<string, PlatformConfig>()
             };
         }
 
