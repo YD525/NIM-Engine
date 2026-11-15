@@ -55,6 +55,7 @@
     <Compile Include="Nodes\DeepLApi.cs" />
     <Compile Include="Nodes\DeepSeekApi.cs" />
     <Compile Include="Nodes\GeminiApi.cs" />
+    <Compile Include="Nodes\LocalAI.cs" />
     <Compile Include="Nodes\NanoGptApi.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace NIMEngine.Plugin
 {
-    public interface IPlugin
+    public interface I_Plugin
     {
         string Name { get; set; }
         string Author { get; set; }
         string Description { get; set; }
 
-        void Init(string MethodName, object[] ParamsRef);
+        void Init(string MethodName,ref object[] ParamsRef);
 
-        void HandleEvent(string MethodName, object[] ParamsRef);
+        void HandleEvent(string MethodName,ref object[] ParamsRef);
     }
 }
