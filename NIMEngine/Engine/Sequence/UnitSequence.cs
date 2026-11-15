@@ -202,7 +202,7 @@ namespace NIMEngine.Sequence
                 if (NIM_Engine.Config.PreTranslateEnable)
                 {
                     PreTranslateCall NPreTranslateCall = new PreTranslateCall();
-                    NPreTranslateCall.Platform = PlatformType.NIMEngine;
+                    NPreTranslateCall.Name = "Local Engine";
                     NPreTranslateCall.FromAI = false;
                     NPreTranslateCall.Key = Item.Key;
 

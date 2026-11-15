@@ -2,9 +2,7 @@
 using NIMEngine.Events;
 using NIMEngine.Language;
 using NIMEngine.P_Delegate;
-using NIMEngine.Platform.LocalAI;
 using NIMEngine.Platform;
-using NIMEngine.Request;
 using NIMEngine.Sequence;
 using NIMEngine.Translate;
 using NIMEngine.Unit;
@@ -109,97 +107,28 @@ public class EngineCore
         lock (_Lock)
         {
             EngineNodes.Clear();
-            PlatformApiKeys KeyData = null;
 
-            var ChatGptConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(ChatGptApi.Type);
-            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(ChatGptApi.Type);
-            if (ChatGptConfig.Enable && KeyData.HaveKey())
+            var Nodes = PlatformHub.GetAllNode();
+
+            if (Nodes != null)
             {
-                ChatGptApi NChatGptApi = new ChatGptApi();
-                NChatGptApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                AddNode_NoLock(new EngineNode(this, NChatGptApi, KeyData.GetKeyCount(), "ChatGpt"));
-            }
-
-            var GeminiConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(GeminiApi.Type);
-            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(GeminiApi.Type);
-            if (GeminiConfig.Enable && KeyData.HaveKey())
-            {
-                GeminiApi NGeminiApi = new GeminiApi();
-                NGeminiApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                AddNode_NoLock(new EngineNode(this, NGeminiApi, KeyData.GetKeyCount(), "Gemini"));
-            }
-
-            var DeepSeekConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(DeepSeekApi.Type);
-            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(DeepSeekApi.Type);
-            if (DeepSeekConfig.Enable && KeyData.HaveKey())
-            {
-                DeepSeekApi NDeepSeekApi = new DeepSeekApi();
-                NDeepSeekApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                AddNode_NoLock(new EngineNode(this, NDeepSeekApi, KeyData.GetKeyCount(), "DeepSeek"));
-            }
-
-            var LMLocalAIConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(LMStudio.Type);
-            if (LMLocalAIConfig.Enable)
-            {
-                LMStudio NLMStudio = new LMStudio();
-                NLMStudio.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
-                AddNode_NoLock(new EngineNode(this, NLMStudio, 1, "LMStudio"));
-            }
-
-            var DeepLConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(DeepLApi.Type);
-            KeyData = NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type);
-            if (DeepLConfig.Enable && KeyData.HaveKey())
-            {
-                DeepLApi NDeepLApi = new DeepLApi();
-                NDeepLApi.Init(0, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                AddNode_NoLock(new EngineNode(this, NDeepLApi, KeyData.GetKeyCount(), "DeepL"));
-            }
-
-            for (int i = 0; i < NIMEngine.NIM_Engine.Config.PlatformConfigs.Count; i++)
-            {
-                int GetKey = NIMEngine.NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
-                var CustomInFo = NIMEngine.NIM_Engine.Config.PlatformConfigs[GetKey].CustomInFo;
-                if (CustomInFo == null) continue;
-                if (CustomInFo.CustomID <= 0 || !NIMEngine.NIM_Engine.Config.PlatformConfigs[GetKey].Enable) continue;
-
-                KeyData = NIMEngine.NIM_Engine.KeyData.GetData(CustomInFo.CustomID);
-                string CustomKey = "Custom_" + CustomInFo.CustomID;
-
-                switch (CustomInFo.Type)
+                foreach (var GetNode in Nodes)
                 {
-                    case CustomPlatformType.LocalAI:
+                    if (PlatformHub.IsEnable(GetNode.Value.Name))
+                    {
+                        string Key = GetNode.Value.Name;
+                        if (GetNode.Value.Type == 0)
                         {
-                            CustomLocalAIApi NCustomLocalAIApi = new CustomLocalAIApi();
-                            NCustomLocalAIApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
-                            AddNode_NoLock(new EngineNode(this, NCustomLocalAIApi, 1, CustomKey));
+                            //Local AI Need Init();
+                            PlatformHub.GetLocalAINode(Key)?.Init();
                         }
-                        break;
-                    case CustomPlatformType.CloudAI:
-                        {
-                            CustomAIApi NCustomAIApi = new CustomAIApi();
-                            NCustomAIApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                            AddNode_NoLock(new EngineNode(this, NCustomAIApi, KeyData.GetKeyCount(), CustomKey));
-                        }
-                        break;
-                    case CustomPlatformType.Traditional:
-                        {
-                            CustomApi NCustomApi = new CustomApi();
-                            NCustomApi.Init(CustomInFo.CustomID, NIMEngine.NIM_Engine.Config, ProxyCenter.CurrentProxy);
-                            AddNode_NoLock(new EngineNode(this, NCustomApi, KeyData.GetKeyCount(), CustomKey));
-                        }
-                        break;
+
+                        PlatformApiKeys KeyData = NIMEngine.NIM_Engine.KeyData.GetData(Key);
+
+                        AddNode_NoLock(new EngineNode(this,GetNode.Value.Name,GetNode.Value.Type,KeyData.GetKeyCount(), Key));
+                    }
                 }
             }
-
-            var HumanConfig = NIMEngine.NIM_Engine.Config.GetPlatformData(HumanTranslationApi.Type);
-            if (HumanConfig.Enable)
-            {
-                HumanTranslationApi NHumanTranslationApi = new HumanTranslationApi();
-                NHumanTranslationApi.Init(0, NIMEngine.NIM_Engine.AIMemory, NIMEngine.NIM_Engine.Config);
-                AddNode_NoLock(new EngineNode(this, NHumanTranslationApi, 1, "Human"));
-            }
-
-            KeyData = null;
         }
     }
 
@@ -297,10 +226,8 @@ public class EngineCore
                     return Item;
                 }
 
-                string SetType = "";
-
                 GetTrans = CurrentEngine.Call(TranslatorRef.ID, CancelToken, TranslatorRef, ref Item, ref Sequences, From, To,
-                true, NIMEngine.NIM_Engine.Config.ContextLimit, AIParam, ref SetType,ref UseModel);
+                true, NIMEngine.NIM_Engine.Config.ContextLimit, AIParam, ref UseModel);
 
                 CancelToken.ThrowIfCancellationRequested();
 
@@ -335,7 +262,7 @@ public class EngineCore
                 List<BaseUnit> NotPassUnits = new List<BaseUnit>();
                 List<BaseUnit> PassUnits = new List<BaseUnit>();
 
-                bool IsDeepL = SetType.Equals("DeepL");
+                bool IsDeepL = CurrentEngine.Name.Equals("DeepL");
 
                 bool Passed = Passer.TryPass(ref NotPassUnits, ref PassUnits, IsDeepL);
 
@@ -408,7 +335,9 @@ public class EngineCore
     {
         private readonly EngineCore Owner;
 
-        public object ApiRef;
+        public string Name;
+        public int Type = 0;
+
         public string Key;
         public int MaxCallCount;
         public int EffectiveWeight;
@@ -416,13 +345,14 @@ public class EngineCore
         public bool Disabled;
         public int SleepBySec;
 
-        public EngineNode(EngineCore Owner, object Api, int MaxCallCount, string Key) : this(Owner, Api, MaxCallCount, Key, 1) { }
+        public EngineNode(EngineCore Owner,string Name,int Type, int MaxCallCount, string Key) : this(Owner,Name,Type,MaxCallCount, Key, 1) { }
 
-        public EngineNode(EngineCore Owner, object Api, int MaxCallCount, string Key, int SleepBySec)
+        public EngineNode(EngineCore Owner,string Name, int Type, int MaxCallCount, string Key, int SleepBySec)
         {
             this.Owner = Owner;
-            this.ApiRef = Api;
             this.Key = Key;
+            this.Name = Name;
+            this.Type = Type;
             this.MaxCallCount = MaxCallCount;
             this.EffectiveWeight = MaxCallCount;
             this.CurrentWeight = 0;
@@ -458,12 +388,14 @@ public class EngineCore
         }
 
         public string Call(string TranslatorID, CancellationToken CancelToken, Translator TranslatorRef, ref UnitGroup Source, ref Dictionary<string, UnitSequence> Sequences,
-           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string SetType,ref string UseModel)
+           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam,ref string UseModel)
         {
             bool ForceReplace = true;
             bool ForceReplaceProtected = true;
 
-            if (this.ApiRef is ChatGptApi || this.ApiRef is GeminiApi || this.ApiRef is DeepSeekApi || this.ApiRef is LMStudio || this.ApiRef is CustomAIApi || this.ApiRef is CustomLocalAIApi || this.ApiRef is HumanTranslationApi)
+            //Local_AI_Node = 0, AI_Node = 1,Interactive_Node = 2,Node = 3
+
+            if (this.Type <= 2)
             {
                 ForceReplace = false;
                 ForceReplaceProtected = false;
@@ -500,21 +432,33 @@ public class EngineCore
                     CustomWords.AddRange(GetSeq.Value.Preprocessor.ReplaceTags);
             }
 
-            if (this.ApiRef is DeepLApi SetDeepL)
+            if (this.Type == 3)
             {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(DeepLApi.Type).Enable)
+                if (PlatformHub.IsEnable(this.Name))
                 {
                     PlatformCall Call = new PlatformCall();
-                    string GetData = null;
                     bool Passed = false;
                     int MaxTry = MaxTranslationAttempts;
                     string CurrentApiKey = "";
 
+                    string GetData = null;
+
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type).GetFirstKey();
-                        GetData = SetDeepL.QuickTrans(CurrentApiKey, Source, From, To, ref Call).Trim();
+
+                        bool State = PlatformHub.CallNode(
+                            this.Name, 
+                            NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey(),
+                            NIM_Engine.Config,
+                            Source, 
+                            From, 
+                            To, 
+                            ref Call,
+                            out string TranslateStr);
+
+                        GetData = TranslateStr.Trim();
+
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -528,60 +472,23 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(DeepLApi.Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
-                    SetType = "DeepL";
 
                     if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
                 }
             }
-            else if (this.ApiRef is CustomApi SetCustomApi)
+            else if (this.Type == 0)
             {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomApi.CustomID).Enable)
+                if (PlatformHub.IsEnable(this.Name))
                 {
-                    var Type = SetCustomApi.CustomID;
-                    PlatformCall Call = new PlatformCall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
+                    var CurrentNode = PlatformHub.GetLocalAINode(this.Name);
 
-                    do
+                    if (IsLocked(CurrentNode.SingleLock))
                     {
-                        CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetCustomApi.QuickTrans(CurrentApiKey, Source, From, To, ref Call).Trim();
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
-
-                    TransText = GetData;
-                    Call.Output();
-                    SetType = Type.ToString();
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.ApiRef is LMStudio SetLM)
-            {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(LMStudio.Type).Enable)
-                {
-                    if (IsLocked(LMStudio.SingleLock))
-                    {
-                        while (IsLocked(LMStudio.SingleLock))
+                        while (IsLocked(CurrentNode.SingleLock))
                         {
                             CancelToken.ThrowIfCancellationRequested();
                             Delay(CancelToken, 200);
@@ -596,7 +503,23 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        GetData = SetLM.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
+
+                        bool State = PlatformHub.CallLocalAINode(
+                            this.Name,
+                            NIM_Engine.Config,
+                            CustomWords, 
+                            Source, 
+                            From, 
+                            To, 
+                            UseAIMemory, 
+                            AIMemoryQueryLimit,
+                            AIParam,
+                            ref UseModel,
+                            ref Call,
+                            out string TranslateStr);
+
+                        GetData = TranslateStr.Trim();
+
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -612,17 +535,16 @@ public class EngineCore
 
                     TransText = GetData;
                     Call.Output();
-                    SetType = "LMStudio";
 
                     if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
                 }
             }
-            else if (this.ApiRef is ChatGptApi SetChatGpt)
+            else if (this.Type == 1)
             {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(ChatGptApi.Type).Enable)
+                if (PlatformHub.IsEnable(this.Name))
                 {
-                    var Type = ChatGptApi.Type;
                     AICall Call = new AICall();
+
                     string GetData = null;
                     bool Passed = false;
                     int MaxTry = MaxTranslationAttempts;
@@ -631,8 +553,24 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetChatGpt.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
+
+                        bool State = PlatformHub.CallAINode(
+                            this.Name,
+                            NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey(),
+                            NIM_Engine.Config,
+                            CustomWords,
+                            Source,
+                            From, 
+                            To, 
+                            UseAIMemory, 
+                            AIMemoryQueryLimit, 
+                            AIParam,
+                            ref UseModel, 
+                            ref Call,
+                            out string TranslateStr);
+
+                        GetData = TranslateStr.Trim();
+
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -646,134 +584,20 @@ public class EngineCore
                         }
                     } while (!Passed);
 
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
+                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(CurrentApiKey);
 
                     TransText = GetData;
                     Call.Output();
-                    SetType = "ChatGpt";
 
                     if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
                 }
             }
-            else if (this.ApiRef is GeminiApi SetGemini)
+            else if (this.Type == 2)
             {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(GeminiApi.Type).Enable)
+                if (PlatformHub.IsEnable(this.Name))
                 {
-                    var Type = GeminiApi.Type;
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
+                    var CurrentNode = PlatformHub.GetHumanNode(this.Name);
 
-                    do
-                    {
-                        CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetGemini.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel,ref Call).Trim();
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
-
-                    TransText = GetData;
-                    Call.Output();
-                    SetType = "Gemini";
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.ApiRef is DeepSeekApi SetDeepSeek)
-            {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(DeepSeekApi.Type).Enable)
-                {
-                    var Type = DeepSeekApi.Type;
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
-
-                    do
-                    {
-                        CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetDeepSeek.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
-
-                    TransText = GetData;
-                    Call.Output();
-                    SetType = "DeepSeek";
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.ApiRef is CustomAIApi SetCustomAI)
-            {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomAI.CustomID).Enable)
-                {
-                    var Type = SetCustomAI.CustomID;
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-                    string CurrentApiKey = "";
-
-                    do
-                    {
-                        CancelToken.ThrowIfCancellationRequested();
-                        CurrentApiKey = NIMEngine.NIM_Engine.KeyData.GetData(Type).GetFirstKey();
-                        GetData = SetCustomAI.QuickTrans(CurrentApiKey, CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam,ref UseModel, ref Call).Trim();
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(Type).ReportError(CurrentApiKey);
-
-                    TransText = GetData;
-                    Call.Output();
-                    SetType = Type.ToString();
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.ApiRef is CustomLocalAIApi SetCustomLocal)
-            {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(SetCustomLocal.CustomID).Enable)
-                {
-                    var Type = SetCustomLocal.CustomID;
                     AICall Call = new AICall();
                     string GetData = null;
                     bool Passed = false;
@@ -782,7 +606,22 @@ public class EngineCore
                     do
                     {
                         CancelToken.ThrowIfCancellationRequested();
-                        GetData = SetCustomLocal.QuickTrans(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref UseModel, ref Call).Trim();
+
+                        bool State = PlatformHub.CallHumanNode(
+                            this.Name,
+                            NIM_Engine.Config,
+                            CustomWords,
+                            Source,
+                            From,
+                            To,
+                            UseAIMemory,
+                            AIMemoryQueryLimit,
+                            AIParam,
+                            ref Call,
+                            out string TranslateStr);
+
+                        GetData = TranslateStr.Trim();
+
                         Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
 
                         if (!Passed && MaxTry > 0)
@@ -798,41 +637,6 @@ public class EngineCore
 
                     TransText = GetData;
                     Call.Output();
-                    SetType = Type.ToString();
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.ApiRef is HumanTranslationApi SetHuman)
-            {
-                if (NIMEngine.NIM_Engine.Config.GetPlatformData(HumanTranslationApi.Type).Enable)
-                {
-                    var Type = SetHuman.CustomID;
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-
-                    do
-                    {
-                        CancelToken.ThrowIfCancellationRequested();
-                        GetData = SetHuman.CallHuman(CustomWords, Source, From, To, UseAIMemory, AIMemoryQueryLimit, AIParam, ref Call).Trim();
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    TransText = GetData;
-                    Call.Output();
-                    SetType = Type.ToString();
 
                     if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
                 }

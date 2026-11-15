@@ -14,11 +14,6 @@ using static NIMEngine.Engine.P_BucketContainer;
 
 namespace NIMEngine.Translate
 {
-    public enum PlatformType
-    {
-        Null = 0, ChatGpt = 1, DeepSeek = 2, Gemini = 3, DeepL = 5, GoogleApi = 7, LMLocalAI = 10, NIMEngine = 11, CustomPlatform = 12, HumanTranslation = 13
-    }
-
     public class Translator
     {
         public string ID = "";

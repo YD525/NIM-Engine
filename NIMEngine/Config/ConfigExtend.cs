@@ -9,52 +9,27 @@ using NIMEngine.Translate;
 
 namespace NIMEngine
 {
-    public class CustomPlatformInFo
-    {
-        public string Name = "";
-        public int CustomID = 0;
-
-        public string Url = "";
-        public List<ReqReplaceTag> Url_Tags = new List<ReqReplaceTag>();
-
-        public string PayLoad = "";
-        public ReqEncodeType PayLoadEncode = ReqEncodeType.Null;
-        public List<ReqReplaceTag> PayLoad_Tags = new List<ReqReplaceTag>();
-
-        public string Header = "";
-        public List<ReqReplaceTag> Header_Tags = new List<ReqReplaceTag>();
-
-        public bool IsPost = true;
-
-        public SignEncode Sign = SignEncode.Null;
-       
-        public string SignParams = "";
-
-        public bool SignToLower = false;
-
-        public CustomPlatformType Type = CustomPlatformType.Null;
-
-        public ReqQueryRuleItem QueryRule = new ReqQueryRuleItem();
-    }
     public class PlatformConfig
     {
-        public List<string> ApiKeys { get; set; } = new List<string>();
-        public PlatformType Platform { get; set; } = PlatformType.Null;
+        /// <summary>
+        /// This is the unique primary key; it cannot have any conflicts.
+        /// </summary>
+        public string Name = "";
 
+        /// <summary>
+        /// Local_AI_Node = 0, AI_Node = 1,Interactive_Node = 2,Node = 3
+        /// </summary>
+        public int Type = 0;
+
+        public List<string> ApiKeys { get; set; } = new List<string>();
+     
         public bool Enable = false;
         public string Model { get; set; } = "";
-        public CustomPlatformInFo CustomInFo { get; set; } = null;
 
         public int LocalPort = 0;
 
-        public bool IsFree = false;
-
         public PlatformConfig()
         {
-        }
-        public PlatformConfig(PlatformType Type)
-        {
-            this.Platform = Type;
         }
     }
     public class EngineConfigJson
@@ -98,7 +73,7 @@ namespace NIMEngine
 
         #region ApiKey Set
 
-        public Dictionary<int, PlatformConfig> PlatformConfigs { get; set; } = null;
+        public Dictionary<string, PlatformConfig> PlatformConfigs { get; set; } = null;
 
         #endregion
 
@@ -210,22 +185,7 @@ namespace NIMEngine
         /// </summary>
         public string UserCustomAIPrompt { get; set; } = "";
 
-        public PlatformConfig GetPlatformData(PlatformType Type)
-        {
-            lock (NIM_Engine.QueryPlatformDataLock)
-            {
-                return this.PlatformConfigs[(int)Type];
-            }
-        }
-
-        public PlatformConfig GetPlatformData(int CustomID)
-        {
-            lock (NIM_Engine.QueryPlatformDataLock)
-            {
-                return this.PlatformConfigs[CustomID];
-            }
-        }
-
+      
         public string GetPlatformKeysStr(PlatformConfig Config)
         {
             lock (NIM_Engine.QueryPlatformDataLock)
@@ -266,55 +226,55 @@ namespace NIMEngine
 
         public static void SetDefaultModel()
         {
-            if (Config.PlatformConfigs == null)
-            {
-                Config.PlatformConfigs = new Dictionary<int, PlatformConfig>();
+            //if (Config.PlatformConfigs == null)
+            //{
+            //    Config.PlatformConfigs = new Dictionary<int, PlatformConfig>();
 
-                Config.PlatformConfigs.Add((int)PlatformType.ChatGpt, new PlatformConfig(PlatformType.ChatGpt));
-                Config.PlatformConfigs.Add((int)PlatformType.Gemini, new PlatformConfig(PlatformType.Gemini));
-                Config.PlatformConfigs.Add((int)PlatformType.LMLocalAI, new PlatformConfig(PlatformType.LMLocalAI));
-                Config.PlatformConfigs.Add((int)PlatformType.DeepSeek, new PlatformConfig(PlatformType.DeepSeek));
-                Config.PlatformConfigs.Add((int)PlatformType.DeepL, new PlatformConfig(PlatformType.DeepL));
+            //    Config.PlatformConfigs.Add((int)PlatformType.ChatGpt, new PlatformConfig(PlatformType.ChatGpt));
+            //    Config.PlatformConfigs.Add((int)PlatformType.Gemini, new PlatformConfig(PlatformType.Gemini));
+            //    Config.PlatformConfigs.Add((int)PlatformType.LMLocalAI, new PlatformConfig(PlatformType.LMLocalAI));
+            //    Config.PlatformConfigs.Add((int)PlatformType.DeepSeek, new PlatformConfig(PlatformType.DeepSeek));
+            //    Config.PlatformConfigs.Add((int)PlatformType.DeepL, new PlatformConfig(PlatformType.DeepL));
 
-                Config.PlatformConfigs.Add((int)PlatformType.HumanTranslation, new PlatformConfig(PlatformType.HumanTranslation));
+            //    Config.PlatformConfigs.Add((int)PlatformType.HumanTranslation, new PlatformConfig(PlatformType.HumanTranslation));
 
-                if (Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort == 0)
-                {
-                    Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort = 1234;
-                }
-                if (Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model == "")
-                {
-                    Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model = "gpt-4.1-nano";
-                }
-                if (Config.PlatformConfigs[(int)PlatformType.Gemini].Model == "")
-                {
-                    Config.PlatformConfigs[(int)PlatformType.Gemini].Model = "gemini-2.5-flash";
-                }
-                if (Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model == "")
-                {
-                    Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model = "deepseek-v4-pro";
-                }
+            //    if (Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort == 0)
+            //    {
+            //        Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort = 1234;
+            //    }
+            //    if (Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model == "")
+            //    {
+            //        Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model = "gpt-4.1-nano";
+            //    }
+            //    if (Config.PlatformConfigs[(int)PlatformType.Gemini].Model == "")
+            //    {
+            //        Config.PlatformConfigs[(int)PlatformType.Gemini].Model = "gemini-2.5-flash";
+            //    }
+            //    if (Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model == "")
+            //    {
+            //        Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model = "deepseek-v4-pro";
+            //    }
 
-                Config.PlatformConfigs[(int)PlatformType.DeepL].IsFree = true;
+            //    Config.PlatformConfigs[(int)PlatformType.DeepL].IsFree = true;
 
-                if (Config.Init == 0)
-                {
-                    int EnableCount = 0;
-                    foreach (var GetItem in new Dictionary<int, PlatformConfig>(Config.PlatformConfigs))
-                    {
-                        if (GetItem.Value.Enable && GetItem.Value.Platform!= PlatformType.HumanTranslation)
-                        { 
-                           EnableCount++;
-                        }
-                    }
+            //    if (Config.Init == 0)
+            //    {
+            //        int EnableCount = 0;
+            //        foreach (var GetItem in new Dictionary<int, PlatformConfig>(Config.PlatformConfigs))
+            //        {
+            //            if (GetItem.Value.Enable && GetItem.Value.Platform!= PlatformType.HumanTranslation)
+            //            { 
+            //               EnableCount++;
+            //            }
+            //        }
 
-                    if (EnableCount == 0)
-                    {
-                        Config.PlatformConfigs[(int)PlatformType.HumanTranslation].Enable = true;
-                    }
-                    Config.Init = 1;
-                }
-            }
+            //        if (EnableCount == 0)
+            //        {
+            //            Config.PlatformConfigs[(int)PlatformType.HumanTranslation].Enable = true;
+            //        }
+            //        Config.Init = 1;
+            //    }
+            //}
         }
         private static byte[] XOREncrypt(byte[] data)
         {
@@ -345,6 +305,7 @@ namespace NIMEngine
             for (int i = 0; i < NIM_Engine.Config.PlatformConfigs.Count; i++)
             { 
                 var GetKey = NIM_Engine.Config.PlatformConfigs.ElementAt(i).Key;
+
                 if (NIM_Engine.Config.PlatformConfigs[GetKey].ApiKeys.Count > 0)
                 {
                     if (NIM_Engine.Config.PlatformConfigs[GetKey].Enable)
@@ -353,12 +314,12 @@ namespace NIMEngine
                     }
                 }
                 else
-                if (NIM_Engine.Config.PlatformConfigs[GetKey].Platform == PlatformType.LMLocalAI && NIM_Engine.Config.PlatformConfigs[GetKey].Enable)
+                if (NIM_Engine.Config.PlatformConfigs[GetKey].Name.Equals("LocalAI") && NIM_Engine.Config.PlatformConfigs[GetKey].Enable)
                 {
                     EnableCount++;
                 }
                 else
-                if (NIM_Engine.Config.PlatformConfigs[GetKey].Platform == PlatformType.HumanTranslation && NIM_Engine.Config.PlatformConfigs[GetKey].Enable)
+                if (NIM_Engine.Config.PlatformConfigs[GetKey].Name.Equals("HumanTranslation") && NIM_Engine.Config.PlatformConfigs[GetKey].Enable)
                 {
                     EnableCount++;
                 }
