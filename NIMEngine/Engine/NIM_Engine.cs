@@ -19,6 +19,8 @@ namespace NIMEngine
         public static AITranslationMemory AIMemory = new AITranslationMemory();
         public static string Version = "3.3.9.5";
 
+        public static string PluginsPath = @"\CorePlugins\";
+
         public static object QueryPlatformDataLock = new object();
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace NIMEngine
             return NIM_Engine.Version;
         }
 
-        public static string PluginsPath = @"\CorePlugins\";
+
         private static string CurrentPath = "";
         public static void Init(string StartupPath,Action<int>StepAction = null)
         {
@@ -117,6 +119,7 @@ namespace NIMEngine
             WordAutoComplete.Init();
 
             StepAction?.Invoke(10);
+            PlatformHub.Init();
             ReSetKeyData();
         }
 
