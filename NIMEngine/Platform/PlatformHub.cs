@@ -18,15 +18,12 @@ namespace NIMEngine.Platform
 {
     public class PlatformHub
     {
-        public static ConcurrentDictionary<string, I_AI_Node> AINodes { get; private set; } = new ConcurrentDictionary<string, I_AI_Node>();
-        public static ConcurrentDictionary<string, I_Local_AI_Node> LocalNodes { get; private set; } = new ConcurrentDictionary<string, I_Local_AI_Node>();
-        public static ConcurrentDictionary<string, I_Node> Nodes { get; private set; } = new ConcurrentDictionary<string, I_Node>();
+        public static ConcurrentDictionary<string, I_AI_Node> CloudAINodes { get; private set; } = new ConcurrentDictionary<string, I_AI_Node>();
+        public static ConcurrentDictionary<string, I_Local_AI_Node> LocalAINodes { get; private set; } = new ConcurrentDictionary<string, I_Local_AI_Node>();
+        public static ConcurrentDictionary<string, I_Node> CloudNodes { get; private set; } = new ConcurrentDictionary<string, I_Node>();
 
         public static ConcurrentDictionary<string, I_Interactive_Node> HumanNodes { get; private set; } = new ConcurrentDictionary<string, I_Interactive_Node>();
 
-        /// <summary>
-        /// Global network initialization. Call once at program startup, before any request is sent.
-        /// </summary>
         public static void Init()
         {
             // .NET Framework limits HttpWebRequest to 2 concurrent connections per host by default,
@@ -36,9 +33,9 @@ namespace NIMEngine.Platform
             // Enable TLS 1.2, older .NET Framework versions do not enable it by default.
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
-            AINodes.Clear();
-            LocalNodes.Clear();
-            Nodes.Clear();
+            CloudAINodes.Clear();
+            LocalAINodes.Clear();
+            CloudNodes.Clear();
 
             HumanNodes.Clear();
 
@@ -60,12 +57,13 @@ namespace NIMEngine.Platform
             }
 
             //Also, remember to synchronize the NIM_Engine.Config.
+            List<object> AllNodes = new List<object>();
 
-            List<object> AllNodes = new List<object>() 
-            {
-                LocalNodes.Values.ToList(),AINodes.Values.ToList(),Nodes.Values.ToList(), 
-                new List<I_Interactive_Node>() { new HumanTranslationApi() } //System Node
-            };
+            AllNodes.AddRange(LocalAINodes.Values.ToList());
+            AllNodes.AddRange(CloudAINodes.Values.ToList());
+            AllNodes.AddRange(CloudNodes.Values.ToList());
+
+            AllNodes.Add(new HumanTranslationApi());
 
             foreach (var GetNode in AllNodes)
             {
@@ -88,7 +86,7 @@ namespace NIMEngine.Platform
                 if (GetNode is I_AI_Node)
                 {
                     var Node = (I_AI_Node)GetNode;
-                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(((I_AI_Node)GetNode).Name))
+                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
                     {
                         NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
                                new PlatformConfig()
@@ -155,7 +153,7 @@ namespace NIMEngine.Platform
                 try
                 {
                     var Node = (I_AI_Node)Activator.CreateInstance(Kv.Value);
-                    AINodes[Kv.Key] = Node;
+                    CloudAINodes[Kv.Key] = Node;
                 }
                 catch (Exception)
                 {
@@ -174,7 +172,7 @@ namespace NIMEngine.Platform
                 try
                 {
                     var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv.Value);
-                    LocalNodes[Kv.Key] = Node;
+                    LocalAINodes[Kv.Key] = Node;
                 }
                 catch (Exception)
                 {
@@ -192,7 +190,7 @@ namespace NIMEngine.Platform
                 try
                 {
                     var Node = (I_Node)Activator.CreateInstance(Kv.Value);
-                    Nodes[Kv.Key] = Node;
+                    CloudNodes[Kv.Key] = Node;
                 }
                 catch (Exception)
                 {
@@ -243,7 +241,7 @@ namespace NIMEngine.Platform
 
         public static I_AI_Node GetAINode(string Name)
         {
-            if (AINodes.TryGetValue(Name, out var CurrentNode))
+            if (CloudAINodes.TryGetValue(Name, out var CurrentNode))
             {
                 return CurrentNode;
             }
@@ -254,7 +252,7 @@ namespace NIMEngine.Platform
             List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
             , out string TranslateStr)
         {
-            if (AINodes.TryGetValue(Name, out var CurrentNode))
+            if (CloudAINodes.TryGetValue(Name, out var CurrentNode))
             {
                 List<string> Related = new List<string>();
 
@@ -321,7 +319,7 @@ namespace NIMEngine.Platform
 
         public static I_Local_AI_Node GetLocalAINode(string Name)
         {
-            if (LocalNodes.TryGetValue(Name, out var CurrentNode))
+            if (LocalAINodes.TryGetValue(Name, out var CurrentNode))
             {
                 return CurrentNode;
             }
@@ -332,7 +330,7 @@ namespace NIMEngine.Platform
             List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
             , out string TranslateStr)
         {
-            if (LocalNodes.TryGetValue(Name, out var CurrentNode))
+            if (LocalAINodes.TryGetValue(Name, out var CurrentNode))
             {
                 if (PlatformConfigCache == null)
                 {
@@ -411,7 +409,7 @@ namespace NIMEngine.Platform
 
         public static I_Node GetNode(string Name)
         {
-            if (Nodes.TryGetValue(Name, out var CurrentNode))
+            if (CloudNodes.TryGetValue(Name, out var CurrentNode))
             {
                 return CurrentNode;
             }
@@ -438,7 +436,7 @@ namespace NIMEngine.Platform
             UnitGroup Source, Languages FromLang, Languages ToLang,
             ref PlatformCall Call, out string TranslateStr)
         {
-            if (Nodes.TryGetValue(Name, out var CurrentNode))
+            if (CloudNodes.TryGetValue(Name, out var CurrentNode))
             {
                 // Nothing to translate
                 bool CanTrans = false;
