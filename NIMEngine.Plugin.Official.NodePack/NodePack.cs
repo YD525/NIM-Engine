@@ -9,7 +9,7 @@ namespace NIMEngine.Plugin.Official.NodePack
 {
     [PluginName("Node Pack")] //Enter your plugin name here.
     [PluginAuthor("NIM Engine")] //Remember to use a different author name—definitely don’t use the one I’ve written here.
-    [PluginDescription("Node extension pack that registers multiple translation platform nodes so the engine can use them.")]
+    [PluginDescription("Node extension pack that registers multiple translation platform nodes so the engine can use them.")] //Write your description here
     [PluginVersion(1.0f)]// Two-part format: Major.Revision
     [PluginEnabled(true)] // Third-party plugin: always <c>false</c>.
     public class NodePack: I_Plugin
@@ -27,13 +27,13 @@ namespace NIMEngine.Plugin.Official.NodePack
 
                 ParamsRef[0] = new List<KeyValuePair<string, Type>>()
                 {
-                    // Local_AI_Node
+                    //Need to implement the I_Local_AI_Node interface
                     new KeyValuePair<string,Type>("LocalAI",typeof(LocalAI))
                 };
 
                 ParamsRef[1] = new List<KeyValuePair<string, Type>>()
                 {
-                    // I_AI_Node
+                    //Need to implement the I_AI_Node interface
                     new KeyValuePair<string,Type>("Claude",typeof(ClaudeApi)),
                     new KeyValuePair<string,Type>("ChatGpt",typeof(ChatGptApi)),
                     new KeyValuePair<string,Type>("Gemini",typeof(GeminiApi)),
@@ -43,7 +43,7 @@ namespace NIMEngine.Plugin.Official.NodePack
 
                 ParamsRef[2] = new List<KeyValuePair<string, Type>>()
                 {
-                    // Node
+                    //Need to implement I_Node interface
                     new KeyValuePair<string,Type>("DeepL",typeof(DeepLApi))
                 };
             }
