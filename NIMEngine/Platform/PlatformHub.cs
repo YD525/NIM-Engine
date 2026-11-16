@@ -36,6 +36,14 @@ namespace NIMEngine.Platform
             // Enable TLS 1.2, older .NET Framework versions do not enable it by default.
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls13;
 
+            AINodes.Clear();
+            LocalNodes.Clear();
+            Nodes.Clear();
+
+            HumanNodes.Clear();
+
+            HumanNodes["HumanTranslation"] = new HumanTranslationApi();
+
             var Results = PluginHub.Instance.Dispatch(0, "LoadNodes");
 
             if (Results.Executed)
@@ -51,8 +59,89 @@ namespace NIMEngine.Platform
                 }
             }
 
-
             //Also, remember to synchronize the NIM_Engine.Config.
+
+            List<object> AllNodes = new List<object>() 
+            {
+                LocalNodes.Values.ToList(),AINodes.Values.ToList(),Nodes.Values.ToList(), 
+                new List<I_Interactive_Node>() { new HumanTranslationApi() } //System Node
+            };
+
+            foreach (var GetNode in AllNodes)
+            {
+                if (GetNode is I_Interactive_Node)
+                {
+                    var Node = (I_Interactive_Node)GetNode;
+                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
+                    {
+                        NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
+                            new PlatformConfig()
+                            {
+                                Name = Node.Name,
+                                Type = Node.Type,
+
+                                Enable = false,
+                            });
+                    }
+                }
+                else
+                if (GetNode is I_AI_Node)
+                {
+                    var Node = (I_AI_Node)GetNode;
+                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(((I_AI_Node)GetNode).Name))
+                    {
+                        NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
+                               new PlatformConfig()
+                               {
+                                   Name = Node.Name,
+                                   Type = Node.Type,
+
+                                   ApiKeys = new List<string>(),
+
+                                   Enable = false,
+
+                                   Model = string.Empty
+                               });
+                    }
+                }
+                else
+                if (GetNode is I_Local_AI_Node)
+                {
+                    var Node = (I_Local_AI_Node)GetNode;
+                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
+                    {
+                        NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
+                              new PlatformConfig()
+                              {
+                                  Name = Node.Name,
+                                  Type = Node.Type,
+
+                                  Enable = false,
+
+                                  Model = Node.Model,
+                                  LocalPort = Node.LocalPort,
+                              });
+                    }
+                }
+                else
+                if (GetNode is I_Node)
+                {
+                    var Node = (I_Node)GetNode;
+                    if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
+                    {
+                        NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
+                             new PlatformConfig()
+                             {
+                                 Name = Node.Name,
+                                 Type = Node.Type,
+
+                                 ApiKeys = new List<string>(),
+
+                                 Enable = false,
+                             });
+                    }
+                }
+            }
         }
 
         #region Register
@@ -287,6 +376,17 @@ namespace NIMEngine.Platform
                     out AIResponseStr);
 
                     Success = !string.IsNullOrEmpty(AIResponseStr);
+
+                    try 
+                    {
+                        if (NIM_Engine.Config.PlatformConfigs.ContainsKey(Name))
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Name].Model = CurrentNode.Model;
+                        }
+                    } 
+                    catch(Exception)
+                    { 
+                    }
                 }
                 catch (Exception Ex)
                 {
