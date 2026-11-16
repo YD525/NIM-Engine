@@ -20,10 +20,11 @@ namespace NIMEngine.Plugin
         {
             public I_Plugin Instance { get; internal set; }
             public string FilePath { get; internal set; }
-            public string Name => Instance?.Name;
-            public string Author => Instance?.Author;
-            public string Description => Instance?.Description;
-            public string Version => Instance?.Version.ToString("F2");
+            public Type PluginType { get; internal set; }
+            public string Name { get; internal set; }
+            public string Author { get; internal set; }
+            public string Description { get; internal set; }
+            public string Version { get; internal set; }
 
             public string SHA256_Sign = "";
 
@@ -52,26 +53,42 @@ namespace NIMEngine.Plugin
                         if (T == null || T.IsAbstract || T.IsInterface) continue;
                         if (!typeof(I_Plugin).IsAssignableFrom(T)) continue;
 
-                        I_Plugin Instance;
-                        try { Instance = (I_Plugin)Activator.CreateInstance(T); }
-                        catch (Exception) { continue; }
+                        PluginNameAttribute NameAttr = T.GetCustomAttribute<PluginNameAttribute>();
+                        PluginAuthorAttribute AuthorAttr = T.GetCustomAttribute<PluginAuthorAttribute>();
+                        PluginDescriptionAttribute DescriptionAttr = T.GetCustomAttribute<PluginDescriptionAttribute>();
+                        PluginVersionAttribute VersionAttr = T.GetCustomAttribute<PluginVersionAttribute>();
+                        PluginEnabledAttribute EnabledAttr = T.GetCustomAttribute<PluginEnabledAttribute>();
+
+                        if (NameAttr == null || AuthorAttr == null || DescriptionAttr == null || VersionAttr == null || EnabledAttr == null)
+                        {
+                            // [Violating plugin] Simply skip any plugins that don't behave as expected.
+                            continue;
+                        }                  
 
                         PluginEntry Entry = new PluginEntry
                         {
-                            Instance = Instance,
+                            Instance = null, // Do not create the instance early, otherwise Enabled is meaningless.
                             FilePath = Dll,
+                            PluginType = T,
                             SHA256_Sign = SHA256_Validator.ComputeFileSHA256(Dll),
                             Enabled = false,
                             IsLoaded = true
                         };
 
-                        if (Entry.Instance.Enabled && Verified_SHA256_List.Contains(Entry.SHA256_Sign))
+                        if (EnabledAttr.Enabled && !Verified_SHA256_List.Contains(Entry.SHA256_Sign))
+                        {
+                            // [Violating plugin] Simply skip any plugins that don't behave as expected.
+                            continue;
+                        }
+
+                        Entry.Name = NameAttr?.Name;
+                        Entry.Author = AuthorAttr?.Author;
+                        Entry.Description = DescriptionAttr?.Description;
+                        Entry.Version = VersionAttr?.Version.ToString("F2");
+
+                        if (EnabledAttr.Enabled && Verified_SHA256_List.Contains(Entry.SHA256_Sign))
                         {
                             Entry.Enabled = true;
-                        }
-                        else
-                        {
-                            Entry.Enabled = false;
                         }
 
                         lock (_Lock)
@@ -97,6 +114,11 @@ namespace NIMEngine.Plugin
 
             foreach (PluginEntry Entry in Snapshot)
             {
+                if (Entry.Instance == null)
+                {
+                    Entry.Instance = (I_Plugin)Activator.CreateInstance(Entry.PluginType);
+                }
+
                 object[] Args = ParamsRef;
                 try
                 {
@@ -126,9 +148,9 @@ namespace NIMEngine.Plugin
 
         public List<PluginEntry> GetPlugins()
         {
-            lock (_Lock) 
-            { 
-                return Plugins.ToList(); 
+            lock (_Lock)
+            {
+                return Plugins.ToList();
             }
         }
     }
