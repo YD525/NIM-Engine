@@ -96,3 +96,4 @@ NIMEngine uses different licenses for different projects within this repository.
 - **All other projects:** Licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**.
 
 **All plugin authors must read and comply with the NIM Plugin License (PPL) 1.0 before developing, distributing, or making available any Plugin for NIM Engine. Developing a Plugin for NIM Engine constitutes acceptance of the PPL 1.0 terms.**
+**Exception: Official plugins developed and maintained by the NIM Engine project are not licensed under the PPL 1.0. They remain licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0), consistent with the rest of the NIM Engine project.**
