@@ -11,7 +11,7 @@ namespace NIMEngine.Plugin.Official.NodePack
     [PluginAuthor("NIM Engine")] //Remember to use a different author name—definitely don’t use the one I’ve written here.
     [PluginDescription("Node extension pack that registers multiple translation platform nodes so the engine can use them.")] //Write your description here
     [PluginVersion(1.0f)]// Two-part format: Major.Revision
-    [PluginEnabled(true)] // Third-party plugin: always <c>false</c>.
+    [PluginEnabled(true)]// Official plugins: set to true to run the plugin automatically after the main program starts. Third-party plugins: keep false.
     public class NodePack: I_Plugin
     {
         /// <summary>
