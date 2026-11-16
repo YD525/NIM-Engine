@@ -11,7 +11,7 @@ namespace NIMEngine.Plugin
         string Name { get; set; }
         string Author { get; set; }
         string Description { get; set; }
-
+        float Version { get; set; }
         bool Enabled { get; set; }
 
         void Init(string MethodName,ref object[] ParamsRef);

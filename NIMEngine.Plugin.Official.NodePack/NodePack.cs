@@ -9,11 +9,14 @@ namespace NIMEngine.Plugin.Official.NodePack
 {
     public class NodePack: I_Plugin
     {
-        public bool Enabled { get; set; } = true;
+        public bool Enabled { get; set; } = true;// Third-party plugin: always <c>false</c>.
 
-        public string Name { get; set; } = "Node Pack";
-        public string Author { get; set; } = "NIM Engine";
-        public string Description { get; set; } = "Node extension pack that registers multiple translation platform nodes so the engine can use them.";
+        public string Name { get; set; } = "Node Pack";//Enter your plugin name here.
+        public string Author { get; set; } = "NIM Engine";//Remember to use a different author name—definitely don’t use the one I’ve written here.
+
+        public float Version { get; set; } = 1.0f;// Two-part format: Major.Revision
+
+        public string Description { get; set; } = "Node extension pack that registers multiple translation platform nodes so the engine can use them.";//Write a description here
 
         /// <summary>
         /// Called by the engine when the plugin is loaded.
