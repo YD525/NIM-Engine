@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,7 +30,6 @@ namespace NIMEngine.Plugin
             public string SHA256_Sign = "";
 
             public bool Enabled = false;
-            public bool IsLoaded { get; internal set; }
             public Exception LastError { get; internal set; }
         }
 
@@ -71,8 +71,7 @@ namespace NIMEngine.Plugin
                             FilePath = Dll,
                             PluginType = T,
                             SHA256_Sign = SHA256_Validator.ComputeFileSHA256(Dll),
-                            Enabled = false,
-                            IsLoaded = true
+                            Enabled = false
                         };
 
                         if (EnabledAttr.Enabled && !Verified_SHA256_List.Contains(Entry.SHA256_Sign))
@@ -84,11 +83,16 @@ namespace NIMEngine.Plugin
                         Entry.Name = NameAttr?.Name;
                         Entry.Author = AuthorAttr?.Author;
                         Entry.Description = DescriptionAttr?.Description;
-                        Entry.Version = VersionAttr?.Version.ToString("F2");
+                        Entry.Version = VersionAttr.Version.ToString("F1", CultureInfo.InvariantCulture);
 
                         if (EnabledAttr.Enabled && Verified_SHA256_List.Contains(Entry.SHA256_Sign))
                         {
                             Entry.Enabled = true;
+                        }
+
+                        if (!NIM_Engine.Config.Plugins.ContainsKey(Entry.SHA256_Sign))
+                        {
+                            NIM_Engine.Config.Plugins.Add(Entry.SHA256_Sign, Entry.Enabled);
                         }
 
                         lock (_Lock)
@@ -110,24 +114,42 @@ namespace NIMEngine.Plugin
             Dictionary<string, object[]> Results = new Dictionary<string, object[]>();
 
             List<PluginEntry> Snapshot;
-            lock (_Lock) { Snapshot = Plugins.Where(P => P.IsLoaded && P.Enabled).ToList(); }
+            lock (_Lock) { Snapshot = Plugins.ToList(); }
 
             foreach (PluginEntry Entry in Snapshot)
             {
-                if (Entry.Instance == null)
+                if (Type < 0 || Type > 1)
                 {
-                    Entry.Instance = (I_Plugin)Activator.CreateInstance(Entry.PluginType);
+                    return (false, Results);
+                }
+
+                if (string.IsNullOrEmpty(Entry.SHA256_Sign) || !NIM_Engine.Config.Plugins.ContainsKey(Entry.SHA256_Sign))
+                {
+                    continue;
+                }
+
+                if (!NIM_Engine.Config.Plugins[Entry.SHA256_Sign])
+                {
+                    continue;
                 }
 
                 object[] Args = ParamsRef;
+
                 try
                 {
+                    if (Entry.Instance == null)
+                    {
+                        Entry.Instance = (I_Plugin)Activator.CreateInstance(Entry.PluginType);
+                    }
+
                     if (Type == 0)
+                    {
                         Entry.Instance.Init(MethodName, ref Args);
+                    }
                     else if (Type == 1)
+                    {
                         Entry.Instance.HandleEvent(MethodName, ref Args);
-                    else
-                        continue;
+                    }
 
                     Executed = true;
 
