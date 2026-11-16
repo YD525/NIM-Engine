@@ -430,7 +430,7 @@ namespace NIMEngine.Platform
         /// <param name="FromLang">Source language</param>
         /// <param name="ToLang">Target language</param>
         /// <param name="Call">Call record (request / raw response / success flag)</param>
-        /// <param name="TranslateStr">Translated text, "&lt;empty&gt;" when there is nothing to translate</param>
+        /// <param name="TranslateStr">Translated text, "<empty>" when there is nothing to translate</param>
         /// <returns>true when the platform was found and executed (check Call.Success for the result), false when the platform does not exist</returns>
         public static bool CallNode(string Name, string ApiKey, EngineConfigJson ConfigRef,
             UnitGroup Source, Languages FromLang, Languages ToLang,
