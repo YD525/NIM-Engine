@@ -114,7 +114,7 @@
     <Compile Include="Language\UrduHelper.cs" />
     <Compile Include="Language\VietnameseHelper.cs" />
     <Compile Include="Platform\AIPrompt.cs" />
-    <Compile Include="Platform\Nodes\Node.cs" />
+    <Compile Include="Platform\Nodes\P_Node.cs" />
     <Compile Include="Plugin\SHA256Validator.cs" />
     <Compile Include="Platform\Nodes\HumanTranslationApi.cs" />
     <Compile Include="Platform\ApiKeyHelper.cs" />
