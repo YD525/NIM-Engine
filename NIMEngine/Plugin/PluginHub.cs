@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using NIMEngine.Platform;
 
 namespace NIMEngine.Plugin
 {
     // Copyright (c) 2026 YD525
     public class PluginHub
     {
+        /// <summary>
+        /// The whitelist only records the signatures of official mods.
+        /// </summary>
+        public static List<string> Verified_SHA256_List = new List<string>() { };
+
         public static PluginHub Instance = new PluginHub();
         public sealed class PluginEntry
         {
@@ -17,7 +23,11 @@ namespace NIMEngine.Plugin
             public string Name => Instance?.Name;
             public string Author => Instance?.Author;
             public string Description => Instance?.Description;
-            public bool Enabled => Instance != null && Instance.Enabled;
+            public string Version => Instance?.Version.ToString("F2");
+
+            public string SHA256_Sign = "";
+
+            public bool Enabled = false;
             public bool IsLoaded { get; internal set; }
             public Exception LastError { get; internal set; }
         }
@@ -50,8 +60,19 @@ namespace NIMEngine.Plugin
                         {
                             Instance = Instance,
                             FilePath = Dll,
+                            SHA256_Sign = SHA256_Validator.ComputeFileSHA256(Dll),
+                            Enabled = false,
                             IsLoaded = true
                         };
+
+                        if (Entry.Instance.Enabled && Verified_SHA256_List.Contains(Entry.SHA256_Sign))
+                        {
+                            Entry.Enabled = true;
+                        }
+                        else
+                        {
+                            Entry.Enabled = false;
+                        }
 
                         lock (_Lock)
                         {
@@ -65,6 +86,7 @@ namespace NIMEngine.Plugin
                 }
             }
         }
+
         public (bool Executed, Dictionary<string, object[]> Results) Dispatch(int Type, string MethodName, object[] ParamsRef = null)
         {
             bool Executed = false;
@@ -75,7 +97,7 @@ namespace NIMEngine.Plugin
 
             foreach (PluginEntry Entry in Snapshot)
             {
-                object[] Args = new object[] { MethodName, ParamsRef };
+                object[] Args = ParamsRef;
                 try
                 {
                     if (Type == 0)
@@ -87,9 +109,9 @@ namespace NIMEngine.Plugin
 
                     Executed = true;
 
-                    if (Args[1] is object[] Payload)
+                    if (Args != null)
                     {
-                        Results[Entry.FilePath] = Payload;
+                        Results[Entry.FilePath] = Args;
                     }
                 }
                 catch (Exception Ex)
@@ -101,6 +123,7 @@ namespace NIMEngine.Plugin
 
             return (Executed, Results);
         }
+
         public List<PluginEntry> GetPlugins()
         {
             lock (_Lock) 
