@@ -6,6 +6,7 @@ using System.Reflection;
 
 namespace NIMEngine.Plugin
 {
+    // Copyright (c) 2026 YD525
     public class PluginHub
     {
         public static PluginHub Instance = new PluginHub();
