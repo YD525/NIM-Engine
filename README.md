@@ -92,19 +92,7 @@ NIMEngine combines **semantic aggregation**, **fine-grained unit control**, and 
 
 NIMEngine uses different licenses for different projects within this repository. This repository contains multiple Solutions and Projects, and their licensing terms are not necessarily the same.
 
-- **NIM Engine Plugins:** Licensed under the **Phoenix Plugin License (PPL) 1.0**, a custom license written by YD525 specifically for the NIM Engine plugin ecosystem. See [PLUGIN-LICENSE.txt](NIMEngine.Plugin.Official.NodePack/PLUGIN-LICENSE.txt) for the complete license terms.
+- **NIM Engine Plugins:** Licensed under the **NIM Plugin License (PPL) 1.0**, a custom license written by YD525 specifically for the NIM Engine plugin ecosystem. See [PLUGIN-LICENSE.txt](NIMEngine.Plugin.Official.NodePack/PLUGIN-LICENSE.txt) for the complete license terms.
 - **All other projects:** Licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**.
 
-### Plugin Development Requirements
-
-Anyone developing, modifying, or distributing plugins for NIM Engine MUST comply with the Phoenix Plugin License (PPL) 1.0.
-
-In particular:
-
-- All plugins and derivative plugins must be open-source, with their complete corresponding source code publicly available.
-- All plugins and derivative plugins must be distributed free of charge.
-- Derivative plugins must continue to comply with PPL 1.0.
-
-These requirements apply to all third-party plugins developed for NIM Engine, not just the official plugins included in this repository.
-
-**Using a different license for a plugin does not exempt it from these requirements.** Please read the complete PPL 1.0 before developing or distributing NIM Engine plugins.
+**All plugin authors must read and comply with the NIM Plugin License (PPL) 1.0 before developing, distributing, or making available any Plugin for NIM Engine. Developing a Plugin for NIM Engine constitutes acceptance of the PPL 1.0 terms.**
