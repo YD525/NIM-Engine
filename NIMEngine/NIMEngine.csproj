@@ -51,6 +51,9 @@
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NIM-Plugin">
+      <HintPath>..\..\NIM-Plugin\NIM-Plugin\bin\x64\Debug\NIM-Plugin.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -115,14 +118,10 @@
     <Compile Include="Language\VietnameseHelper.cs" />
     <Compile Include="Platform\AIPrompt.cs" />
     <Compile Include="Platform\Nodes\P_Node.cs" />
-    <Compile Include="Plugin\SHA256Validator.cs" />
     <Compile Include="Platform\Nodes\HumanTranslationApi.cs" />
     <Compile Include="Platform\ApiKeyHelper.cs" />
-    <Compile Include="Platform\ITranslationNode.cs" />
     <Compile Include="Platform\PlatformHub.cs" />
     <Compile Include="Http\TimeHelper.cs" />
-    <Compile Include="Plugin\IPlugin.cs" />
-    <Compile Include="Plugin\PluginHub.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Engine\ADO\AdvancedDictionary.cs" />
     <Compile Include="Engine\Memory\AITranslationMemory.cs" />

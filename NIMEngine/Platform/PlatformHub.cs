@@ -6,11 +6,12 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using NIM_Plugin.Core;
+using NIM_Plugin.Node;
 using NIMEngine.Engine;
 using NIMEngine.Language;
 using NIMEngine.Memory;
 using NIMEngine.P_Delegate;
-using NIMEngine.Plugin;
 using NIMEngine.Translate;
 using NIMEngine.Unit;
 
