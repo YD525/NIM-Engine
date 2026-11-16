@@ -42,7 +42,7 @@ namespace NIMEngine.Platform
             {
                 foreach (var GetPluginResult in Results.Results)
                 {
-                    object[] Payload = GetPluginResult.Value; 
+                    object[] Payload = GetPluginResult.Value;
                     if (Payload == null || Payload.Length < 3) continue; // invalid payload
 
                     RegisterLocalAINodes(Payload[0]);
@@ -70,7 +70,7 @@ namespace NIMEngine.Platform
                 }
                 catch (Exception)
                 {
-                    
+
                 }
             }
         }
@@ -193,22 +193,35 @@ namespace NIMEngine.Platform
                 string SendPrompt = GenAIPrompt;
 
                 string Response = "";
+                string AIResponseStr = string.Empty;
+                bool Success;
 
-                Response = CurrentNode.Call(ApiKey, SendPrompt,
-                out string AIResponseStr,
-                new string[3]
+                try
                 {
-                    ConfigRef.ProxyUrl,
-                    ConfigRef.ProxyUserName,
-                    ConfigRef.ProxyPassword,
-                });
+                    Response = CurrentNode.Call(ApiKey, SendPrompt,
+                    out AIResponseStr,
+                    new string[3]
+                    {
+                        ConfigRef.ProxyUrl,
+                        ConfigRef.ProxyUserName,
+                        ConfigRef.ProxyPassword,
+                    });
+
+                    Success = !string.IsNullOrEmpty(AIResponseStr);
+                }
+                catch (Exception Ex)
+                {
+                    Response = "Exception: " + Ex.Message;
+                    AIResponseStr = string.Empty;
+                    Success = false;
+                }
 
                 Call = new AICall(Name, SendPrompt, Response);
-                Call.Success = !string.IsNullOrEmpty(AIResponseStr);
+                Call.Success = Success;
 
                 TranslateStr = AIResponseStr;
 
-                UseModel = CurrentNode.Model;
+                try { UseModel = CurrentNode.Model; } catch (Exception) { }
 
                 return true;
             }
@@ -226,7 +239,7 @@ namespace NIMEngine.Platform
 
             return null;
         }
-        public static bool CallLocalAINode(string Name,EngineConfigJson ConfigRef,
+        public static bool CallLocalAINode(string Name, EngineConfigJson ConfigRef,
             List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
             , out string TranslateStr)
         {
@@ -263,18 +276,31 @@ namespace NIMEngine.Platform
                 string SendPrompt = GenAIPrompt;
 
                 string Response = "";
+                string AIResponseStr = string.Empty;
+                bool Success;
 
-                CurrentNode.LocalPort = PlatformConfigCache[Name].LocalPort;
+                try
+                {
+                    CurrentNode.LocalPort = PlatformConfigCache[Name].LocalPort;
 
-                Response = CurrentNode.Call(SendPrompt,
-                out string AIResponseStr);
+                    Response = CurrentNode.Call(SendPrompt,
+                    out AIResponseStr);
+
+                    Success = !string.IsNullOrEmpty(AIResponseStr);
+                }
+                catch (Exception Ex)
+                {
+                    Response = "Exception: " + Ex.Message;
+                    AIResponseStr = string.Empty;
+                    Success = false;
+                }
 
                 Call = new AICall(Name, SendPrompt, Response);
-                Call.Success = !string.IsNullOrEmpty(AIResponseStr);
+                Call.Success = Success;
 
                 TranslateStr = AIResponseStr;
 
-                UseModel = CurrentNode.Model;
+                try { UseModel = CurrentNode.Model; } catch (Exception) { }
 
                 return true;
             }
@@ -329,17 +355,32 @@ namespace NIMEngine.Platform
                 string FromCode = P_Language.ToLanguageCode(FromLang);
                 string ToCode = P_Language.ToLanguageCode(ToLang);
 
-                string Response = CurrentNode.Call(ApiKey, SourceStr, FromCode, ToCode,
-                out string ResponseStr,
-                new string[3]
+                string Response = "";
+                string ResponseStr = string.Empty;
+                bool Success;
+
+                try
                 {
-                    ConfigRef.ProxyUrl,
-                    ConfigRef.ProxyUserName,
-                    ConfigRef.ProxyPassword,
-                });
+                    Response = CurrentNode.Call(ApiKey, SourceStr, FromCode, ToCode,
+                    out ResponseStr,
+                    new string[3]
+                    {
+                        ConfigRef.ProxyUrl,
+                        ConfigRef.ProxyUserName,
+                        ConfigRef.ProxyPassword,
+                    });
+
+                    Success = !string.IsNullOrEmpty(ResponseStr);
+                }
+                catch (Exception Ex)
+                {
+                    Response = "Exception: " + Ex.Message;
+                    ResponseStr = string.Empty;
+                    Success = false;
+                }
 
                 Call = new PlatformCall(Name, FromLang, ToLang, SourceStr, Response);
-                Call.Success = !string.IsNullOrEmpty(ResponseStr);
+                Call.Success = Success;
 
                 TranslateStr = ResponseStr;
 
@@ -393,12 +434,25 @@ namespace NIMEngine.Platform
                 string SendPrompt = GenAIPrompt;
 
                 string Response = "";
+                string AIResponseStr = string.Empty;
+                bool Success;
 
-                Response = CurrentNode.CallHuman(SendPrompt,
-                out string AIResponseStr);
+                try
+                {
+                    Response = CurrentNode.CallHuman(SendPrompt,
+                    out AIResponseStr);
+
+                    Success = !string.IsNullOrEmpty(AIResponseStr);
+                }
+                catch (Exception Ex)
+                {
+                    Response = "Exception: " + Ex.Message;
+                    AIResponseStr = string.Empty;
+                    Success = false;
+                }
 
                 Call = new AICall(Name, SendPrompt, Response);
-                Call.Success = !string.IsNullOrEmpty(AIResponseStr);
+                Call.Success = Success;
 
                 TranslateStr = AIResponseStr;
 
