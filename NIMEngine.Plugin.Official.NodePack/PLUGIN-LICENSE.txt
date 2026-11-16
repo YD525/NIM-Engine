@@ -41,15 +41,7 @@ Any modifications, adaptations, or derivative works must also be distributed und
 
 It is strictly prohibited to distribute Plugins or Derivative Plugins in a closed-source or otherwise source-unavailable form.
 
-## 4. Commercial Use and Distribution
-
-Plugins and Derivative Plugins may be used, distributed, and made available for commercial or non-commercial purposes, provided that all other terms of this License are satisfied.
-
-Plugin authors may accept voluntary donations. Donations must be entirely optional and must not be used to restrict access to any functionality of the Plugin.
-
-Nothing in this License requires a Plugin to be provided free of charge.
-
-## 5. License Inheritance
+## 4. License Inheritance
 
 All Plugins and Derivative Plugins distributed under this License MUST comply with all of its terms.
 
@@ -59,7 +51,7 @@ No additional restrictions may be imposed that conflict with the requirements of
 
 Redistribution of Plugins and Derivative Plugins is permitted only when the requirements of this License are preserved.
 
-## 6. Third-Party Plugin Independence
+## 5. Third-Party Plugin Independence
 
 Plugins are independent software components developed and maintained by their respective authors.
 
@@ -69,7 +61,7 @@ The inclusion, availability, or compatibility of a Plugin with the Host Applicat
 
 Plugin developers are solely responsible for their own Plugins, including their implementation, functionality, security, maintenance, distribution, and compliance with applicable laws.
 
-## 7. Disclaimer of Warranty
+## 6. Disclaimer of Warranty
 
 ALL PLUGINS AND DERIVATIVE PLUGINS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -77,7 +69,7 @@ The Plugin authors are solely responsible for providing any warranties or suppor
 
 The Host Application and its developers make no representations or warranties regarding third-party Plugins, including their reliability, safety, compatibility, or fitness for any particular purpose.
 
-## 8. Limitation of Liability
+## 7. Limitation of Liability
 
 The Host Application and its developers are not responsible for any Plugin or Derivative Plugin, including their development, distribution, installation, use, errors, defects, vulnerabilities, malicious behavior, data loss, system damage, security breaches, or interactions with the Host Application or other software.
 
@@ -85,13 +77,13 @@ This applies regardless of whether the Host Application directly or indirectly l
 
 Nothing in this License excludes or limits liability where such exclusion or limitation is prohibited by applicable law.
 
-## 9. Termination
+## 8. Termination
 
 Any failure to comply with the terms of this License automatically terminates the rights granted under this License.
 
 Upon termination, the affected party must cease all activities authorized under this License, including the distribution of non-compliant Plugins, unless and until compliance is restored.
 
-## 10. Acceptance
+## 9. Acceptance
 
 By developing, modifying, distributing, or making a Plugin available under this License, you agree to comply with all of its terms.
 
