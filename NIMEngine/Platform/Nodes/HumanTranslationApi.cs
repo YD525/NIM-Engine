@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NIM_Plugin.Node;
 using NIMEngine.Engine;
 using NIMEngine.Language;
 using NIMEngine.Memory;

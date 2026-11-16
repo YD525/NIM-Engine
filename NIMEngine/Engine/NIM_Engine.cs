@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using NIM_Plugin;
+using NIM_Plugin.Core;
 using NIMEngine.Additional;
 using NIMEngine.ADO;
 using NIMEngine.Engine;
@@ -9,7 +11,6 @@ using NIMEngine.Http;
 using NIMEngine.Language;
 using NIMEngine.Memory;
 using NIMEngine.Platform;
-using NIMEngine.Plugin;
 using NIMEngine.Translate;
 
 namespace NIMEngine
@@ -19,8 +20,6 @@ namespace NIMEngine
         //The engine allows the creation of multiple instances of the Translator, each capable of translating its own content, but sharing a single AIMemory. This improves context utilization.
         public static AITranslationMemory AIMemory = new AITranslationMemory();
         public static string Version = "3.3.9.5";
-
-        public static string PluginsPath = @"\CorePlugins\";
 
         public static object QueryPlatformDataLock = new object();
 
@@ -77,11 +76,14 @@ namespace NIMEngine
             return NIM_Engine.Version;
         }
 
-
+        public static string PluginVersion = "";
         private static string CurrentPath = "";
         public static void Init(string StartupPath,Action<int>StepAction = null)
         {
             CurrentPath = StartupPath;
+
+            PluginVersion = NIMPlugin.Version;
+            NIMPlugin.Init(StartupPath);
 
             string GetFilePath = GetFullPath(@"\Engine.db");
 
@@ -119,7 +121,7 @@ namespace NIMEngine
             ProxyCenter.UsingProxy();
 
             StepAction?.Invoke(9);
-            WordAutoComplete.DatabaseDirectory = GetFullPath(PluginsPath);
+            WordAutoComplete.DatabaseDirectory = GetFullPath(NIMPlugin.PluginsPath);
             WordAutoComplete.Init();
 
             StepAction?.Invoke(10);
