@@ -1,49 +1,70 @@
-# Phoenix Plugin License (PPL) 1.0
+# NIM Plugin License (PPL) 1.0
 
 Copyright (c) 2026 YD525
-
 
 ## 1. Definitions
 
 For the purposes of this License:
 
-- **Host Application** refers to the software that loads, invokes, or interacts with plugins.
-- **Plugin** refers to any software component, extension, module, or additional functionality designed to be loaded, invoked, or used by the Host Application.
+- **Host Application** refers to NIM Engine or any other software that loads, invokes, or interacts with Plugins.
+- **Plugin** refers to any software component, extension, module, or additional functionality specifically designed to be loaded, invoked, or used by the Host Application, whether independently developed or based on existing software.
+- **Plugin Author** refers to any individual or entity that develops, modifies, or distributes a Plugin.
 - **Derivative Plugin** refers to any modified version, adaptation, extension, or derivative work of an existing Plugin.
 - **Source Code** refers to the complete preferred form of the software for making modifications, including relevant source files and build instructions.
 
-## 2. Open Source Requirement
+## 2. Grant of License
 
-All Plugins and Derivative Plugins distributed under or in connection with this License MUST make their complete corresponding Source Code publicly available.
+Subject to the terms and conditions of this License, the copyright holder grants you a worldwide, non-exclusive, royalty-free license to:
+
+- Develop and create new Plugins for the Host Application.
+- Use and execute Plugins.
+- Modify, adapt, and extend existing Plugins.
+- Create Derivative Plugins.
+- Reproduce, publish, and distribute Plugins and Derivative Plugins.
+- Make Plugins and Derivative Plugins available to other users.
+
+You are permitted to independently develop and distribute entirely new Plugins without incorporating or modifying any existing Plugin source code.
+
+You may distribute your Plugins and Derivative Plugins to other users, provided that all applicable requirements of this License are satisfied.
+
+The rights granted under this License are conditional upon continued compliance with its terms. Any rights not expressly granted under this License are reserved by the respective copyright holders.
+
+## 3. Source Code Availability Requirement
+
+All Plugins and Derivative Plugins developed for or distributed for use with the Host Application MUST make their complete corresponding Source Code publicly available.
 
 The Source Code must be provided in a form that allows users to inspect, modify, build, and redistribute the Plugin.
 
-Any modifications, adaptations, or derivative works must also be distributed under this License, with the same open-source requirements.
+The publicly available Source Code must correspond to the exact version of the distributed Plugin.
+
+Any modifications, adaptations, or derivative works must also be distributed under this License, with the same source code availability requirements.
 
 It is strictly prohibited to distribute Plugins or Derivative Plugins in a closed-source or otherwise source-unavailable form.
 
-## 3. Free Distribution Requirement
+## 4. Free Distribution Requirement
 
 All Plugins and Derivative Plugins MUST be provided free of charge.
 
 The following activities are prohibited:
 
 - Charging users for downloading, accessing, or using a Plugin.
-- Requiring payment, subscriptions, donations, or other financial contributions to unlock functionality.
+- Requiring payment or subscriptions to unlock functionality.
 - Distributing paid versions or paid editions of a Plugin.
 - Restricting essential functionality behind payment requirements.
 
 Plugins may accept voluntary donations, provided that donations are entirely optional and do not affect access to any functionality.
 
-## 4. License Inheritance
+## 5. License Inheritance
 
-Any Plugin or Derivative Plugin incorporating, modifying, or deriving from software distributed under this License MUST comply with all terms of this License.
+All Plugins and Derivative Plugins distributed under this License MUST comply with all of its terms.
+
+Any Plugin or Derivative Plugin incorporating, modifying, or deriving from software distributed under this License MUST retain this License and its requirements.
 
 No additional restrictions may be imposed that conflict with the requirements of this License.
 
 Redistribution of Plugins and Derivative Plugins is permitted only when the requirements of this License are preserved.
 
-## 5. Third-Party Plugin Independence
+## 6. Third-Party Plugin Independence
 
 Plugins are independent software components developed and maintained by their respective authors.
 
@@ -53,7 +74,7 @@ The inclusion, availability, or compatibility of a Plugin with the Host Applicat
 
 Plugin developers are solely responsible for their own Plugins, including their implementation, functionality, security, maintenance, distribution, and compliance with applicable laws.
 
-## 6. Disclaimer of Warranty
+## 7. Disclaimer of Warranty
 
 ALL PLUGINS AND DERIVATIVE PLUGINS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
 
@@ -61,7 +82,7 @@ The Plugin authors are solely responsible for providing any warranties or suppor
 
 The Host Application and its developers make no representations or warranties regarding third-party Plugins, including their reliability, safety, compatibility, or fitness for any particular purpose.
 
-## 7. Limitation of Liability
+## 8. Limitation of Liability
 
 To the maximum extent permitted by applicable law, the authors, contributors, and maintainers of the Host Application shall not be held liable for any damages, losses, claims, or other liabilities arising from or related to:
 
@@ -77,17 +98,17 @@ The Host Application and its developers are not responsible for the behavior or 
 
 Nothing in this License excludes or limits liability where such exclusion or limitation is prohibited by applicable law.
 
-## 8. Termination
+## 9. Termination
 
 Any failure to comply with the terms of this License automatically terminates the rights granted under this License.
 
-Upon termination, the affected party must cease all distribution and use of the licensed Plugin unless and until compliance is restored.
+Upon termination, the affected party must cease all activities authorized under this License, including the distribution of non-compliant Plugins, unless and until compliance is restored.
 
-## 9. Acceptance
+## 10. Acceptance
 
-By using, modifying, or distributing a Plugin under this License, you agree to comply with all of its terms.
+By developing, modifying, distributing, or making a Plugin available under this License, you agree to comply with all of its terms.
 
-If you do not agree to these terms, you may not use, modify, or distribute the Plugin under this License.
+If you do not agree to these terms, you may not distribute or make Plugins available under this License.
 
 ---
 
