@@ -107,7 +107,7 @@ namespace NIMEngine
             FontColorFinder.Init();
 
             StepAction?.Invoke(5);
-            ChineseVariantMap.Init();
+            ChineseVariantMap.Init();//<- 111
 
             StepAction?.Invoke(6);
             UniqueKeyHelper.Init();
