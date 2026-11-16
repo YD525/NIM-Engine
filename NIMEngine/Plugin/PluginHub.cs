@@ -13,7 +13,7 @@ namespace NIMEngine.Plugin
         /// <summary>
         /// The whitelist only records the signatures of official mods.
         /// </summary>
-        public static List<string> Verified_SHA256_List = new List<string>() { };
+        public static readonly IReadOnlyList<string> Verified_SHA256_List = new List<string>() { }.AsReadOnly();
 
         public static PluginHub Instance = new PluginHub();
         public sealed class PluginEntry
