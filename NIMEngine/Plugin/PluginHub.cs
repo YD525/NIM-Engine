@@ -38,8 +38,42 @@ namespace NIMEngine.Plugin
 
         public void Init()
         {
-            foreach (string Dll in Directory.GetFiles(NIM_Engine.GetFullPath(NIM_Engine.PluginsPath), "*.dll", SearchOption.TopDirectoryOnly))
+            string PluginDir = NIM_Engine.GetFullPath(NIM_Engine.PluginsPath);
+
+            // Directory missing: skip everything, and never prune (would wipe the user's switches).
+            if (!Directory.Exists(PluginDir)) return;
+
+            HashSet<string> Seen = new HashSet<string>();
+            bool ScanOk = true;
+
+            string[] Dlls;
+            try
             {
+                Dlls = Directory.GetFiles(PluginDir, "*.dll", SearchOption.TopDirectoryOnly);
+            }
+            catch (Exception)
+            {
+                return;
+            }
+
+            foreach (string Dll in Dlls)
+            {
+                string Sign;
+                try
+                {
+                    Sign = SHA256_Validator.ComputeFileSHA256(Dll);
+                }
+                catch (Exception)
+                {
+                    // Cannot identify this DLL (file locked, etc.), so the scan is incomplete: do not prune.
+                    ScanOk = false;
+                    continue;
+                }
+
+                // A DLL that exists on disk counts as "seen" even if it fails to load below,
+                // so a temporarily broken DLL does not lose the user's switch.
+                Seen.Add(Sign);
+
                 try
                 {
                     Assembly Asm = Assembly.LoadFrom(Dll);
@@ -63,36 +97,32 @@ namespace NIMEngine.Plugin
                         {
                             // [Violating plugin] Simply skip any plugins that don't behave as expected.
                             continue;
-                        }                  
+                        }
+
+                        bool Verified = Verified_SHA256_List.Contains(Sign);
+
+                        if (EnabledAttr.Enabled && !Verified)
+                        {
+                            // [Violating plugin] Claims to be official but is not in the whitelist.
+                            continue;
+                        }
 
                         PluginEntry Entry = new PluginEntry
                         {
                             Instance = null, // Do not create the instance early, otherwise Enabled is meaningless.
                             FilePath = Dll,
                             PluginType = T,
-                            SHA256_Sign = SHA256_Validator.ComputeFileSHA256(Dll),
-                            Enabled = false
+                            SHA256_Sign = Sign,
+                            Name = NameAttr.Name,
+                            Author = AuthorAttr.Author,
+                            Description = DescriptionAttr.Description,
+                            Version = VersionAttr.Version.ToString("F1", CultureInfo.InvariantCulture),
+                            Enabled = EnabledAttr.Enabled && Verified
                         };
 
-                        if (EnabledAttr.Enabled && !Verified_SHA256_List.Contains(Entry.SHA256_Sign))
+                        if (!NIM_Engine.Config.Plugins.ContainsKey(Sign))
                         {
-                            // [Violating plugin] Simply skip any plugins that don't behave as expected.
-                            continue;
-                        }
-
-                        Entry.Name = NameAttr?.Name;
-                        Entry.Author = AuthorAttr?.Author;
-                        Entry.Description = DescriptionAttr?.Description;
-                        Entry.Version = VersionAttr.Version.ToString("F1", CultureInfo.InvariantCulture);
-
-                        if (EnabledAttr.Enabled && Verified_SHA256_List.Contains(Entry.SHA256_Sign))
-                        {
-                            Entry.Enabled = true;
-                        }
-
-                        if (!NIM_Engine.Config.Plugins.ContainsKey(Entry.SHA256_Sign))
-                        {
-                            NIM_Engine.Config.Plugins.Add(Entry.SHA256_Sign, Entry.Enabled);
+                            NIM_Engine.Config.Plugins.Add(Sign, Entry.Enabled);
                         }
 
                         lock (_Lock)
@@ -103,8 +133,28 @@ namespace NIMEngine.Plugin
                 }
                 catch (Exception)
                 {
-
+                    // Load failed: skip this DLL. Its hash is already in Seen, so the user's switch is kept.
                 }
+            }
+
+            if (ScanOk)
+            {
+                PruneInvalidKeys(Seen);
+            }
+        }
+
+        /// <summary>
+        /// Remove config entries whose DLL no longer exists in the plugin directory.
+        /// </summary>
+        private static void PruneInvalidKeys(HashSet<string> Seen)
+        {
+            List<string> Stale = NIM_Engine.Config.Plugins.Keys
+                .Where(K => !Seen.Contains(K))
+                .ToList(); // ToList first: cannot remove while enumerating
+
+            foreach (string Key in Stale)
+            {
+                NIM_Engine.Config.Plugins.Remove(Key);
             }
         }
 
@@ -113,16 +163,16 @@ namespace NIMEngine.Plugin
             bool Executed = false;
             Dictionary<string, object[]> Results = new Dictionary<string, object[]>();
 
+            if (Type < 0 || Type > 1)
+            {
+                return (false, Results);
+            }
+
             List<PluginEntry> Snapshot;
             lock (_Lock) { Snapshot = Plugins.ToList(); }
 
             foreach (PluginEntry Entry in Snapshot)
             {
-                if (Type < 0 || Type > 1)
-                {
-                    return (false, Results);
-                }
-
                 if (string.IsNullOrEmpty(Entry.SHA256_Sign) || !NIM_Engine.Config.Plugins.ContainsKey(Entry.SHA256_Sign))
                 {
                     continue;
