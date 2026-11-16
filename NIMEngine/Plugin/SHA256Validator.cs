@@ -3,7 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace NIMEngine.Platform
+namespace NIMEngine.Plugin
 {
     public static class SHA256_Validator
     {
