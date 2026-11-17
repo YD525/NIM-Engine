@@ -154,7 +154,25 @@ namespace NIMEngine.Platform
                 try
                 {
                     var Node = (I_AI_Node)Activator.CreateInstance(Kv.Value);
+
+                    string GetDefModel = "";
+
+                    if (CloudAINodes.ContainsKey(Kv.Key))
+                    {
+                        GetDefModel = CloudAINodes[Kv.Key].Model;
+                    }
+
                     CloudAINodes[Kv.Key] = Node;
+
+                    if (!string.IsNullOrEmpty(GetDefModel) && Node.AvailableModels.Contains(GetDefModel))
+                    {
+                        CloudAINodes[Kv.Key].Model = GetDefModel;
+                    }
+                    else
+                    if (Node.AvailableModels.Count() > 0)
+                    {
+                        CloudAINodes[Kv.Key].Model = Node.AvailableModels[0];
+                    }
                 }
                 catch (Exception)
                 {
