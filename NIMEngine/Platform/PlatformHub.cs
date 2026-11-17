@@ -71,6 +71,7 @@ namespace NIMEngine.Platform
                 if (GetNode is I_Interactive_Node)
                 {
                     var Node = (I_Interactive_Node)GetNode;
+
                     if (!NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
                     {
                         NIM_Engine.Config.PlatformConfigs.Add(Node.Name,
@@ -81,6 +82,19 @@ namespace NIMEngine.Platform
 
                                 Enable = false,
                             });
+                    }
+                    else
+                    {
+                        if (NIM_Engine.Config.PlatformConfigs[Node.Name] == null)
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Node.Name] =
+                            new PlatformConfig()
+                            {
+                               Name = Node.Name,
+                               Type = Node.Type,
+                               Enable = false,
+                            };
+                        }
                     }
                 }
                 else
@@ -94,13 +108,29 @@ namespace NIMEngine.Platform
                                {
                                    Name = Node.Name,
                                    Type = Node.Type,
-
                                    ApiKeys = new List<string>(),
-
                                    Enable = false,
-
-                                   Model = string.Empty
+                                   Model = Node.Model
                                });
+                    }
+                    else
+                    {
+                        if (NIM_Engine.Config.PlatformConfigs[Node.Name] == null)
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Node.Name] =
+                            new PlatformConfig()
+                            {
+                                Name = Node.Name,
+                                Type = Node.Type,
+                                ApiKeys = new List<string>(),
+                                Enable = false,
+                                Model = Node.Model
+                            };
+                        }
+                        else
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Node.Name].Model = Node.Model;
+                        }
                     }
                 }
                 else
@@ -114,12 +144,25 @@ namespace NIMEngine.Platform
                               {
                                   Name = Node.Name,
                                   Type = Node.Type,
-
                                   Enable = false,
-
                                   Model = Node.Model,
                                   LocalPort = Node.LocalPort,
                               });
+                    }
+                    else
+                    {
+                        if (NIM_Engine.Config.PlatformConfigs[Node.Name] == null)
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Node.Name] =
+                            new PlatformConfig()
+                            {
+                                Name = Node.Name,
+                                Type = Node.Type,
+                                Enable = false,
+                                Model = Node.Model,
+                                LocalPort = Node.LocalPort,
+                            };
+                        }
                     }
                 }
                 else
@@ -135,9 +178,24 @@ namespace NIMEngine.Platform
                                  Type = Node.Type,
 
                                  ApiKeys = new List<string>(),
-
                                  Enable = false,
                              });
+                    }
+                    else
+                    {
+                        if (NIM_Engine.Config.PlatformConfigs[Node.Name] == null)
+                        {
+                            NIM_Engine.Config.PlatformConfigs[Node.Name] =
+                            new PlatformConfig()
+                            {
+                                Name = Node.Name,
+                                Type = Node.Type,
+
+                                ApiKeys = new List<string>(),
+                                Enable = false,
+                            };
+                        }
+
                     }
                 }
             }
@@ -157,9 +215,9 @@ namespace NIMEngine.Platform
 
                     string GetDefModel = "";
 
-                    if (CloudAINodes.ContainsKey(Kv.Key))
+                    if (NIM_Engine.Config.PlatformConfigs.ContainsKey(Kv.Key))
                     {
-                        GetDefModel = CloudAINodes[Kv.Key].Model;
+                        GetDefModel = NIM_Engine.Config.PlatformConfigs[Kv.Key].Model;
                     }
 
                     CloudAINodes[Kv.Key] = Node;
