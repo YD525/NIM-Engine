@@ -201,6 +201,16 @@ namespace NIMEngine.Platform
             }
         }
 
+        public static List<string> QueryModels(string Key)
+        {
+            if (CloudAINodes.ContainsKey(Key))
+            {
+                return CloudAINodes[Key].AvailableModels.ToList();
+            }
+
+            return new List<string>();
+        }
+
         #region Register
         private static void RegisterAINodes(object Raw)
         {
