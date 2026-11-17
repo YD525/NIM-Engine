@@ -214,77 +214,70 @@ namespace NIMEngine.Platform
         #region Register
         private static void RegisterAINodes(object Raw)
         {
-            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+            if (!(Raw is List<Type> List)) return;
 
             foreach (var Kv in List)
             {
-                if (Kv.Value == null) continue;
                 try
                 {
-                    var Node = (I_AI_Node)Activator.CreateInstance(Kv.Value);
+                    var Node = (I_AI_Node)Activator.CreateInstance(Kv);
 
                     string GetDefModel = "";
 
-                    if (NIM_Engine.Config.PlatformConfigs.ContainsKey(Kv.Key))
+                    if (NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
                     {
-                        GetDefModel = NIM_Engine.Config.PlatformConfigs[Kv.Key].Model;
+                        GetDefModel = NIM_Engine.Config.PlatformConfigs[Node.Name].Model;
                     }
 
-                    CloudAINodes[Kv.Key] = Node;
+                    CloudAINodes[Node.Name] = Node;
 
                     if (!string.IsNullOrEmpty(GetDefModel) && Node.AvailableModels.Contains(GetDefModel))
                     {
-                        CloudAINodes[Kv.Key].Model = GetDefModel;
+                        CloudAINodes[Node.Name].Model = GetDefModel;
                     }
                     else
                     if (Node.AvailableModels.Count() > 0)
                     {
-                        CloudAINodes[Kv.Key].Model = Node.AvailableModels[0];
+                        CloudAINodes[Node.Name].Model = Node.AvailableModels[0];
                     }
                 }
                 catch (Exception)
                 {
-
                 }
             }
         }
-
         private static void RegisterLocalAINodes(object Raw)
         {
-            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+            if (!(Raw is List<Type> List)) return;
 
             foreach (var Kv in List)
             {
-                if (Kv.Value == null) continue;
                 try
                 {
-                    var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv.Value);
-                    LocalAINodes[Kv.Key] = Node;
+                    var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv);
+                    LocalAINodes[Node.Name] = Node;
                 }
                 catch (Exception)
                 {
                 }
             }
         }
-
         private static void RegisterNodes(object Raw)
         {
-            if (!(Raw is List<KeyValuePair<string, Type>> List)) return;
+            if (!(Raw is List<Type> List)) return;
 
             foreach (var Kv in List)
             {
-                if (Kv.Value == null) continue;
                 try
                 {
-                    var Node = (I_Node)Activator.CreateInstance(Kv.Value);
-                    CloudNodes[Kv.Key] = Node;
+                    var Node = (I_Node)Activator.CreateInstance(Kv);
+                    CloudNodes[Node.Name] = Node;
                 }
                 catch (Exception)
                 {
                 }
             }
         }
-
         #endregion
 
         private static Dictionary<string, PlatformConfig> PlatformConfigCache = null;
