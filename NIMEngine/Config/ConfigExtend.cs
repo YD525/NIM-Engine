@@ -236,55 +236,10 @@ namespace NIMEngine
 
         public static void SetDefaultModel()
         {
-            //if (Config.PlatformConfigs == null)
-            //{
-            //    Config.PlatformConfigs = new Dictionary<int, PlatformConfig>();
-
-            //    Config.PlatformConfigs.Add((int)PlatformType.ChatGpt, new PlatformConfig(PlatformType.ChatGpt));
-            //    Config.PlatformConfigs.Add((int)PlatformType.Gemini, new PlatformConfig(PlatformType.Gemini));
-            //    Config.PlatformConfigs.Add((int)PlatformType.LMLocalAI, new PlatformConfig(PlatformType.LMLocalAI));
-            //    Config.PlatformConfigs.Add((int)PlatformType.DeepSeek, new PlatformConfig(PlatformType.DeepSeek));
-            //    Config.PlatformConfigs.Add((int)PlatformType.DeepL, new PlatformConfig(PlatformType.DeepL));
-
-            //    Config.PlatformConfigs.Add((int)PlatformType.HumanTranslation, new PlatformConfig(PlatformType.HumanTranslation));
-
-            //    if (Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort == 0)
-            //    {
-            //        Config.PlatformConfigs[(int)PlatformType.LMLocalAI].LocalPort = 1234;
-            //    }
-            //    if (Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model == "")
-            //    {
-            //        Config.PlatformConfigs[(int)PlatformType.ChatGpt].Model = "gpt-4.1-nano";
-            //    }
-            //    if (Config.PlatformConfigs[(int)PlatformType.Gemini].Model == "")
-            //    {
-            //        Config.PlatformConfigs[(int)PlatformType.Gemini].Model = "gemini-2.5-flash";
-            //    }
-            //    if (Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model == "")
-            //    {
-            //        Config.PlatformConfigs[(int)PlatformType.DeepSeek].Model = "deepseek-v4-pro";
-            //    }
-
-            //    Config.PlatformConfigs[(int)PlatformType.DeepL].IsFree = true;
-
-            //    if (Config.Init == 0)
-            //    {
-            //        int EnableCount = 0;
-            //        foreach (var GetItem in new Dictionary<int, PlatformConfig>(Config.PlatformConfigs))
-            //        {
-            //            if (GetItem.Value.Enable && GetItem.Value.Platform!= PlatformType.HumanTranslation)
-            //            { 
-            //               EnableCount++;
-            //            }
-            //        }
-
-            //        if (EnableCount == 0)
-            //        {
-            //            Config.PlatformConfigs[(int)PlatformType.HumanTranslation].Enable = true;
-            //        }
-            //        Config.Init = 1;
-            //    }
-            //}
+            if (Config.PlatformConfigs == null)
+            {
+                Config.PlatformConfigs = new Dictionary<string, PlatformConfig>();
+            }
         }
         private static byte[] XOREncrypt(byte[] data)
         {
