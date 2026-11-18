@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NIM_Plugin;
@@ -149,6 +150,19 @@ namespace NIMEngine
         {
             KeyData = new KeyManage();
             KeyData.Init();
+        }
+
+        public static bool DisablePlugin(string Key)
+        {
+            return PluginHub.Instance.DisablePlugin(Key);
+        }
+        public static bool EnablePlugin(string Key)
+        {
+            return PluginHub.Instance.EnablePlugin(Key);
+        }
+        public static List<string[]> GetAllPlugins()
+        {
+            return PluginHub.Instance.GetPlugins();
         }
     }
 }
