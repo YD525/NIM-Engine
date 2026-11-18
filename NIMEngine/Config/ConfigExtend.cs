@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Newtonsoft.Json;
+using NIM_Plugin;
 using NIMEngine.Common;
 using NIMEngine.Platform;
 using NIMEngine.Translate;
@@ -259,6 +261,8 @@ namespace NIMEngine
         //Use Xor to easily encrypt and store user API keys to ensure security
         public static void SaveConfig()
         {
+            NIM_Engine.Config.Plugins = NIMPlugin.Plugins;
+
             string GetJson = JsonConvert.SerializeObject(Config);
             var EncryptedBytes = XOREncrypt(Encoding.UTF8.GetBytes(GetJson));
             File.WriteAllBytes(NIM_Engine.GetFullPath("EngineConfig.data"), EncryptedBytes);
