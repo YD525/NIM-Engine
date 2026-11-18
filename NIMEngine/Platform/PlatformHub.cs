@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using NIM_Plugin.Core;
 using NIM_Plugin.Node;
 using NIMEngine.Engine;
@@ -65,6 +66,8 @@ namespace NIMEngine.Platform
             AllNodes.AddRange(CloudNodes.Values.ToList());
 
             AllNodes.Add(new HumanTranslationApi());
+
+            ActiveNodes.Add("HumanTranslation");
 
             foreach (var GetNode in AllNodes)
             {
@@ -201,6 +204,17 @@ namespace NIMEngine.Platform
             }
         }
 
+        public static HashSet<string> ActiveNodes = new HashSet<string>();
+        public static bool IsNodeActive(string Key)
+        {
+            if (ActiveNodes.Contains(Key))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         public static List<string> QueryModels(string Key)
         {
             if (CloudAINodes.ContainsKey(Key))
@@ -240,6 +254,8 @@ namespace NIMEngine.Platform
                     {
                         CloudAINodes[Node.Name].Model = Node.AvailableModels[0];
                     }
+
+                    ActiveNodes.Add(Node.Name);
                 }
                 catch (Exception)
                 {
@@ -255,7 +271,22 @@ namespace NIMEngine.Platform
                 try
                 {
                     var Node = (I_Local_AI_Node)Activator.CreateInstance(Kv);
+
+                    int GetDefPort = 0;
+
+                    if (NIM_Engine.Config.PlatformConfigs.ContainsKey(Node.Name))
+                    {
+                        GetDefPort = NIM_Engine.Config.PlatformConfigs[Node.Name].LocalPort;
+                    }
+
                     LocalAINodes[Node.Name] = Node;
+
+                    if (GetDefPort != 0)
+                    {
+                        LocalAINodes[Node.Name].LocalPort = GetDefPort;
+                    }
+
+                    ActiveNodes.Add(Node.Name);
                 }
                 catch (Exception)
                 {
@@ -272,6 +303,8 @@ namespace NIMEngine.Platform
                 {
                     var Node = (I_Node)Activator.CreateInstance(Kv);
                     CloudNodes[Node.Name] = Node;
+
+                    ActiveNodes.Add(Node.Name);
                 }
                 catch (Exception)
                 {
