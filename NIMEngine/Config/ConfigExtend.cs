@@ -47,7 +47,7 @@ namespace NIMEngine
         /// <summary>
         /// Loaded plugins:UniqueKey = plugin file path, value = enabled switch (true = enabled, false = disabled).
         /// </summary>
-        public Dictionary<string, bool> Plugins { get; set; } = null;
+        public Dictionary<string, bool> Plugins { get; set; } = new Dictionary<string, bool>();
 
         #endregion
 
