@@ -83,40 +83,40 @@ namespace NIMEngine
         {
             CurrentPath = StartupPath;
 
+            StepAction?.Invoke(0);
+            NIM_Engine.LoadConfig();
+
             PluginVersion = NIMPlugin.Version;
             NIMPlugin.Init(StartupPath,NIM_Engine.Config.Plugins);
 
             string GetFilePath = GetFullPath(@"\Engine.db");
 
-            StepAction?.Invoke(0);
+            StepAction?.Invoke(1);
             PluginHub.Instance.Init();//Must be called first, before the first load.
 
             if (!File.Exists(GetFilePath))
             {
-                StepAction?.Invoke(1);
+                StepAction?.Invoke(2);
                 P_SQLite.CreateDataBase(GetFilePath);
             }
 
             LocalDB.OpenSQL(GetFilePath);
 
-            StepAction?.Invoke(2);
+            StepAction?.Invoke(3);
             AdvancedDictionary.Init();
 
-            StepAction?.Invoke(3);
+            StepAction?.Invoke(5);
             CloudDBCache.Init();
             LocalDBCache.Init();
-            HistoryDBCache.Init();
 
+            HistoryDBCache.Init();
             FontColorFinder.Init();
 
-            StepAction?.Invoke(5);
+            StepAction?.Invoke(6);
             ChineseVariantMap.Init();//<- 111
 
-            StepAction?.Invoke(6);
-            UniqueKeyHelper.Init();
-
             StepAction?.Invoke(7);
-            NIM_Engine.LoadConfig();
+            UniqueKeyHelper.Init();
 
             StepAction?.Invoke(8);
             ProxyCenter.UsingProxy();
