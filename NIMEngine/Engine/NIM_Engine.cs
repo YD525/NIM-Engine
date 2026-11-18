@@ -84,7 +84,7 @@ namespace NIMEngine
             CurrentPath = StartupPath;
 
             PluginVersion = NIMPlugin.Version;
-            NIMPlugin.Init(StartupPath);
+            NIMPlugin.Init(StartupPath,NIM_Engine.Config.Plugins);
 
             string GetFilePath = GetFullPath(@"\Engine.db");
 
