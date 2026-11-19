@@ -120,7 +120,7 @@ namespace NIMEngine.Engine
         /// <param name="FilePath">Full path to the file</param>
         /// <param name="CanSkipFuzzyMatching">Whether to skip fuzzy matching</param>
         /// <returns>Rowid of the added or matched record. -1 if nothing added.</returns>
-        public static int AddItemByReturn(ref UniqueKeyItem GenUniqueKeyItem, string FilePath, bool CanSkipFuzzyMatching = false)
+        public static int AddItemByReturn(ref UniqueKeyItem GenUniqueKeyItem, string FilePath)
         {
             string SourceOriginalKey = GetFileName(FilePath);
 

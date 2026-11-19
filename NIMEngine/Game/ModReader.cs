@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NIM_Plugin.Data;
+using NIMEngine.Engine;
 
 namespace NIMEngine.Game
 {
@@ -101,7 +102,7 @@ namespace NIMEngine.Game
             }
         }
 
-        public static bool Read(string FilePath, ref P_ModContent ContentRef)
+        public static bool Read(string FilePath,ref P_ModContent ContentRef)
         {
             if (string.IsNullOrEmpty(FilePath)) return false;
 
@@ -120,6 +121,10 @@ namespace NIMEngine.Game
 
             byte[] Data = File.ReadAllBytes(FilePath);
 
+            UniqueKeyItem FileKey = new UniqueKeyItem();
+
+            int FileUniqueKey = UniqueKeyHelper.AddItemByReturn(ref FileKey, FilePath);
+
             foreach (var GetReader in CanUseReaders)
             {
                 if (GetReader.Value.TakenOverFileExtension.ToLowerInvariant() != Ext)
@@ -133,7 +138,7 @@ namespace NIMEngine.Game
                 {
                     SetReader = NewReaderInstance(GetReader.Value);
 
-                    var Content = SetReader.Read(Data);
+                    var Content = SetReader.Read(FileUniqueKey,Data);
 
                     // Not readable by this reader: release it and let the next reader with the same extension try
                     if (!SetReader.CanRead() || Content == null || Content.Rows == null || Content.Rows.Count == 0)
