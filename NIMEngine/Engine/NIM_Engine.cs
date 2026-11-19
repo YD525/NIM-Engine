@@ -9,6 +9,7 @@ using NIMEngine.Additional;
 using NIMEngine.ADO;
 using NIMEngine.Engine;
 using NIMEngine.Engine.ADO;
+using NIMEngine.Game;
 using NIMEngine.Http;
 using NIMEngine.Language;
 using NIMEngine.Memory;
@@ -165,6 +166,12 @@ namespace NIMEngine
             StepAction?.Invoke(10);
             PlatformHub.Init(
                 PluginHub.Instance.Dispatch(0, Engine_Method.LoadNodes)
+            );
+
+            StepAction?.Invoke(11);
+
+            ModReader.Init(
+                PluginHub.Instance.Dispatch(0, Engine_Method.LoadReaders)
             );
 
             ReSetKeyData();

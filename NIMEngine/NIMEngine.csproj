@@ -90,6 +90,7 @@
     <Compile Include="Engine\Thread\PThread.cs" />
     <Compile Include="Engine\Unit\UnitGroup.cs" />
     <Compile Include="Engine\Unit\UnitGroupExtend.cs" />
+    <Compile Include="Game\ModReader.cs" />
     <Compile Include="Game\PGame.cs" />
     <Compile Include="Http\ProxyCenter.cs" />
     <Compile Include="Language\ArabicHelper.cs" />
