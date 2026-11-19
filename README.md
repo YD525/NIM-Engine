@@ -105,5 +105,9 @@ NIMEngine combines **semantic aggregation**, **fine-grained unit control**, and 
 
 
 ## Plugin Development
+The first project contains the core implementation of the plugin framework.
+
+- [NIM-Plugin](https://github.com/YD525/NIM-Plugin/tree/main/NIM-Plugin): The core implementation of the plugin framework.
+- [YDTest](https://github.com/YD525/NIM-Plugin/tree/main/YDTest): A sample plugin primarily intended as a demo to help you understand how to develop plugins for NIM.
 
 When developing plugins for NIM Engine, please read and comply with the [NIM Plugin License (PPL) 1.0](https://github.com/YD525/NIM-Plugin/blob/main/PLUGIN-LICENSE.md).
