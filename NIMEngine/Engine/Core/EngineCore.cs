@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Linq;
+using System;
 
 public class EngineCore
 {
@@ -21,11 +22,6 @@ public class EngineCore
     private readonly Dictionary<string, int> _FailureCounts = new Dictionary<string, int>();
     private readonly Dictionary<string, bool> _DisabledPlatforms = new Dictionary<string, bool>();
 
-    /// <summary>
-    /// Waits for a synchronous provider delay while allowing cancellation to interrupt the wait.
-    /// </summary>
-    /// <param name="cancellationToken">The token that interrupts the delay.</param>
-    /// <param name="milliseconds">The delay in milliseconds; non-positive values return immediately.</param>
     internal static void Delay(CancellationToken cancellationToken, int milliseconds)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -75,6 +71,14 @@ public class EngineCore
         Node.Disabled = _DisabledPlatforms.TryGetValue(Node.Key, out var Dis) && Dis;
     }
 
+    internal void PreDeductWeight(EngineNode Node)
+    {
+        lock (_Lock)
+        {
+            if (Node.EffectiveWeight > 0) Node.EffectiveWeight--;
+        }
+    }
+
     internal void RegisterFailure(EngineNode Node)
     {
         lock (_Lock)
@@ -88,8 +92,6 @@ public class EngineCore
                 _DisabledPlatforms[Node.Key] = true;
                 Node.Disabled = true;
             }
-
-            if (Node.EffectiveWeight > 1) Node.EffectiveWeight--;
         }
     }
 
@@ -119,13 +121,14 @@ public class EngineCore
                         string Key = GetNode.Value.Name;
                         if (GetNode.Value.Type == 0)
                         {
-                            //Local AI Need Init();
                             PlatformHub.GetLocalAINode(Key)?.Init();
                         }
 
                         PlatformApiKeys KeyData = NIMEngine.NIM_Engine.KeyData.GetData(Key);
 
-                        AddNode_NoLock(new EngineNode(this,GetNode.Value.Name,GetNode.Value.Type,KeyData.GetKeyCount(), Key));
+                        int Weight = GetNode.Value.Type == 0 ? 1 : KeyData.GetKeyCount();
+
+                        AddNode_NoLock(new EngineNode(this, GetNode.Value.Name, GetNode.Value.Type, Weight, Key));
                     }
                 }
             }
@@ -189,7 +192,7 @@ public class EngineCore
     }
 
     public UnitGroup CallOnce(CancellationToken CancelToken, Translator TranslatorRef, TranslationPreprocessor Preprocessor, UnitGroup Item,
-        Languages From, Languages To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate,ref string UseModel)
+        Languages From, Languages To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate, ref string UseModel)
     {
         if (!Item.ApplyStateChange(TranslatorRef.ID, UnitTranslationState.Preparing).CanDo(-1))
         {
@@ -217,7 +220,7 @@ public class EngineCore
             {
                 int MaxTry = 10;
 
-                NextCall:
+            NextCall:
 
                 string GetTrans = "";
 
@@ -302,7 +305,7 @@ public class EngineCore
 
                 if (CanUpdate)
                 {
-                    Item.UpdateCloudData(TranslatorRef, Sequences,new List<string>() { UseModel });
+                    Item.UpdateCloudData(TranslatorRef, Sequences, new List<string>() { UseModel });
                 }
 
                 if (!Item.ApplyStateChange(TranslatorRef.ID, UnitTranslationState.Completed).CanDo(-1))
@@ -345,9 +348,9 @@ public class EngineCore
         public bool Disabled;
         public int SleepBySec;
 
-        public EngineNode(EngineCore Owner,string Name,int Type, int MaxCallCount, string Key) : this(Owner,Name,Type,MaxCallCount, Key, 1) { }
+        public EngineNode(EngineCore Owner, string Name, int Type, int MaxCallCount, string Key) : this(Owner, Name, Type, MaxCallCount, Key, 1) { }
 
-        public EngineNode(EngineCore Owner,string Name, int Type, int MaxCallCount, string Key, int SleepBySec)
+        public EngineNode(EngineCore Owner, string Name, int Type, int MaxCallCount, string Key, int SleepBySec)
         {
             this.Owner = Owner;
             this.Key = Key;
@@ -359,18 +362,11 @@ public class EngineCore
             this.SleepBySec = SleepBySec;
         }
 
-        /// <summary>
-        /// Applies the provider throttle delay for callers without cancellation support.
-        /// </summary>
         public void BeginSleep()
         {
             BeginSleep(CancellationToken.None);
         }
 
-        /// <summary>
-        /// Applies the provider throttle delay while honoring cooperative cancellation.
-        /// </summary>
-        /// <param name="cancellationToken">The token that cancels the delay.</param>
         public void BeginSleep(CancellationToken cancellationToken)
         {
             for (int i = 0; i < SleepBySec; i++)
@@ -388,12 +384,10 @@ public class EngineCore
         }
 
         public string Call(string TranslatorID, CancellationToken CancelToken, Translator TranslatorRef, ref UnitGroup Source, ref Dictionary<string, UnitSequence> Sequences,
-           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam,ref string UseModel)
+           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string UseModel)
         {
             bool ForceReplace = true;
             bool ForceReplaceProtected = true;
-
-            //Local_AI_Node = 0, AI_Node = 1,Interactive_Node = 2,Node = 3
 
             if (this.Type <= 2)
             {
@@ -432,222 +426,269 @@ public class EngineCore
                     CustomWords.AddRange(GetSeq.Value.Preprocessor.ReplaceTags);
             }
 
-            if (this.Type == 3)
+            bool ShouldRefund = false;
+            Owner.PreDeductWeight(this);
+
+            try
             {
-                if (PlatformHub.IsEnable(this.Name))
+                if (this.Type == 3)
                 {
-                    PlatformCall Call = new PlatformCall();
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-
-                    string ApiKey = "";
-                    string GetData = null;
-
-                    do
+                    if (PlatformHub.IsEnable(this.Name))
                     {
-                        CancelToken.ThrowIfCancellationRequested();
+                        PlatformCall Call = new PlatformCall();
+                        bool Passed = false;
+                        int MaxTry = MaxTranslationAttempts;
 
-                        ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
+                        string ApiKey = "";
+                        string GetData = null;
 
-                        bool State = PlatformHub.CallNode(
-                            this.Name,
-                            ApiKey,
-                            NIM_Engine.Config,
-                            Source, 
-                            From, 
-                            To, 
-                            ref Call,
-                            out string TranslateStr);
-
-                        GetData = TranslateStr.Trim();
-
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
-
-                    TransText = GetData;
-                    Call.Output();
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
-                }
-            }
-            else if (this.Type == 0)
-            {
-                if (PlatformHub.IsEnable(this.Name))
-                {
-                    var CurrentNode = PlatformHub.GetLocalAINode(this.Name);
-
-                    if (IsLocked(CurrentNode.SingleLock))
-                    {
-                        while (IsLocked(CurrentNode.SingleLock))
+                        do
                         {
                             CancelToken.ThrowIfCancellationRequested();
-                            Delay(CancelToken, 200);
-                        }
+
+                            ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
+
+                            bool State = PlatformHub.CallNode(
+                                this.Name,
+                                ApiKey,
+                                NIM_Engine.Config,
+                                Source,
+                                From,
+                                To,
+                                ref Call,
+                                out string TranslateStr);
+
+                            GetData = TranslateStr.Trim();
+
+                            Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
+
+                            if (!Passed && MaxTry > 0)
+                            {
+                                Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
+                                MaxTry--;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        } while (!Passed);
+
+                        if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
+
+                        TransText = GetData;
+                        Call.Output();
+
+                        if (GetData.Trim().Length == 0 || !Passed) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
                     }
-
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-
-                    do
+                    else
                     {
-                        CancelToken.ThrowIfCancellationRequested();
-
-                        bool State = PlatformHub.CallLocalAINode(
-                            this.Name,
-                            NIM_Engine.Config,
-                            CustomWords, 
-                            Source, 
-                            From, 
-                            To, 
-                            UseAIMemory, 
-                            AIMemoryQueryLimit,
-                            AIParam,
-                            ref UseModel,
-                            ref Call,
-                            out string TranslateStr);
-
-                        GetData = TranslateStr.Trim();
-
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
-                        {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    } while (!Passed);
-
-                    TransText = GetData;
-                    Call.Output();
-
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                        ShouldRefund = true;
+                    }
                 }
-            }
-            else if (this.Type == 1)
-            {
-                if (PlatformHub.IsEnable(this.Name))
+                else if (this.Type == 0)
                 {
-                    AICall Call = new AICall();
-               
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-
-                    string ApiKey = "";
-                    string GetData = null;
-
-                    do
+                    if (PlatformHub.IsEnable(this.Name))
                     {
-                        CancelToken.ThrowIfCancellationRequested();
+                        var CurrentNode = PlatformHub.GetLocalAINode(this.Name);
 
-                        ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
-
-                        bool State = PlatformHub.CallAINode(
-                            this.Name,
-                            ApiKey,
-                            NIM_Engine.Config,
-                            CustomWords,
-                            Source,
-                            From, 
-                            To, 
-                            UseAIMemory, 
-                            AIMemoryQueryLimit, 
-                            AIParam,
-                            ref UseModel, 
-                            ref Call,
-                            out string TranslateStr);
-
-                        GetData = TranslateStr.Trim();
-
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
+                        if (IsLocked(CurrentNode.SingleLock))
                         {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
+                            while (IsLocked(CurrentNode.SingleLock))
+                            {
+                                CancelToken.ThrowIfCancellationRequested();
+                                Delay(CancelToken, 200);
+                            }
                         }
-                        else
+
+                        AICall Call = new AICall();
+                        string GetData = null;
+                        bool Passed = false;
+                        int MaxTry = MaxTranslationAttempts;
+
+                        do
                         {
-                            break;
-                        }
-                    } while (!Passed);
+                            CancelToken.ThrowIfCancellationRequested();
 
-                    if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
+                            bool State = PlatformHub.CallLocalAINode(
+                                this.Name,
+                                NIM_Engine.Config,
+                                CustomWords,
+                                Source,
+                                From,
+                                To,
+                                UseAIMemory,
+                                AIMemoryQueryLimit,
+                                AIParam,
+                                ref UseModel,
+                                ref Call,
+                                out string TranslateStr);
 
-                    TransText = GetData;
-                    Call.Output();
+                            GetData = TranslateStr.Trim();
 
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                            Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
+
+                            if (!Passed && MaxTry > 0)
+                            {
+                                Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
+                                MaxTry--;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        } while (!Passed);
+
+                        TransText = GetData;
+                        Call.Output();
+
+                        if (GetData.Trim().Length == 0 || !Passed) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                    }
+                    else
+                    {
+                        ShouldRefund = true;
+                    }
                 }
-            }
-            else if (this.Type == 2)
-            {
-                if (PlatformHub.IsEnable(this.Name))
+                else if (this.Type == 1)
                 {
-                    var CurrentNode = PlatformHub.GetHumanNode(this.Name);
-
-                    AICall Call = new AICall();
-                    string GetData = null;
-                    bool Passed = false;
-                    int MaxTry = MaxTranslationAttempts;
-
-                    do
+                    if (PlatformHub.IsEnable(this.Name))
                     {
-                        CancelToken.ThrowIfCancellationRequested();
+                        AICall Call = new AICall();
 
-                        bool State = PlatformHub.CallHumanNode(
-                            this.Name,
-                            NIM_Engine.Config,
-                            CustomWords,
-                            Source,
-                            From,
-                            To,
-                            UseAIMemory,
-                            AIMemoryQueryLimit,
-                            AIParam,
-                            ref Call,
-                            out string TranslateStr);
+                        bool Passed = false;
+                        int MaxTry = MaxTranslationAttempts;
 
-                        GetData = TranslateStr.Trim();
+                        string ApiKey = "";
+                        string GetData = null;
 
-                        Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
-
-                        if (!Passed && MaxTry > 0)
+                        do
                         {
-                            Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
-                            MaxTry--;
-                        }
-                        else
+                            CancelToken.ThrowIfCancellationRequested();
+
+                            ApiKey = NIMEngine.NIM_Engine.KeyData.GetData(this.Name).GetFirstKey();
+
+                            bool State = PlatformHub.CallAINode(
+                                this.Name,
+                                ApiKey,
+                                NIM_Engine.Config,
+                                CustomWords,
+                                Source,
+                                From,
+                                To,
+                                UseAIMemory,
+                                AIMemoryQueryLimit,
+                                AIParam,
+                                ref UseModel,
+                                ref Call,
+                                out string TranslateStr);
+
+                            GetData = TranslateStr.Trim();
+
+                            Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
+
+                            if (!Passed && MaxTry > 0)
+                            {
+                                Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
+                                MaxTry--;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        } while (!Passed);
+
+                        if (GetData.Length == 0) NIMEngine.NIM_Engine.KeyData.GetData(this.Name).ReportError(ApiKey);
+
+                        TransText = GetData;
+                        Call.Output();
+
+                        if (GetData.Trim().Length == 0 || !Passed) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                    }
+                    else
+                    {
+                        ShouldRefund = true;
+                    }
+                }
+                else if (this.Type == 2)
+                {
+                    if (PlatformHub.IsEnable(this.Name))
+                    {
+                        var CurrentNode = PlatformHub.GetHumanNode(this.Name);
+
+                        AICall Call = new AICall();
+                        string GetData = null;
+                        bool Passed = false;
+                        int MaxTry = MaxTranslationAttempts;
+
+                        do
                         {
-                            break;
-                        }
-                    } while (!Passed);
+                            CancelToken.ThrowIfCancellationRequested();
 
-                    TransText = GetData;
-                    Call.Output();
+                            bool State = PlatformHub.CallHumanNode(
+                                this.Name,
+                                NIM_Engine.Config,
+                                CustomWords,
+                                Source,
+                                From,
+                                To,
+                                UseAIMemory,
+                                AIMemoryQueryLimit,
+                                AIParam,
+                                ref Call,
+                                out string TranslateStr);
 
-                    if (GetData.Trim().Length == 0) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                            GetData = TranslateStr.Trim();
+
+                            Passed = TranslatorRef.Preprocessor.SecondaryQualityInspection(GetData, CustomWords);
+
+                            if (!Passed && MaxTry > 0)
+                            {
+                                Delay(CancelToken, NIMEngine.NIM_Engine.Config.ReTryWaitTime);
+                                MaxTry--;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        } while (!Passed);
+
+                        TransText = GetData;
+                        Call.Output();
+
+                        if (GetData.Trim().Length == 0 || !Passed) Owner.RegisterFailure(this); else Owner.RegisterSuccess(this);
+                    }
+                    else
+                    {
+                        ShouldRefund = true;
+                    }
+                }
+
+                return TransText.Trim();
+            }
+            catch (OperationCanceledException)
+            {
+                Owner.RefundWeight(this);
+                throw;
+            }
+            catch
+            {
+                Owner.RegisterFailure(this);
+                throw;
+            }
+            finally
+            {
+                if (ShouldRefund)
+                {
+                    Owner.RefundWeight(this);
                 }
             }
+        }
+    }
 
-            return TransText.Trim();
+    internal void RefundWeight(EngineNode Node)
+    {
+        lock (_Lock)
+        {
+            if (Node.EffectiveWeight < Node.MaxCallCount) Node.EffectiveWeight++;
         }
     }
 }
