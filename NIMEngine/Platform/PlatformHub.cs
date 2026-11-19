@@ -27,7 +27,7 @@ namespace NIMEngine.Platform
 
         public static ConcurrentDictionary<string, I_Interactive_Node> HumanNodes { get; private set; } = new ConcurrentDictionary<string, I_Interactive_Node>();
 
-        public static void Init((bool Executed, Dictionary<string, object[]> Results) Results)
+        public static void Init((bool Executed, Dictionary<string, object[]> Results) PluginData)
         {
             // .NET Framework limits HttpWebRequest to 2 concurrent connections per host by default,
             // extra requests queue up and may time out. Only affects ServicePoints created after this call.
@@ -44,9 +44,9 @@ namespace NIMEngine.Platform
 
             HumanNodes["HumanTranslation"] = new HumanTranslationApi();
 
-            if (Results.Executed)
+            if (PluginData.Executed)
             {
-                foreach (var GetPluginResult in Results.Results)
+                foreach (var GetPluginResult in PluginData.Results)
                 {
                     object[] Payload = GetPluginResult.Value;
                     if (Payload == null || Payload.Length < 3) continue; // invalid payload
