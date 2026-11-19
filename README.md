@@ -104,13 +104,6 @@ NIMEngine combines **semantic aggregation**, **fine-grained unit control**, and 
 - Scalable to large and repetitive datasets
 
 
-## Licensing
+## Plugin Development
 
-NIMEngine uses different licenses for different projects within this repository. This repository contains multiple Solutions and Projects, and their licensing terms are not necessarily the same.
-
-- **NIM Plugins:** Licensed under the **NIM Plugin License (PPL) 1.0**, a custom license written by YD525 specifically for the NIM Engine plugin ecosystem. See [PLUGIN-LICENSE.md](https://github.com/YD525/NIM-Plugin/blob/main/NIM-NodePack/PLUGIN-LICENSE.md) for the complete license terms.
-- **All other projects:** Licensed under the **GNU Lesser General Public License v3.0 (LGPL-3.0)**.
-
-**All third-party plugin authors must read and comply with the NIM Plugin License (PPL) 1.0 before developing, distributing, or making available any Plugin for NIM Engine. Developing a third-party Plugin for NIM Engine constitutes acceptance of the PPL 1.0 terms.**
-
-**Exception: NIM plugins developed and maintained by the NIM Engine core team are not licensed under the PPL 1.0. They remain licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0), consistent with the rest of the NIM Engine project.**
+When developing plugins for NIM Engine, please read and comply with the [NIM Plugin License (PPL) 1.0](https://github.com/YD525/NIM-Plugin/blob/main/PLUGIN-LICENSE.md).
