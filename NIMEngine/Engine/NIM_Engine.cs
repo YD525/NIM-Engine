@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NIM_Plugin;
+using NIM_Plugin.ADO;
 using NIM_Plugin.Core;
 using NIMEngine.Additional;
 using NIMEngine.ADO;
@@ -98,6 +99,42 @@ namespace NIMEngine
             {
                 StepAction?.Invoke(2);
                 P_SQLite.CreateDataBase(GetFilePath);
+
+                var Results = PluginHub.Instance.Dispatch(0, Engine_Method.InitDatabase);
+                if (Results.Executed)
+                {
+                    foreach (var GetPluginResult in Results.Results)
+                    {
+                        object[] Payload = GetPluginResult.Value;
+                        if (Payload == null || Payload.Length < 1) continue;
+
+                        try 
+                        {
+                            var DBRef = ((I_Database)Payload[0]);
+
+                            if (DBRef.Bind(
+                            new DB_ExecuteQuery(
+                            (SQL) =>
+                            {
+                                return NIM_Engine.LocalDB.ExecuteQuery(SQL);
+                            }),
+                            new DB_ExecuteNonQuery(
+                            (SQL) =>
+                            {
+                                return NIM_Engine.LocalDB.ExecuteNonQuery(SQL);
+                            }),
+                            new DB_ExecuteScalar(
+                            (SQL) =>
+                            {
+                                return NIM_Engine.LocalDB.ExecuteScalar(SQL);
+                            })))
+                            {
+                                DBRef.OnBound();
+                            }
+                        }
+                        catch { }
+                    }
+                }
             }
 
             LocalDB.OpenSQL(GetFilePath);
@@ -126,7 +163,10 @@ namespace NIMEngine
             WordAutoComplete.Init();
 
             StepAction?.Invoke(10);
-            PlatformHub.Init();
+            PlatformHub.Init(
+                PluginHub.Instance.Dispatch(0, Engine_Method.LoadNodes)
+            );
+
             ReSetKeyData();
         }
 

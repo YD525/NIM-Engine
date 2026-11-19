@@ -7,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using NIM_Plugin;
 using NIM_Plugin.Core;
 using NIM_Plugin.Node;
 using NIMEngine.Engine;
@@ -26,7 +27,7 @@ namespace NIMEngine.Platform
 
         public static ConcurrentDictionary<string, I_Interactive_Node> HumanNodes { get; private set; } = new ConcurrentDictionary<string, I_Interactive_Node>();
 
-        public static void Init()
+        public static void Init((bool Executed, Dictionary<string, object[]> Results) Results)
         {
             // .NET Framework limits HttpWebRequest to 2 concurrent connections per host by default,
             // extra requests queue up and may time out. Only affects ServicePoints created after this call.
@@ -42,8 +43,6 @@ namespace NIMEngine.Platform
             HumanNodes.Clear();
 
             HumanNodes["HumanTranslation"] = new HumanTranslationApi();
-
-            var Results = PluginHub.Instance.Dispatch(0, "LoadNodes");
 
             if (Results.Executed)
             {
