@@ -125,63 +125,89 @@ namespace NIMEngine.Game
 
             return false;
         }
-        public static bool Save(string FilePath, P_ModContent Content)
+        public static bool Close(string FilePath)
         {
-            if (Content == null) return false;
-
             I_ModReader SetReader;
             if (!CurrentReaders.TryGetValue(FilePath, out SetReader)) return false;
 
-            byte[] Data;
+            CurrentReaders.Remove(FilePath);
+
+            // Release the reader's resources if it supports it
+            IDisposable Disposable = SetReader as IDisposable;
+            if (Disposable != null)
+            {
+                try { Disposable.Dispose(); } catch { }
+            }
+
+            return true;
+        }
+
+        public static bool Save(string FilePath, P_ModContent Content)
+        {
+            I_ModReader SetReader;
+            if (!CurrentReaders.TryGetValue(FilePath, out SetReader)) return false;
 
             try
             {
-                Mod_Content SetContent = new Mod_Content();
+                if (Content == null) return false;
 
-                foreach (var GetLine in Content.Lines)
-                {
-                    SetContent.Add(GetLine.Key, GetLine.Value.Data, GetLine.Value.GroupID);
-                }
+                byte[] Data;
 
-                Data = SetReader.Save(SetContent);
-            }
-            catch
-            {
-                return false;
-            }
-
-            // Never touch the original file if the serializer produced nothing
-            if (Data == null || Data.Length == 0) return false;
-
-            // Last-resort safety copy (the app layer already keeps rotating ZIP backups)
-            string BackupPath = FilePath + ".backup";   // xxx.esp -> xxx.esp.backup
-            bool HasOriginal = File.Exists(FilePath);
-
-            try
-            {
-                if (HasOriginal)
-                {
-                    // Back up first, overwrite any previous .backup
-                    File.Copy(FilePath, BackupPath, true);
-                    File.Delete(FilePath);
-                }
-
-                File.WriteAllBytes(FilePath, Data);
-                return true;
-            }
-            catch
-            {
-                // Write failed: restore the original from the backup
                 try
                 {
-                    if (HasOriginal && File.Exists(BackupPath))
-                    {
-                        File.Copy(BackupPath, FilePath, true);
-                    }
-                }
-                catch { }
+                    Mod_Content SetContent = new Mod_Content();
 
-                return false;
+                    foreach (var GetLine in Content.Lines)
+                    {
+                        SetContent.Add(GetLine.Key, GetLine.Value.Data, GetLine.Value.GroupID);
+                    }
+
+                    Data = SetReader.Save(SetContent);
+                }
+                catch
+                {
+                    return false;
+                }
+
+                // Never touch the original file if the serializer produced nothing
+                if (Data == null || Data.Length == 0) return false;
+
+                // Last-resort safety copy (the app layer already keeps rotating ZIP backups)
+                string TempPath = FilePath + ".tmp";
+                string BackupPath = FilePath + ".backup";   // xxx.esp -> xxx.esp.backup
+
+                try
+                {
+                    // Write everything to a temp file first, the original is untouched so far
+                    File.WriteAllBytes(TempPath, Data);
+
+                    // Swap in one step; the old file becomes .backup (overwrites a previous one)
+                    if (File.Exists(FilePath))
+                    {
+                        File.Replace(TempPath, FilePath, BackupPath);
+                    }
+                    else
+                    {
+                        File.Move(TempPath, FilePath);
+                    }
+
+                    return true;
+                }
+                catch
+                {
+                    // Any failure above leaves the original file as it was
+                    try
+                    {
+                        if (File.Exists(TempPath)) File.Delete(TempPath);
+                    }
+                    catch { }
+
+                    return false;
+                }
+            }
+            finally
+            {
+                Close(FilePath);
             }
         }
     }
