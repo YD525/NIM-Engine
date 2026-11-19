@@ -74,8 +74,39 @@ namespace NIMEngine.Game
             }
         }
 
+        // Disposes a per-file reader. The shared template instances registered in
+        // CanUseReaders are never disposed, other files may still be using them.
+        private static void ReleaseReader(I_ModReader SetReader)
+        {
+            if (SetReader == null) return;
+
+            if (CanUseReaders.ContainsValue(SetReader)) return;
+
+            IDisposable Disposable = SetReader as IDisposable;
+            if (Disposable != null)
+            {
+                try { Disposable.Dispose(); } catch { }
+            }
+        }
+
+        private static string NormalizePath(string FilePath)
+        {
+            try
+            {
+                return Path.GetFullPath(FilePath);
+            }
+            catch
+            {
+                return FilePath;
+            }
+        }
+
         public static bool Read(string FilePath, ref P_ModContent ContentRef)
         {
+            if (string.IsNullOrEmpty(FilePath)) return false;
+
+            FilePath = NormalizePath(FilePath);
+
             if (!File.Exists(FilePath)) return false;
 
             if (CurrentReaders.ContainsKey(FilePath)) return false;
@@ -96,15 +127,18 @@ namespace NIMEngine.Game
                     continue;
                 }
 
+                I_ModReader SetReader = null;
+
                 try
                 {
-                    var SetReader = NewReaderInstance(GetReader.Value);
+                    SetReader = NewReaderInstance(GetReader.Value);
 
                     var Content = SetReader.Read(Data);
 
-                    // Not readable by this reader: let the next reader with the same extension try
+                    // Not readable by this reader: release it and let the next reader with the same extension try
                     if (!SetReader.CanRead() || Content == null || Content.Rows == null || Content.Rows.Count == 0)
                     {
+                        ReleaseReader(SetReader);
                         continue;
                     }
 
@@ -115,38 +149,47 @@ namespace NIMEngine.Game
                         NewContent.Lines.Add(GetLine.Key, new P_ModString(GetLine.Data, GetLine.GroupID));
                     }
 
-                    ContentRef = NewContent;
                     CurrentReaders.Add(FilePath, SetReader);
+                    ContentRef = NewContent;
 
                     return true;
                 }
-                catch { }
+                catch
+                {
+                    ReleaseReader(SetReader);
+                }
             }
 
             return false;
         }
+
         public static bool Close(string FilePath)
         {
+            if (string.IsNullOrEmpty(FilePath)) return false;
+
+            FilePath = NormalizePath(FilePath);
+
             I_ModReader SetReader;
             if (!CurrentReaders.TryGetValue(FilePath, out SetReader)) return false;
 
             CurrentReaders.Remove(FilePath);
 
-            // Release the reader's resources if it supports it
-            IDisposable Disposable = SetReader as IDisposable;
-            if (Disposable != null)
-            {
-                try { Disposable.Dispose(); } catch { }
-            }
+            ReleaseReader(SetReader);
 
             return true;
         }
 
         public static bool Save(string FilePath, P_ModContent Content)
         {
+            if (string.IsNullOrEmpty(FilePath)) return false;
+
+            FilePath = NormalizePath(FilePath);
+
             I_ModReader SetReader;
             if (!CurrentReaders.TryGetValue(FilePath, out SetReader)) return false;
 
+            // From here on the reader is always released, whatever happens,
+            // so a misbehaving plugin can never leave this file stuck as "already open".
             try
             {
                 if (Content == null) return false;
