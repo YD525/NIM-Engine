@@ -396,10 +396,10 @@ FROM (
 
         private int FileUniqueKey = 0;
         public string LastLoadFileName = "";
-        public void LoadFile(string FilePath, bool CanSkipFuzzyMatching = false)
+        public void LoadFile(string FilePath)
         {
             UniqueKeyItem NewKey = new UniqueKeyItem();
-            FileUniqueKey = UniqueKeyHelper.AddItemByReturn(ref NewKey, FilePath, CanSkipFuzzyMatching);
+            FileUniqueKey = UniqueKeyHelper.AddItemByReturn(ref NewKey, FilePath);
             LastLoadFileName = NewKey.FileName;
         }
 
