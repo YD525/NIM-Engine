@@ -202,8 +202,8 @@ namespace NIMEngine.Engine
         public void Build()
         {
             ChooseLinks();
-            ChooseHeads();
             BuildBuckets();
+            ChooseHeads();
 
             Units = UnitBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, Bucket.Type == 1)).ToList();
             Books = BookBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, false)).ToList();
@@ -227,136 +227,26 @@ namespace NIMEngine.Engine
 
         public void ChooseHeads()
         {
-            int N = TempUnits.Count;
-            if (N == 0)
-            {
-                MarkHeadsPercent = 70;
-                return;
-            }
+            MarkHeadsPercent = 0;
 
             Heads.Clear();
 
-            List<BaseUnit> LeftoverUnits = new List<BaseUnit>();
-            int MaxCharsForHeadSelection = NIM_Engine.Config.ContextLimit;
-            var FilteredItems = new List<int>();
-
-            for (int i = 0; i < N; i++)
+            for (int i = 0; i < UnitBuckets.Count; i++)
             {
-                var Item = TempUnits[i];
-                Item.TempSim = 0;
-
-                if (!string.IsNullOrEmpty(Item.Original) && Item.Original.Length > MaxCharsForHeadSelection)
+                if (UnitBuckets[i].Head != null)
                 {
-                    LeftoverUnits.Add(Item);
-                }
-                else
-                {
-                    FilteredItems.Add(i);
+                    Heads.Add(UnitBuckets[i].Head.Key, UnitBuckets[i].Head);
                 }
             }
 
-            if (FilteredItems.Count == 0)
-            {
-                TempUnits = LeftoverUnits;
-                MarkHeadsPercent = 70;
-                return;
-            }
-
-            var TokensCache = new Dictionary<int, HashSet<string>>(FilteredItems.Count);
-            foreach (var ItemIndex in FilteredItems)
-            {
-                var Token = TextTokenizer.BuildTokenSignature(TranslatorRef.From, TempUnits[ItemIndex].Original);
-                TokensCache[ItemIndex] = Token.Take(10).ToHashSet();
-            }
-
-            var PrefixBuckets = new Dictionary<string, List<int>>();
-            foreach (var ItemIndex in FilteredItems)
-            {
-                var Prefix = ContextProc.BuildPrefixKey(TempUnits[ItemIndex].Original, 3);
-                if (!PrefixBuckets.TryGetValue(Prefix, out var list))
-                {
-                    list = new List<int>();
-                    PrefixBuckets[Prefix] = list;
-                }
-                list.Add(ItemIndex);
-            }
-
-            int ProcessedCount = LeftoverUnits.Count;
-            int TotalToProcess = N;
-            int UpdateInterval = Math.Max(1, TotalToProcess / 100);
-
-            foreach (var Bucket in PrefixBuckets.Values)
-            {
-                if (Bucket.Count == 0) continue;
-
-                if (Bucket.Count == 1)
-                {
-                    LeftoverUnits.Add(TempUnits[Bucket[0]]);
-                    ProcessedCount++;
-                    continue;
-                }
-
-                int HeadIndex = ContextProc.PickContextHead(Bucket, TempUnits, TokensCache);
-                var HeadItem = TempUnits[HeadIndex];
-                HeadItem.TempSim = Bucket.Count - 1;
-
-                if (!string.IsNullOrEmpty(HeadItem.Key) && !Heads.ContainsKey(HeadItem.Key))
-                {
-                    HeadItem.Head = true;
-                    Heads[HeadItem.Key] = HeadItem;
-                }
-                else
-                {
-                    LeftoverUnits.Add(HeadItem);
-                }
-                ProcessedCount++;
-
-                foreach (var ItemIndex in Bucket)
-                {
-                    if (ItemIndex == HeadIndex) continue;
-                    LeftoverUnits.Add(TempUnits[ItemIndex]);
-                    ProcessedCount++;
-                }
-
-                if (ProcessedCount % UpdateInterval == 0)
-                {
-                    MarkHeadsPercent = 40 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 30.0 / TotalToProcess, 2);
-                }
-            }
-
-            var SecondStageMap = new Dictionary<string, int>();
-            var DemotedHeadKeys = new List<string>();
-
-            foreach (var KV in Heads)
-            {
-                var Item = KV.Value;
-                var Key2 = ContextProc.BuildPrefixKey(Item.Original, 2);
-
-                if (SecondStageMap.ContainsKey(Key2))
-                {
-                    DemotedHeadKeys.Add(KV.Key);
-                    LeftoverUnits.Add(Item);
-                }
-                else
-                {
-                    SecondStageMap[Key2] = 1;
-                }
-            }
-
-            foreach (var K in DemotedHeadKeys)
-            {
-                Heads.Remove(K);
-            }
-
-            TempUnits = LeftoverUnits;
-            MarkHeadsPercent = 70;
+            MarkHeadsPercent = 100;
         }
         public void BuildBuckets()
         {
             int TotalToProcess = Heads.Count + TempUnits.Count;
             if (TotalToProcess == 0)
             {
-                MarkHeadsPercent = 100;
+                MarkHeadsPercent = 90;
                 return;
             }
 
@@ -373,7 +263,7 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = 70 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 30.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
                 }
             }
 
@@ -399,7 +289,7 @@ namespace NIMEngine.Engine
 
                     ProcessedCount++;
                     if (ProcessedCount % UpdateInterval == 0)
-                        MarkHeadsPercent = 70 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 30.0 / TotalToProcess, 2);
+                        MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
                     continue;
                 }
 
@@ -465,15 +355,14 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = 70 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 30.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
                 }
             }
 
             RemoveEmptyBuckets();
             MergeBuckets();
 
-            MarkHeadsPercent = 100;
-            GC.Collect();
+            MarkHeadsPercent = 90;
         }
 
         private void MergeBuckets()

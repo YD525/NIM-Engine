@@ -82,7 +82,6 @@
     <Compile Include="Engine\Events\EngineEvents.cs" />
     <Compile Include="Config\ConfigExtend.cs" />
     <Compile Include="Delegate\DataTransmission.cs" />
-    <Compile Include="Engine\Context\ContextProc.cs" />
     <Compile Include="Engine\Core\BucketContainer.cs" />
     <Compile Include="Engine\Memory\DataGear.cs" />
     <Compile Include="Engine\NIM_Engine.cs" />
