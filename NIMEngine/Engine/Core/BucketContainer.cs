@@ -487,7 +487,10 @@ namespace NIMEngine.Engine
                 return;
             }
 
-            double SimilarityThreshold = NIM_Engine.Config.BucketAssignmentSimilarityThreshold;
+            bool IsWordBoundary = TranslatorRef.From.IsSpaceDelimitedLanguage();
+            double SimilarityThreshold = IsWordBoundary
+                ? NIM_Engine.Config.BucketAssignmentSimilarityThreshold_WordBoundary
+                : NIM_Engine.Config.BucketAssignmentSimilarityThreshold_NoSpace;
 
             foreach (var Unit in TempUnits)
             {

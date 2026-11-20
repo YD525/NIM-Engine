@@ -136,7 +136,8 @@ namespace NIMEngine
         /// It is NOT used when choosing Heads in the ChooseHeads stage,
         /// nor for deduplicating Head against Head.
         /// </summary>
-        public double BucketAssignmentSimilarityThreshold = 0.17;
+        public double BucketAssignmentSimilarityThreshold_WordBoundary = 0.25;
+        public double BucketAssignmentSimilarityThreshold_NoSpace = 0.17;
 
         /// <summary>
         /// Specifies the maximum number of context characters to include during generation.
