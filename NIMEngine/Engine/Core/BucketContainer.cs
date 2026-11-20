@@ -487,7 +487,7 @@ namespace NIMEngine.Engine
                 return;
             }
 
-            double SimilarityThreshold = 0.25;
+            double SimilarityThreshold = NIM_Engine.Config.BucketAssignmentSimilarityThreshold;
 
             foreach (var Unit in TempUnits)
             {
