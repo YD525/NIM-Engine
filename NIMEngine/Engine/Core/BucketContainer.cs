@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using NIMEngine.Engine.Core;
+using NIMEngine.Language;
 using NIMEngine.Translate;
 using NIMEngine.Unit;
 
@@ -487,7 +488,24 @@ namespace NIMEngine.Engine
                 return;
             }
 
-            bool IsWordBoundary = TranslatorRef.From.IsSpaceDelimitedLanguage();
+            var GetLang = TranslatorRef.From;
+
+            if (GetLang == Language.Languages.Auto)
+            {
+                string Sample = null;
+
+                if (TempUnits.Count > 0)
+                {
+                    Sample = TempUnits[0].Original;
+                }
+
+                if (Sample != null)
+                {
+                    GetLang = P_Language.DetectLanguageByLine(Sample);
+                }
+            }
+
+            bool IsWordBoundary = GetLang.IsSpaceDelimitedLanguage();
             double SimilarityThreshold = IsWordBoundary
                 ? NIM_Engine.Config.BucketAssignmentSimilarityThreshold_WordBoundary
                 : NIM_Engine.Config.BucketAssignmentSimilarityThreshold_NoSpace;
