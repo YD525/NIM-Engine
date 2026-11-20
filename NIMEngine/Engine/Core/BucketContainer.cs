@@ -492,15 +492,9 @@ namespace NIMEngine.Engine
 
             if (GetLang == Language.Languages.Auto)
             {
-                string Sample = null;
-
                 if (TempUnits.Count > 0)
                 {
-                    Sample = TempUnits[0].Original;
-                }
-
-                if (Sample != null)
-                {
+                    var Sample = TempUnits[0].Original;
                     GetLang = P_Language.DetectLanguageByLine(Sample);
                 }
             }
