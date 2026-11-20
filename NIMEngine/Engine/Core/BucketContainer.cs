@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using NIMEngine.Engine.Core;
 using NIMEngine.Translate;
 using NIMEngine.Unit;
@@ -184,10 +185,8 @@ namespace NIMEngine.Engine
                 }
             }
 
-            foreach (var GetItem in WaitDeletes)
-            {
-                TempUnits.Remove(GetItem);
-            }
+            var Deleted = new HashSet<BaseUnit>(WaitDeletes);
+            TempUnits.RemoveAll(U => Deleted.Contains(U));
 
             MarkHeadsPercent = 20;
         }
@@ -202,8 +201,8 @@ namespace NIMEngine.Engine
         public void Build()
         {
             ChooseLinks();//0~20
-            BuildBuckets();//20~90
-            ChooseHeads();//90~100
+            ChooseHeads();//20~50
+            BuildBuckets();//50~100
 
             Units = UnitBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, Bucket.Type == 1)).ToList();
             Books = BookBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, false)).ToList();
@@ -225,28 +224,241 @@ namespace NIMEngine.Engine
 
         public double MarkHeadsPercent = 0;
 
+        #region ChooseHeads (20~50)
+
         public void ChooseHeads()
         {
-            MarkHeadsPercent = 90;
+            int N = TempUnits.Count;
+            if (N == 0)
+            {
+                MarkHeadsPercent = 50;
+                return;
+            }
 
             Heads.Clear();
 
-            for (int i = 0; i < UnitBuckets.Count; i++)
+            var Leftover = new List<BaseUnit>(N);
+            int MaxChars = NIM_Engine.Config.ContextLimit;
+            var From = TranslatorRef.From;
+
+            var TokenCounts = new int[N];
+            var PrefixBuckets = new Dictionary<string, List<int>>();
+
+            for (int i = 0; i < N; i++)
             {
-                if (UnitBuckets[i].Head != null)
+                var Item = TempUnits[i];
+                Item.TempSim = 0;
+
+                Item.Head = false;
+
+                var Original = Item.Original;
+                if (!string.IsNullOrEmpty(Original) && Original.Length > MaxChars)
                 {
-                    Heads.Add(UnitBuckets[i].Head.Key, UnitBuckets[i].Head);
+                    Leftover.Add(Item);
+                    continue;
+                }
+
+                TokenCounts[i] = Math.Min(10, TextTokenizer.BuildTokenSignature(From, Original).Count);
+
+                var Prefix = BuildPrefixKey(Original, 3);
+                if (!PrefixBuckets.TryGetValue(Prefix, out var List))
+                {
+                    List = new List<int>();
+                    PrefixBuckets[Prefix] = List;
+                }
+                List.Add(i);
+            }
+
+            if (PrefixBuckets.Count == 0)
+            {
+                TempUnits = Leftover;
+                MarkHeadsPercent = 50;
+                return;
+            }
+
+            int Processed = Leftover.Count;
+            int UpdateInterval = Math.Max(1, N / 100);
+            int LastReported = 0;
+
+            var Prefix2Winner = new Dictionary<string, BaseUnit>();
+            var Demoted = new List<BaseUnit>();
+
+            foreach (var KV in PrefixBuckets)
+            {
+                var Group = KV.Value;
+
+                if (Group.Count == 1)
+                {
+                    Leftover.Add(TempUnits[Group[0]]);
+                    Processed++;
+                }
+                else
+                {
+                    int HeadIndex = PickHead(Group, TokenCounts);
+                    var HeadItem = TempUnits[HeadIndex];
+                    HeadItem.TempSim = Group.Count - 1;
+
+                    bool Accepted = false;
+
+                    if (!string.IsNullOrEmpty(HeadItem.Key) && !Heads.ContainsKey(HeadItem.Key))
+                    {
+                        var Key2 = Cut2Words(KV.Key);
+
+                        if (!Prefix2Winner.TryGetValue(Key2, out var Current))
+                        {
+                            Prefix2Winner[Key2] = HeadItem;
+                            Accepted = true;
+                        }
+                        else if (HeadItem.TempSim > Current.TempSim)
+                        {
+                            Prefix2Winner[Key2] = HeadItem;
+                            Demoted.Add(Current);
+                            Accepted = true;
+                        }
+                    }
+
+                    if (Accepted)
+                    {
+                        HeadItem.Head = true;
+                        Heads[HeadItem.Key] = HeadItem;
+                    }
+                    else
+                    {
+                        Leftover.Add(HeadItem);
+                    }
+                    Processed++;
+
+                    for (int k = 0; k < Group.Count; k++)
+                    {
+                        if (Group[k] == HeadIndex) continue;
+                        Leftover.Add(TempUnits[Group[k]]);
+                        Processed++;
+                    }
+                }
+
+                if (Processed - LastReported >= UpdateInterval)
+                {
+                    LastReported = Processed;
+                    MarkHeadsPercent = 20 + Math.Round(Math.Min(Processed, N) * 30.0 / N, 2);
                 }
             }
 
-            MarkHeadsPercent = 100;
+            foreach (var Item in Demoted)
+            {
+                Item.Head = false;
+                Heads.Remove(Item.Key);
+                Leftover.Add(Item);
+            }
+
+            TempUnits = Leftover;
+            MarkHeadsPercent = 50;
         }
+
+        private int PickHead(List<int> Group, int[] TokenCounts)
+        {
+            int Best = -1;
+            int BestWords = int.MaxValue;
+            bool BestDigit = true;
+            int BestTokens = -1;
+            int BestLen = int.MaxValue;
+
+            for (int g = 0; g < Group.Count; g++)
+            {
+                int Index = Group[g];
+                var Text = TempUnits[Index].Original ?? string.Empty;
+
+                int Words = 0;
+                bool InWord = false;
+                bool HasDigit = false;
+
+                for (int c = 0; c < Text.Length; c++)
+                {
+                    char Ch = Text[c];
+                    if (Ch == ' ' || Ch == '\t')
+                    {
+                        InWord = false;
+                    }
+                    else
+                    {
+                        if (!InWord) { Words++; InWord = true; }
+                        if (!HasDigit && char.IsDigit(Ch)) HasDigit = true;
+                    }
+                }
+
+                if (Words > BestWords) continue;
+
+                int Tokens = TokenCounts[Index];
+                int Len = Text.Length;
+
+                bool Better;
+                if (Words != BestWords) Better = true;              
+                else if (HasDigit != BestDigit) Better = !HasDigit; 
+                else if (Tokens != BestTokens) Better = Tokens > BestTokens;
+                else Better = Len < BestLen;
+
+                if (Better)
+                {
+                    Best = Index;
+                    BestWords = Words;
+                    BestDigit = HasDigit;
+                    BestTokens = Tokens;
+                    BestLen = Len;
+                }
+            }
+
+            return Best;
+        }
+
+        private static string Cut2Words(string Key3)
+        {
+            int First = Key3.IndexOf(' ');
+            if (First < 0) return Key3;
+
+            int Second = Key3.IndexOf(' ', First + 1);
+            return Second < 0 ? Key3 : Key3.Substring(0, Second);
+        }
+
+        private static string BuildPrefixKey(string Text, int MaxWords)
+        {
+            if (string.IsNullOrEmpty(Text))
+                return string.Empty;
+
+            int Len = Text.Length;
+            int Words = 0;
+            int i = 0;
+            var Sb = new StringBuilder(Math.Min(Len, 64));
+
+            while (i < Len && Words < MaxWords)
+            {
+                while (i < Len && (Text[i] == ' ' || Text[i] == '\t'))
+                    i++;
+
+                if (i >= Len)
+                    break;
+
+                if (Words > 0)
+                    Sb.Append(' ');
+
+                while (i < Len && Text[i] != ' ' && Text[i] != '\t')
+                {
+                    Sb.Append(char.ToLowerInvariant(Text[i]));
+                    i++;
+                }
+
+                Words++;
+            }
+
+            return Sb.ToString();
+        }
+
+        #endregion
+
         public void BuildBuckets()
         {
             int TotalToProcess = Heads.Count + TempUnits.Count;
             if (TotalToProcess == 0)
             {
-                MarkHeadsPercent = 90;
+                MarkHeadsPercent = 100;
                 return;
             }
 
@@ -263,15 +475,15 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = 50 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 50.0 / TotalToProcess, 2);
                 }
             }
 
             if (TempUnits.Count == 0)
             {
-                MarkHeadsPercent = 90;
                 RemoveEmptyBuckets();
                 MergeBuckets();
+                MarkHeadsPercent = 100;
                 return;
             }
 
@@ -289,7 +501,7 @@ namespace NIMEngine.Engine
 
                     ProcessedCount++;
                     if (ProcessedCount % UpdateInterval == 0)
-                        MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
+                        MarkHeadsPercent = 50 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 50.0 / TotalToProcess, 2);
                     continue;
                 }
 
@@ -355,14 +567,14 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = 50 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 50.0 / TotalToProcess, 2);
                 }
             }
 
             RemoveEmptyBuckets();
             MergeBuckets();
 
-            MarkHeadsPercent = 90;
+            MarkHeadsPercent = 100;
         }
 
         private void MergeBuckets()
@@ -410,7 +622,7 @@ namespace NIMEngine.Engine
                     foreach (var Bucket in AllAnchorBuckets)
                     {
                         if (NIM_Engine.Config.StrictLinkBucketPurity && Bucket.Type == 1)
-                            continue; 
+                            continue;
 
                         if (Bucket.TryAdd(Unit))
                         {
@@ -459,12 +671,15 @@ namespace NIMEngine.Engine
                         continue;
                     }
 
+                    if (NIM_Engine.Config.StrictLinkBucketPurity && Source.Type == 1)
+                        continue;
+
                     for (int j = 0; j < i; j++)
                     {
                         var Target = AllAnchorBuckets[j];
 
                         if (NIM_Engine.Config.StrictLinkBucketPurity && Target.Type == 1)
-                            continue; 
+                            continue;
 
                         bool IsLinkToLink = (Source.Type == 1 && Target.Type == 1);
 
