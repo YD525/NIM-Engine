@@ -123,6 +123,22 @@ namespace NIMEngine
         public bool ContextEnable { get; set; } = true;
 
         /// <summary>
+        /// Bucket-assignment similarity threshold (lower bound of the Jaccard coefficient).
+        /// During BuildBuckets, each pending Unit is compared against every existing
+        /// Head bucket using the Jaccard similarity |A∩B| / |A∪B|
+        /// (A = the Head's token signature, B = the Unit's token signature).
+        /// The Head bucket with the highest similarity is selected; the Unit is added
+        /// to that bucket only when the highest value is ≥ this threshold.
+        /// Otherwise the Unit forms its own independent bucket (with no Head).
+        /// Higher values → stricter assignment, more independent buckets;
+        /// lower values → looser assignment, fewer and larger buckets.
+        /// Note: this threshold applies only to "Unit vs Head" bucket assignment.
+        /// It is NOT used when choosing Heads in the ChooseHeads stage,
+        /// nor for deduplicating Head against Head.
+        /// </summary>
+        public double BucketAssignmentSimilarityThreshold = 0.17;
+
+        /// <summary>
         /// Specifies the maximum number of context characters to include during generation.
         /// For example, if set to 200, the total character count of all context lines will not exceed 200.
         /// </summary>
