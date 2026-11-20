@@ -62,7 +62,7 @@ namespace NIMEngine.Engine
         {
             if (CheckLinksEvent == null)
             {
-                MarkHeadsPercent = 40;
+                MarkHeadsPercent = 20;
                 return;
             }
 
@@ -83,7 +83,7 @@ namespace NIMEngine.Engine
                 {
                     if (ProcessedCount % UpdateInterval == 0)
                     {
-                        MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 40.0 / TotalToProcess, 2);
+                        MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 20.0 / TotalToProcess, 2);
                     }
                     continue;
                 }
@@ -100,7 +100,7 @@ namespace NIMEngine.Engine
                         {
                             if (ProcessedCount % UpdateInterval == 0)
                             {
-                                MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 40.0 / TotalToProcess, 2);
+                                MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 20.0 / TotalToProcess, 2);
                             }
                             continue;
                         }
@@ -140,7 +140,7 @@ namespace NIMEngine.Engine
                             {
                                 if (ProcessedCount % UpdateInterval == 0)
                                 {
-                                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 40.0 / TotalToProcess, 2);
+                                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 20.0 / TotalToProcess, 2);
                                 }
                                 continue;
                             }
@@ -180,7 +180,7 @@ namespace NIMEngine.Engine
 
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 40.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 20.0 / TotalToProcess, 2);
                 }
             }
 
@@ -189,7 +189,7 @@ namespace NIMEngine.Engine
                 TempUnits.Remove(GetItem);
             }
 
-            MarkHeadsPercent = 40;
+            MarkHeadsPercent = 20;
         }
 
         public Translator TranslatorRef;
@@ -201,9 +201,9 @@ namespace NIMEngine.Engine
 
         public void Build()
         {
-            ChooseLinks();
-            BuildBuckets();
-            ChooseHeads();
+            ChooseLinks();//0~20
+            BuildBuckets();//20~90
+            ChooseHeads();//90~100
 
             Units = UnitBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, Bucket.Type == 1)).ToList();
             Books = BookBuckets.Select((Bucket, Index) => P_Bucket_Core.ConvertToUnitGroup(Bucket, Index, false)).ToList();
@@ -227,7 +227,7 @@ namespace NIMEngine.Engine
 
         public void ChooseHeads()
         {
-            MarkHeadsPercent = 0;
+            MarkHeadsPercent = 90;
 
             Heads.Clear();
 
@@ -263,13 +263,13 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
                 }
             }
 
             if (TempUnits.Count == 0)
             {
-                MarkHeadsPercent = 100;
+                MarkHeadsPercent = 90;
                 RemoveEmptyBuckets();
                 MergeBuckets();
                 return;
@@ -289,7 +289,7 @@ namespace NIMEngine.Engine
 
                     ProcessedCount++;
                     if (ProcessedCount % UpdateInterval == 0)
-                        MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
+                        MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
                     continue;
                 }
 
@@ -355,7 +355,7 @@ namespace NIMEngine.Engine
                 ProcessedCount++;
                 if (ProcessedCount % UpdateInterval == 0)
                 {
-                    MarkHeadsPercent = Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 90.0 / TotalToProcess, 2);
+                    MarkHeadsPercent = 20 + Math.Round(Math.Min(ProcessedCount, TotalToProcess) * 70.0 / TotalToProcess, 2);
                 }
             }
 
