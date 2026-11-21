@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI;
 using NIM_Plugin.Data;
 using NIMEngine.Engine;
 
@@ -100,6 +101,16 @@ namespace NIMEngine.Game
             {
                 return FilePath;
             }
+        }
+
+        public bool CanRead(string FileExtension)
+        {
+            if (SupportedFileExtensions.Contains(FileExtension))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public static bool Read(string FilePath,int FileUniqueKey, ref P_ModContent ContentRef)
