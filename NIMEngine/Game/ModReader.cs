@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.UI;
 using NIM_Plugin.Data;
 using NIMEngine.Engine;
 
@@ -26,6 +25,8 @@ namespace NIMEngine.Game
     }
     public class ModReader
     {
+        public ModReader Instance = new ModReader();
+
         public static HashSet<string> SupportedFileExtensions = new HashSet<string>();
 
         public static Dictionary<string, I_ModReader> CanUseReaders = new Dictionary<string, I_ModReader>();
