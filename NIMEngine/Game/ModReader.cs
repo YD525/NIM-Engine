@@ -23,10 +23,8 @@ namespace NIMEngine.Game
     {
         public Dictionary<string, P_ModString> Lines = new Dictionary<string, P_ModString>();
     }
-    public class ModReader
+    public class P_ModReader
     {
-        public ModReader Instance = new ModReader();
-
         public static HashSet<string> SupportedFileExtensions = new HashSet<string>();
 
         public static Dictionary<string, I_ModReader> CanUseReaders = new Dictionary<string, I_ModReader>();

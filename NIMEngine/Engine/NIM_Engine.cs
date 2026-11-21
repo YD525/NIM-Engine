@@ -170,7 +170,7 @@ namespace NIMEngine
 
             StepAction?.Invoke(11);
 
-            ModReader.Init(
+            P_ModReader.Init(
                 PluginHub.Instance.Dispatch(0, Engine_Method.LoadReaders)
             );
 
