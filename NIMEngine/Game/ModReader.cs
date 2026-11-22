@@ -26,6 +26,7 @@ namespace NIMEngine.Game
     public class P_ModReader
     {
         public static HashSet<string> SupportedFileExtensions = new HashSet<string>();
+        public static HashSet<string> SupportedDirectoryStructs = new HashSet<string>();
 
         public static Dictionary<string, I_ModReader> CanUseReaders = new Dictionary<string, I_ModReader>();
 

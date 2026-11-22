@@ -198,7 +198,7 @@ namespace NIMEngine
             KeyData = new KeyManage();
             KeyData.Init();
         }
-        public bool IsTrustedPlugin(string Key)
+        public static bool IsTrustedPlugin(string Key)
         {
             return PluginHub.Instance.IsTrustedPlugin(Key);
         }
