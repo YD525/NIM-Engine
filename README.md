@@ -6,7 +6,7 @@ It also implements **Placeholder Logic**, allowing users to define custom dictio
 
 ---
 
-## Plugin Development
+## Plugin Support
 
 NIMEngine now depends on **NIM-Plugin.dll**, which provides the plugin infrastructure required by NIMEngine.
 
