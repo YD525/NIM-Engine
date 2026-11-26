@@ -109,7 +109,7 @@ namespace NIMEngine.Game
             }
             catch
             {
-                return Template;
+                return null;
             }
         }
 
@@ -251,6 +251,11 @@ namespace NIMEngine.Game
                 {
                     SetReader = NewReaderInstance(GetReader.Value);
 
+                    if (SetReader == null)
+                    {
+                        continue;
+                    }
+
                     List<Mod_File> ModFiles = new List<Mod_File>();
                     var FileExtensions = SetReader.TakenOverFileExtension.Split(',');
 
@@ -382,7 +387,6 @@ namespace NIMEngine.Game
 
             return new P_ModReaderLoadResult();
         }
-
         public static bool Close(string FilePath)
         {
             if (string.IsNullOrEmpty(FilePath)) return false;
@@ -398,9 +402,6 @@ namespace NIMEngine.Game
 
             return true;
         }
-
-     
-
         public static int Save(string SetPath,P_ModContent Content)
         {
             if (string.IsNullOrEmpty(SetPath)) return -1;
