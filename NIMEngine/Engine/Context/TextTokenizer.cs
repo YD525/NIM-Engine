@@ -14,6 +14,7 @@ namespace NIMEngine.Engine
             Lang == Languages.English ||
             Lang == Languages.Turkish ||
             Lang == Languages.Brazilian ||
+            Lang == Languages.Ukrainian ||
             Lang == Languages.Russian ||
             Lang == Languages.Italian ||
             Lang == Languages.Spanish ||
