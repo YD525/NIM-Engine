@@ -1,21 +1,27 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    internal static class EnglishHelper
+    public class EnglishHelper : I_Language
     {
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-       {
+        {
+            // Articles
             "a","an","the",
+
+            // Conjunctions
             "and","or","but","if","then","else","while","when","because","since","unless",
 
+            // Prepositions
             "on","in","at","to","for","with","by","of","from","into","onto","upon",
             "about","around","through","across","between","among","against",
             "over","under","above","below","before","after","during","within","without",
 
+            // Pronouns
             "i","me","my","mine","myself",
             "you","your","yours","yourself","yourselves",
             "he","him","his","himself",
@@ -25,44 +31,83 @@ namespace NIMEngine.Language
             "they","them","their","theirs","themselves",
             "this","that","these","those","which","who","whom","whose","what",
 
-            "is","are","was","were","be","been","being",
+            // Question words and places
+            "where","why","how","here","there",
+
+            // Auxiliary and modal verbs
+            "am","is","are","was","were","be","been","being",
             "has","have","had","having",
             "do","does","did","doing",
-
             "can","could","may","might","must",
             "will","would","shall","should",
 
+            // Negations
             "not","no","nor","never","none","nothing","nobody",
 
+            // Common adverbs
             "very","too","so","just","only","even","still","also","already","yet",
             "again","ever","always","often","sometimes","usually","rarely",
 
+            // Quantifiers
             "all","any","some","each","every","either","neither",
             "much","many","few","less","more","most","several",
 
+            // Time words
             "now","today","tomorrow","yesterday",
 
+            // Other common words
             "as","than","like","via","per"
-       };
+        };
 
+        private static readonly Regex WordRegex = new Regex(@"[\p{L}\p{M}]+", RegexOptions.Compiled);
 
+        // Basic Latin letters, accented letters found in English loanwords,
+        // digits, whitespace and punctuation
         private static readonly Regex EnglishRegex = new Regex(
-            @"^[a-zA-Z0-9\s\p{P}]+$",
+            @"^[a-zA-Z0-9éÉèÈêÊëËïÏàÀâÂçÇ\s\p{P}]+$",
             RegexOptions.Compiled);
 
-        /// <summary>
-        /// Determines whether the input string is likely to be English text,
-        /// containing only English letters, digits, whitespace, and punctuation.
-        /// Excludes accented characters to improve accuracy.
-        /// </summary>
-        /// <param name="Input">Input text to check</param>
-        /// <returns>True if input is likely English; otherwise false.</returns>
-        public static bool IsProbablyEnglish(string Input)
+        public float Version { get; set; } = 1.1f;
+
+        public int GetLanguage()
+        {
+            return (int)Languages.English;
+        }
+
+        public HashSet<string> GetStopWords()
+        {
+            return StopWords;
+        }
+
+        // Fallback language: priority is handled by the caller.
+        // Matching the character set is enough, with or without stop words.
+        public bool IsProbablyMatch(string Input)
         {
             if (string.IsNullOrWhiteSpace(Input))
                 return false;
 
             return EnglishRegex.IsMatch(Input);
+        }
+
+        /// <summary>
+        /// Calculates a feature score indicating likelihood of English language
+        /// </summary>
+        /// <param name="Input">Input text</param>
+        /// <returns>Score value representing English language likelihood</returns>
+        public double GetProbability(string Input)
+        {
+            if (!IsProbablyMatch(Input))
+                return 0;
+
+            int Hits = 0;
+
+            foreach (Match Word in WordRegex.Matches(Input))
+            {
+                if (StopWords.Contains(Word.Value))
+                    Hits++;
+            }
+
+            return Hits * 2.0 / Input.Length;
         }
     }
 }
