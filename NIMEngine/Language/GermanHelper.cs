@@ -122,11 +122,6 @@ namespace NIMEngine.Language
             "[çÇğĞıİşŞåÅõÕőŐűŰøØæÆñÑãÃąĄćĆęĘłŁńŃśŚźŹżŻčČďĎěĚňŇřŘšŠťŤůŮžŽ]",
             RegexOptions.Compiled);
 
-        public int GetLanguage()
-        {
-            return (int)Languages.German;
-        }
-
         public HashSet<string> GetStopWords()
         {
             return StopWords;
