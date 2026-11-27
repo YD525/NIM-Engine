@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class PersianHelper : I_Language
     {
+        public string Code { get; } = "fa";
+        public string LanguageName { get; } = "Persian";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -89,11 +90,6 @@ namespace NIMEngine.Language
         private static readonly Regex ArabicWeakLetterRegex = new Regex(
             @"[يك]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Persian;
-        }
 
         public HashSet<string> GetStopWords()
         {

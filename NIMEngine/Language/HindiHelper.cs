@@ -8,9 +8,12 @@ namespace NIMEngine.Language
 {
     public class HindiHelper : I_Language
     {
+        public string Code { get; } = "hi";
+        public string LanguageName { get; } = "Hindi";
+
         public double PassScore { get; set; } = 0.5;
 
-        public float Version { get; set; } = 1.0f;
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -83,11 +86,6 @@ namespace NIMEngine.Language
         private static readonly Regex ArabicScriptRegex = new Regex(
             @"[\u0600-\u06FF]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Hindi;
-        }
 
         public HashSet<string> GetStopWords()
         {

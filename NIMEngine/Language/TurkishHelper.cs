@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class TurkishHelper : I_Language
     {
+        public string Code { get; } = "tr";
+        public string LanguageName { get; } = "Turkish";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -84,11 +85,6 @@ namespace NIMEngine.Language
 
         // Latin letters (basic + extended), used as denominator to exclude digits/punctuation
         private static readonly Regex LatinLetterRegex = new Regex(@"[\p{L}]", RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Turkish;
-        }
 
         public HashSet<string> GetStopWords()
         {

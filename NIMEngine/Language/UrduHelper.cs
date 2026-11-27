@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class UrduHelper : I_Language
     {
+        public string Code { get; } = "ur";
+        public string LanguageName { get; } = "Urdu";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -93,11 +94,6 @@ namespace NIMEngine.Language
         private static readonly Regex ArabicSpecificLetterRegex = new Regex(
             @"[ةىيك]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Urdu;
-        }
 
         public HashSet<string> GetStopWords()
         {

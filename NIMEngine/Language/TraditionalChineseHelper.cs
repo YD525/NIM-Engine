@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class TraditionalChineseHelper : I_Language
     {
+        public string Code { get; } = "zh-TW";
+        public string LanguageName { get; } = "TraditionalChinese";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         // Asian language detection does not use the stop-word algorithm.
@@ -78,11 +79,6 @@ namespace NIMEngine.Language
         private static readonly Regex KoreanHangulRegex = new Regex(
             @"[\uAC00-\uD7AF\u1100-\u11FF]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.TraditionalChinese;
-        }
 
         public HashSet<string> GetStopWords()
         {

@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class SpanishHelper : I_Language
     {
+        public string Code { get; } = "es";
+        public string LanguageName { get; } = "Spanish";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -88,11 +89,6 @@ namespace NIMEngine.Language
         private static readonly Regex ScriptLetterRegex = new Regex(
             @"[\p{L}]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Spanish;
-        }
 
         public HashSet<string> GetStopWords()
         {

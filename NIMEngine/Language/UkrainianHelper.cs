@@ -8,7 +8,10 @@ namespace NIMEngine.Language
 {
     public class UkrainianHelper : I_Language
     {
+        public string Code { get; } = "uk";
+        public string LanguageName { get; } = "Ukrainian";
         public double PassScore { get; set; } = 0.5;
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -125,13 +128,6 @@ namespace NIMEngine.Language
         private static readonly Regex ForeignCharRegex = new Regex(
             "[ыЫэЭъЪёЁўЎјЈљЉњЊћЋђЂџЏѓЃќЌѕЅәӘғҒқҚңҢөӨұҰүҮһҺ]",
             RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Ukrainian;
-        }
 
         public HashSet<string> GetStopWords()
         {

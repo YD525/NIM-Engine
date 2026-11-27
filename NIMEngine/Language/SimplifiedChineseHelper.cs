@@ -8,6 +8,8 @@ namespace NIMEngine.Language
 {
     public class SimplifiedChineseHelper : I_Language
     {
+        public string Code { get; } = "zh-CN";
+        public string LanguageName { get; } = "SimplifiedChinese";
         public double PassScore { get; set; } = 0.5;
 
         public float Version { get; set; } = 1.1f;
@@ -78,11 +80,6 @@ namespace NIMEngine.Language
         private static readonly Regex KoreanHangulRegex = new Regex(
             @"[\uAC00-\uD7AF\u1100-\u11FF]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.SimplifiedChinese;
-        }
 
         public HashSet<string> GetStopWords()
         {

@@ -8,6 +8,9 @@ namespace NIMEngine.Language
 {
     public class ArabicHelper : I_Language
     {
+        public string Code { get; } = "ar";
+        public string LanguageName { get; } = "Arabic";
+
         public double PassScore { get; set; } = 0.5;
 
         public float Version { get; set; } = 1.1f;
@@ -92,11 +95,6 @@ namespace NIMEngine.Language
         private static readonly Regex PersianStrongDigitRegex = new Regex(
             @"[\u06F0-\u06F9]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Arabic;
-        }
 
         public HashSet<string> GetStopWords()
         {
