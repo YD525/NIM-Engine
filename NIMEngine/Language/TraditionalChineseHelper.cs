@@ -12,6 +12,8 @@ namespace NIMEngine.Language
 
         public float Version { get; set; } = 1.1f;
 
+        // Asian language detection does not use the stop-word algorithm.
+        // Stop words are only used for detection; text processing still uses the standard sliding N-gram algorithm.
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
