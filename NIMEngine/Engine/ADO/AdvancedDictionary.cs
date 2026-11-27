@@ -115,10 +115,33 @@ namespace NIMEngine.ADO
             //Create a new table with the updated structure
             CreateNewTable();
 
-            //Migrate data from the old table to the new table
-            string SQLOrder = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) SELECT TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;";
+            //Read old rows first, then map legacy INT language ids to language codes
+            List<Dictionary<string, object>> OldRows = NIM_Engine.LocalDB.ExecuteQuery("SELECT Rowid, TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;");
 
-            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
+            const string InsertSQL = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) VALUES (@TargetFileName, @Type, @Source, @Result, @From, @To, @ExactMatch, @IgnoreCase, @Regex);";
+
+            for (int i = 0; i < OldRows.Count; i++)
+            {
+                var Row = OldRows[i];
+
+                int LegacyFrom = P_Convert.ObjToInt(Row["From"]);
+                int LegacyTo = P_Convert.ObjToInt(Row["To"]);
+
+                string FromCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyFrom);
+                string ToCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyTo);
+
+                NIM_Engine.LocalDB.ExecuteNonQuery(
+                    InsertSQL,
+                    SQLiteBuilder.Parameter("@TargetFileName", Row["TargetModName"]),
+                    SQLiteBuilder.Parameter("@Type", Row["Type"]),
+                    SQLiteBuilder.Parameter("@Source", Row["Source"]),
+                    SQLiteBuilder.Parameter("@Result", Row["Result"]),
+                    SQLiteBuilder.Parameter("@From", FromCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@To", ToCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@ExactMatch", Row["ExactMatch"]),
+                    SQLiteBuilder.Parameter("@IgnoreCase", Row["IgnoreCase"]),
+                    SQLiteBuilder.Parameter("@Regex", Row["Regex"]));
+            }
 
             //Drop the old table after migration
             NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
@@ -126,18 +149,37 @@ namespace NIMEngine.ADO
 
         private static void MigrateLanguageCodeColumns()
         {
-            //Rename the old table
             NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE AdvancedDictionary RENAME TO AdvancedDictionary_Old;");
 
-            //Create a new table with TEXT From/To columns
             CreateNewTable();
 
-            //Migrate data, converting old INT language ids to language codes
-            string SQLOrder = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) SELECT TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;";
+            List<Dictionary<string, object>> OldRows = NIM_Engine.LocalDB.ExecuteQuery("SELECT Rowid, TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;");
 
-            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
+            const string InsertSQL = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) VALUES (@TargetFileName, @Type, @Source, @Result, @From, @To, @ExactMatch, @IgnoreCase, @Regex);";
 
-            //Drop the old table after migration
+            for (int i = 0; i < OldRows.Count; i++)
+            {
+                var Row = OldRows[i];
+
+                int LegacyFrom = P_Convert.ObjToInt(Row["From"]);
+                int LegacyTo = P_Convert.ObjToInt(Row["To"]);
+
+                string FromCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyFrom);
+                string ToCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyTo);
+
+                NIM_Engine.LocalDB.ExecuteNonQuery(
+                    InsertSQL,
+                    SQLiteBuilder.Parameter("@TargetFileName", Row["TargetFileName"]),
+                    SQLiteBuilder.Parameter("@Type", Row["Type"]),
+                    SQLiteBuilder.Parameter("@Source", Row["Source"]),
+                    SQLiteBuilder.Parameter("@Result", Row["Result"]),
+                    SQLiteBuilder.Parameter("@From", FromCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@To", ToCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@ExactMatch", Row["ExactMatch"]),
+                    SQLiteBuilder.Parameter("@IgnoreCase", Row["IgnoreCase"]),
+                    SQLiteBuilder.Parameter("@Regex", Row["Regex"]));
+            }
+
             NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
         }
 
@@ -259,7 +301,7 @@ namespace NIMEngine.ADO
 
             for (int i = 0; i < NTable.Count; i++)
             {
-                var Row = NTable[i];
+                var Row = NTable[i];    
                 var Get = new AdvancedDictionaryItem(
                 Row["Rowid"],
                 SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["TargetFileName"])),

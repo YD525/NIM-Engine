@@ -125,7 +125,29 @@ namespace NIMEngine.Engine.ADO
 
             NIM_Engine.LocalDB.ExecuteNonQuery("CREATE TABLE [RecordsHistory]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [CurrentText] TEXT, [IsCurrent] INT, [Time] INT64, [RangeID] TEXT);");
 
-            NIM_Engine.LocalDB.ExecuteNonQuery("INSERT INTO RecordsHistory (FileUniqueKey, Key, [To], CurrentText, IsCurrent, Time, RangeID) SELECT FileUniqueKey, Key, [To], CurrentText, IsCurrent, Time, RangeID FROM RecordsHistory_Old;");
+            //Read old rows first, then map legacy INT language ids to language codes
+            List<Dictionary<string, object>> OldRows = NIM_Engine.LocalDB.ExecuteQuery("SELECT FileUniqueKey, Key, [To], CurrentText, IsCurrent, Time, RangeID FROM RecordsHistory_Old;");
+
+            const string InsertSQL = "INSERT INTO RecordsHistory (FileUniqueKey, [Key], [To], [CurrentText], [IsCurrent], [Time], [RangeID]) VALUES (@FileUniqueKey, @Key, @To, @CurrentText, @IsCurrent, @Time, @RangeId);";
+
+            for (int i = 0; i < OldRows.Count; i++)
+            {
+                var Row = OldRows[i];
+
+                int LegacyTo = P_Convert.ObjToInt(Row["To"]);
+
+                string ToCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyTo);
+
+                NIM_Engine.LocalDB.ExecuteNonQuery(
+                    InsertSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", Row["FileUniqueKey"]),
+                    SQLiteBuilder.Parameter("@Key", Row["Key"]),
+                    SQLiteBuilder.Parameter("@To", ToCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@CurrentText", Row["CurrentText"]),
+                    SQLiteBuilder.Parameter("@IsCurrent", Row["IsCurrent"]),
+                    SQLiteBuilder.Parameter("@Time", Row["Time"]),
+                    SQLiteBuilder.Parameter("@RangeId", Row["RangeID"]));
+            }
 
             NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE RecordsHistory_Old;");
         }

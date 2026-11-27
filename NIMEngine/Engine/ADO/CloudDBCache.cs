@@ -87,7 +87,28 @@ namespace NIMEngine.ADO
 
             NIM_Engine.LocalDB.ExecuteNonQuery("CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [Source] TEXT, [Result] TEXT, [Model] TEXT);");
 
-            NIM_Engine.LocalDB.ExecuteNonQuery("INSERT INTO CloudTranslation (FileUniqueKey, Key, [To], Source, Result, Model) SELECT FileUniqueKey, Key, [To], Source, Result, Model FROM CloudTranslation_Old;");
+            //Read old rows first, then map legacy INT language ids to language codes
+            List<Dictionary<string, object>> OldRows = NIM_Engine.LocalDB.ExecuteQuery("SELECT FileUniqueKey, Key, [To], Source, Result, Model FROM CloudTranslation_Old;");
+
+            const string InsertSQL = "INSERT INTO CloudTranslation (FileUniqueKey, [Key], [To], [Source], [Result], [Model]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result, @Model);";
+
+            for (int i = 0; i < OldRows.Count; i++)
+            {
+                var Row = OldRows[i];
+
+                int LegacyTo = P_Convert.ObjToInt(Row["To"]);
+
+                string ToCode = LanguageHub.GetLanguageCodeByLegacyCode(LegacyTo);
+
+                NIM_Engine.LocalDB.ExecuteNonQuery(
+                    InsertSQL,
+                    SQLiteBuilder.Parameter("@FileUniqueKey", Row["FileUniqueKey"]),
+                    SQLiteBuilder.Parameter("@Key", Row["Key"]),
+                    SQLiteBuilder.Parameter("@To", ToCode ?? string.Empty),
+                    SQLiteBuilder.Parameter("@Source", Row["Source"]),
+                    SQLiteBuilder.Parameter("@Result", Row["Result"]),
+                    SQLiteBuilder.Parameter("@Model", Row["Model"]));
+            }
 
             NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE CloudTranslation_Old;");
         }
