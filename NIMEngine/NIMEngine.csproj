@@ -94,7 +94,6 @@
     <Compile Include="Http\ProxyCenter.cs" />
     <Compile Include="Language\ArabicHelper.cs" />
     <Compile Include="Language\BrazilianPortugueseHelper.cs" />
-    <Compile Include="Language\CanadianFrenchHelper.cs" />
     <Compile Include="Language\ChineseVariantMap.cs" />
     <Compile Include="Language\CzechHelper.cs" />
     <Compile Include="Language\EnglishHelper.cs" />
