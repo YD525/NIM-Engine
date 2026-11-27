@@ -150,7 +150,7 @@ namespace NIMEngine.Tests
 
         private static TranslatorCore CreateCore(ITranslationProvider provider, params UnitGroup[] groups)
         {
-            var translator = new Translator("task-test", Languages.English, Languages.German, false)
+            var translator = new Translator("task-test", new P_Language("en", "English"), new P_Language("de", "German"), false)
             {
                 TranslationProvider = provider,
                 TranslationScheduler = new SequentialTranslationScheduler()

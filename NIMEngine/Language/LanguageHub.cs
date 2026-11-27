@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
@@ -222,9 +223,20 @@ namespace NIMEngine.Language
             this.Code = Code;
             this.Name = Name;
         }
-
-        public static P_Language Detect(string Str, LanguageDetectMode DetectMode)
+        public P_Language()
         {
+            this.Code = string.Empty;
+            this.Name = string.Empty;
+        }
+
+        public static P_Language NULL = new P_Language();
+        public const string Auto = "(Auto)";
+        public static P_Language Detect(string Text, LanguageDetectMode DetectMode)
+        {
+            string Str = String.Copy(Text);
+
+            Str = Regex.Replace(Str, @"([.!?。！？．｡؟۔።፧։])", "$1\n");
+
             Dictionary<string, double> Scores = new Dictionary<string, double>();
 
             if (DetectMode == LanguageDetectMode.Line)
@@ -275,17 +287,111 @@ namespace NIMEngine.Language
 
             return null;   
         }
+
+        public bool IsSpaceDelimitedLanguage()
+        {
+            switch (this.Name)
+            {
+                case "German":
+                case "English":
+                case "Turkish":
+                case "Brazilian":
+                case "Ukrainian":
+                case "Russian":
+                case "Italian":
+                case "Spanish":
+                case "Indonesian":
+                case "Hindi":
+                case "Urdu":
+                case "French":
+                case "Vietnamese":
+                case "Polish":
+                case "Persian":
+                case "Czech":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        public bool IsNoSpaceLanguage()
+        {
+            switch (this.Name)
+            {
+                case "Japanese":
+                case "Korean":
+                case "TraditionalChinese":
+                case "Thai":
+                case "SimplifiedChinese":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool operator ==(P_Language Left, string Right)
+        {
+            if (Left is null && Right is null) return true;
+            if (Left is null || Right is null) return false;
+            return Left.Name == Right;
+        }
+        public static bool operator !=(P_Language Left, string Right)
+        {
+            return !(Left == Right);
+        }
+        public static bool operator ==(string Left, P_Language Right)
+        {
+            return Right == Left;
+        }
+        public static bool operator !=(string Left, P_Language Right)
+        {
+            return !(Right == Left);
+        }
+        public override bool Equals(object Obj)
+        {
+            if (Obj is P_Language Other)
+            {
+                return this.Code == Other.Code && this.Name == Other.Name;
+            }
+            if (Obj is string Str)
+            {
+                return this.Name == Str;
+            }
+            return false;
+        }
+        public override int GetHashCode()
+        {
+            return ((Code ?? string.Empty) + "|" + (Name ?? string.Empty)).GetHashCode();
+        }
     }
 
     public class LanguageHub
     {
+        public static ConcurrentDictionary<string, string> LanguagesByCode = new ConcurrentDictionary<string, string>();
         public static HashSet<string> SupportedNames = new HashSet<string>();
         public static ConcurrentDictionary<string,I_Language> Languages = new ConcurrentDictionary<string, I_Language>();
 
         private static void AddLanguage(I_Language Lang)
         {
+            LanguagesByCode[Lang.Code] = Lang.LanguageName;
             SupportedNames.Add(Lang.LanguageName);
             Languages[Lang.LanguageName] = Lang;
+        }
+        public static P_Language GetLanguageByCode(string Code)
+        {
+            if (string.IsNullOrEmpty(Code))
+                return null;
+
+            string LanguageName;
+            if (LanguagesByCode.TryGetValue(Code, out LanguageName))
+            {
+                I_Language Lang;
+                if (Languages.TryGetValue(LanguageName, out Lang))
+                {
+                    return new P_Language(Lang.Code,Lang.LanguageName);
+                }
+            }
+
+            return null;
         }
 
         //public enum Languages
@@ -328,6 +434,7 @@ namespace NIMEngine.Language
 
         public static void Init((bool Executed, Dictionary<string, object[]> Results) PluginData)
         {
+            LanguagesByCode.Clear();
             SupportedNames.Clear();
             Languages.Clear();
 

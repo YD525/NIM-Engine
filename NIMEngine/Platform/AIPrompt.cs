@@ -6,7 +6,7 @@ using System.Linq;
 
 public class AIPrompt
 {
-    public static string GenerateTranslationPrompt(Languages From, Languages To, string TextToTranslate, List<string> TerminologyReferences, List<ReplaceTag> CustomWords, string AdditionalInstructions)
+    public static string GenerateTranslationPrompt(P_Language From, P_Language To, string TextToTranslate, List<string> TerminologyReferences, List<ReplaceTag> CustomWords, string AdditionalInstructions)
     {
         if (CustomWords == null)
         {
@@ -47,18 +47,18 @@ public class AIPrompt
         Prompt.AppendLine(RoleRules);
 
         // Language direction
-        if (From == Languages.Auto)
+        if (From == P_Language.Auto)
         {
             Prompt.AppendLine(
-                $"Translate the following text to {P_Language.ToLanguageCode(To)}. " +
+                $"Translate the following text to {To.Code}. " +
                 "The source language will be automatically detected."
             );
         }
         else
         {
             Prompt.AppendLine(
-                $"Translate the following text from {P_Language.ToLanguageCode(From)} " +
-                $"to {P_Language.ToLanguageCode(To)}."
+                $"Translate the following text from {From.Code} " +
+                $"to {To.Code}."
             );
         }
 

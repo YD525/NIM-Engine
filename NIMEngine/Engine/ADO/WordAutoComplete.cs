@@ -16,29 +16,29 @@ namespace NIMEngine.Engine.ADO
     public class WordAutoComplete : IDisposable
     {
         private readonly TrieNode _Root = new TrieNode();
-        private readonly P_SQLite _DB = new P_SQLite(); 
+        private readonly P_SQLite _DB = new P_SQLite();
 
-        public Languages CurrentLanguage { get; private set; } = Languages.Null;
+        public P_Language CurrentLanguage { get; private set; }
 
         public static string DatabaseDirectory { get; set; } = "";
 
         public int MaxResults { get; set; } = 30;
 
 
-        public static string GetDatabaseName(Languages Language)
+        public static string GetDatabaseName(P_Language Language)
         {
-            return (P_Language.ToLanguageCode(Language).Replace("-","_")) + ".db";
+            return Language.Code.Replace("-", "_") + ".db";
         }
 
-        public bool ExistsDatabase(Languages Language)
+        public bool ExistsDatabase(P_Language Language)
         {
             string Path = GetDatabasePath(Language);
             return File.Exists(Path);
         }
 
-        public bool LoadWords(Languages Language)
+        public bool LoadWords(P_Language Language)
         {
-            if (Language == Languages.Null || Language == Languages.Auto)
+            if (Language == null)
                 return false;
 
             string Path = GetDatabasePath(Language);
@@ -60,12 +60,12 @@ namespace NIMEngine.Engine.ADO
             }
             catch
             {
-                CurrentLanguage = Languages.Null;
+                CurrentLanguage = null;
                 return false;
             }
         }
 
-        private string GetDatabasePath(Languages Language)
+        private string GetDatabasePath(P_Language Language)
         {
             return Path.Combine(WordAutoComplete.DatabaseDirectory, GetDatabaseName(Language));
         }
@@ -114,7 +114,7 @@ namespace NIMEngine.Engine.ADO
         }
         public List<string> Query(string UserText)
         {
-            if (string.IsNullOrEmpty(UserText) || CurrentLanguage == Languages.Null)
+            if (string.IsNullOrEmpty(UserText) || CurrentLanguage == null)
                 return new List<string>();
 
             string Prefix = string.Empty;
@@ -180,7 +180,7 @@ namespace NIMEngine.Engine.ADO
                 return string.Empty;
             }
 
-            int Start = End + 1; 
+            int Start = End + 1;
             int Count = 0;
 
             while (Start > 0 && Count < MaxChars)
@@ -208,7 +208,7 @@ namespace NIMEngine.Engine.ADO
                    C == '；' || C == '：' || C == '"' || C == '"' ||
                    C == '、' || C == '「' || C == '」' || C == '【' || C == '】' ||
                    C == '《' || C == '》' || C == '・' || C == '。' ||
-                   C == '　'; 
+                   C == '　';
         }
 
         private void CollectWords(TrieNode Node, string Current, List<(string, double)> Results)
@@ -226,7 +226,7 @@ namespace NIMEngine.Engine.ADO
             _DB.Dispose();
         }
 
-        public static Dictionary<Languages, WordAutoComplete> WordCompleters = new Dictionary<Languages, WordAutoComplete>();
+        public static Dictionary<string, WordAutoComplete> WordCompleters = new Dictionary<string, WordAutoComplete>();
 
         public static void Init()
         {
@@ -234,12 +234,13 @@ namespace NIMEngine.Engine.ADO
             {
                 FileInfo GetInfo = new FileInfo(GetFile);
                 var GetName = Path.GetFileNameWithoutExtension(GetInfo.Name).Replace("_", "-");
-                Languages GetLang = P_Language.FromLanguageCode(GetName);
 
-                if (!WordCompleters.ContainsKey(GetLang))
+                P_Language GetLang = LanguageHub.GetLanguageByCode(GetName);
+
+                if (GetLang != null && !WordCompleters.ContainsKey(GetLang.Code))
                 {
-                    WordCompleters.Add(GetLang,new WordAutoComplete());
-                    WordCompleters[GetLang].LoadWords(GetLang);
+                    WordCompleters.Add(GetLang.Code, new WordAutoComplete());
+                    WordCompleters[GetLang.Code].LoadWords(GetLang);
                 }
             }
         }

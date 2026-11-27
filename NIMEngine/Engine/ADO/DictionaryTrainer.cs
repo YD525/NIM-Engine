@@ -25,14 +25,14 @@ namespace NIMEngine.Engine.ADO
             private Dictionary<string, string> _PairedMachineKeys = new Dictionary<string, string>();
 
             //The paired-key data is read-only. The same item can appear in both the manual and AI translation lists, so the UI uses this mapping to look up the associated entry and let the user choose which one to apply.
-            public IReadOnlyDictionary<string, string> PairedMachineKeys 
+            public IReadOnlyDictionary<string, string> PairedMachineKeys
             {
                 get { return _PairedMachineKeys; }
             }
 
-            public int From = 0;
+            public P_Language From;
 
-            public ModTrainingSession(int From, int FileUniqueKey)
+            public ModTrainingSession(P_Language From, int FileUniqueKey)
             {
                 CollectTrainableItems(FileUniqueKey);
                 this.From = From;
@@ -58,7 +58,7 @@ namespace NIMEngine.Engine.ADO
                 {
                     var Item = MachineData[i];//Almost wrote a bug there—haha!
 
-                    string GenKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
+                    string GenKey = Item.Source + "_" + Item.To + "_Machine";
 
                     if (!TempData.ContainsKey(GenKey))
                     {
@@ -70,8 +70,8 @@ namespace NIMEngine.Engine.ADO
                 {
                     var Item = ManualData[i];
 
-                    string GenKey = Item.Source + "_" + Item.To.ToString() + "_Manual";
-                    string MachineKey = Item.Source + "_" + Item.To.ToString() + "_Machine";
+                    string GenKey = Item.Source + "_" + Item.To + "_Manual";
+                    string MachineKey = Item.Source + "_" + Item.To + "_Machine";
 
                     if (!Manual.ContainsKey(GenKey))
                     {
@@ -117,7 +117,7 @@ namespace NIMEngine.Engine.ADO
                 }
 
                 string Source, Result;
-                int To;
+                string To;
 
                 if (Value is LocalTranslationItem)
                 {
@@ -139,7 +139,7 @@ namespace NIMEngine.Engine.ADO
                     TargetFileName = "",
                     Source = Source,
                     Result = Result,
-                    From = this.From,
+                    From = this.From.Code,
                     To = To,
                     ExactMatch = 1,//Exact Match only
                     IgnoreCase = 0,

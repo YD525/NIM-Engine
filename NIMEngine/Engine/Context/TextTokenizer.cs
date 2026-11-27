@@ -6,36 +6,7 @@ using NIMEngine.Language;
 
 namespace NIMEngine.Engine
 {
-    public static class LanguageExtensions
-    {
-        public static bool IsSpaceDelimitedLanguage(this Languages Lang)
-        {
-            return Lang == Languages.German ||
-            Lang == Languages.English ||
-            Lang == Languages.Turkish ||
-            Lang == Languages.Brazilian ||
-            Lang == Languages.Ukrainian ||
-            Lang == Languages.Russian ||
-            Lang == Languages.Italian ||
-            Lang == Languages.Spanish ||
-            Lang == Languages.Indonesian ||
-            Lang == Languages.Hindi ||
-            Lang == Languages.Urdu ||
-            Lang == Languages.French ||
-            Lang == Languages.Vietnamese ||
-            Lang == Languages.Polish ||
-            Lang == Languages.Persian ||
-            Lang == Languages.Czech;
-        }
-        public static bool IsNoSpaceLanguage(this Languages Lang)
-        {
-            return Lang == Languages.Japanese ||
-            Lang == Languages.Korean ||
-            Lang == Languages.TraditionalChinese ||
-            Lang == Languages.Thai ||
-            Lang == Languages.SimplifiedChinese;
-        }
-    }
+    
 
     public class TextTokenizer
     {
@@ -80,7 +51,7 @@ namespace NIMEngine.Engine
             "as","than","like","via","per"
         };
 
-        public static HashSet<string> BuildTokenSignature(Languages Lang,string Text,int MinTokenLength = 2)
+        public static HashSet<string> BuildTokenSignature(P_Language Lang,string Text,int MinTokenLength = 2)
         {
             if (string.IsNullOrWhiteSpace(Text))
                 return new HashSet<string>();
@@ -102,11 +73,11 @@ namespace NIMEngine.Engine
 
         public const int MaxGram = 3 + 3;
 
-        private static string[] Tokenize(Languages Lang, string Text)
+        private static string[] Tokenize(P_Language Lang, string Text)
         {
-            if (Lang == Languages.Auto)
+            if (Lang == P_Language.Auto)
             {
-                Lang = P_Language.DetectLanguageByLine(Text);
+                Lang = P_Language.Detect(Text,LanguageDetectMode.Line);
             }
 
             Text = Text.Replace('_', ' ').Replace('-', ' ');
@@ -119,7 +90,7 @@ namespace NIMEngine.Engine
 
                 return tokens
                     .Where(t => t.Length > 1)
-                    .Where(t => !(Lang == Languages.English && EnglishStopWords.Contains(t)))
+                    .Where(t => !(Lang.Name == "English" && EnglishStopWords.Contains(t)))
                     .ToArray();
             }
 

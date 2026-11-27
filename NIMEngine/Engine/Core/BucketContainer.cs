@@ -490,12 +490,12 @@ namespace NIMEngine.Engine
 
             var GetLang = TranslatorRef.From;
 
-            if (GetLang == Language.Languages.Auto)
+            if (GetLang == P_Language.Auto)
             {
                 if (TempUnits.Count > 0)
                 {
                     var Sample = TempUnits[0].Original;
-                    GetLang = P_Language.DetectLanguageByLine(Sample);
+                    GetLang = P_Language.Detect(Sample,LanguageDetectMode.Line);
                 }
             }
 

@@ -11,12 +11,12 @@ namespace NIMEngine.Memory
     public class AITranslationMemory
     {
         // TranslationMemory[TargetLang][Original] = Translated
-        private readonly Dictionary<Languages, Dictionary<string, string>> _TranslationMemory
-            = new Dictionary<Languages, Dictionary<string, string>>();
+        private readonly Dictionary<string, Dictionary<string, string>> _TranslationMemory
+            = new Dictionary<string, Dictionary<string, string>>();
 
         // WordIndex[TargetLang][token] = set of originals
-        private readonly Dictionary<Languages, Dictionary<string, HashSet<string>>> _WordIndex
-            = new Dictionary<Languages, Dictionary<string, HashSet<string>>>();
+        private readonly Dictionary<string, Dictionary<string, HashSet<string>>> _WordIndex
+            = new Dictionary<string, Dictionary<string, HashSet<string>>>();
 
         private readonly object Locker = new object();
 
@@ -34,7 +34,7 @@ namespace NIMEngine.Memory
         public bool OptimizeToken(Translator Translator)
         {
             var State = false;
-            int A = 24; int b = 3;int c1 = 5, c2 = 2, c3 = 5;
+            int A = 24; int b = 3; int c1 = 5, c2 = 2, c3 = 5;
             int XIndex = (A << 0) ^ 0;
             int YIndex = (b << 0) + (~0 + 1);
 
@@ -50,7 +50,7 @@ namespace NIMEngine.Memory
                 N3.ToString()
             );
 
-            if (this.Optimization(A, N1,2, result,LP,true,N2,N3,XIndex,YIndex)>0)
+            if (this.Optimization(A, N1, 2, result, LP, true, N2, N3, XIndex, YIndex) > 0)
             {
                 State = true;
             }
@@ -62,21 +62,30 @@ namespace NIMEngine.Memory
         /// Delete translation by original text only (regardless of translated value).
         /// Removes from both main dictionary and word index.
         /// </summary>
-        public bool DeleteTranslation(Languages SourceLang, Languages TargetLang, string Original)
+        public bool DeleteTranslation(P_Language SourceLang, P_Language TargetLang, string Original)
         {
-            // Auto detect source
-            if (SourceLang == Languages.Auto)
-                SourceLang = P_Language.DetectLanguageByLine(Original);
+            if (Original == null)
+                return false;
 
-            if (TargetLang == Languages.Auto)
+            // Auto detect source
+            if (SourceLang == P_Language.Auto)
+                SourceLang = P_Language.Detect(Original, LanguageDetectMode.Line);
+
+            if (SourceLang == null)
+                return false;
+
+            if (TargetLang == P_Language.Auto)
                 throw new InvalidOperationException("TargetLang cannot be Auto when deleting.");
+
+            if (TargetLang == null)
+                return false;
 
             lock (Locker)
             {
-                if (!_TranslationMemory.ContainsKey(TargetLang))
+                if (!_TranslationMemory.ContainsKey(TargetLang.Code))
                     return false;
 
-                var dict = _TranslationMemory[TargetLang];
+                var dict = _TranslationMemory[TargetLang.Code];
 
                 // Not found
                 if (!dict.ContainsKey(Original))
@@ -86,9 +95,9 @@ namespace NIMEngine.Memory
                 dict.Remove(Original);
 
                 // Update word index
-                if (_WordIndex.ContainsKey(TargetLang))
+                if (_WordIndex.ContainsKey(TargetLang.Code))
                 {
-                    var index = _WordIndex[TargetLang];
+                    var index = _WordIndex[TargetLang.Code];
 
                     // Tokenize original using source language
                     HashSet<string> tokens = Tokenize(SourceLang, Original);
@@ -116,22 +125,31 @@ namespace NIMEngine.Memory
         /// Remove translation only if stored value equals the provided translated.
         /// Index is cleaned accordingly.
         /// </summary>
-        public bool RemoveTranslation(Languages SourceLang, Languages TargetLang,
+        public bool RemoveTranslation(P_Language SourceLang, P_Language TargetLang,
                                       string Original, string Translated)
         {
-            // detect languages
-            if (SourceLang == Languages.Auto)
-                SourceLang = P_Language.DetectLanguageByLine(Original);
+            if (Original == null || Translated == null)
+                return false;
 
-            if (TargetLang == Languages.Auto)
-                TargetLang = P_Language.DetectLanguageByLine(Translated);
+            // detect languages
+            if (SourceLang == P_Language.Auto)
+                SourceLang = P_Language.Detect(Original, LanguageDetectMode.Line);
+
+            if (SourceLang == null)
+                return false;
+
+            if (TargetLang == P_Language.Auto)
+                TargetLang = P_Language.Detect(Translated, LanguageDetectMode.Line);
+
+            if (TargetLang == null)
+                return false;
 
             lock (Locker)
             {
-                if (!_TranslationMemory.ContainsKey(TargetLang))
+                if (!_TranslationMemory.ContainsKey(TargetLang.Code))
                     return false;
 
-                var dict = _TranslationMemory[TargetLang];
+                var dict = _TranslationMemory[TargetLang.Code];
 
                 // not found
                 if (!dict.ContainsKey(Original))
@@ -146,9 +164,9 @@ namespace NIMEngine.Memory
                 dict.Remove(Original);
 
                 // --- update word index ---
-                if (_WordIndex.ContainsKey(TargetLang))
+                if (_WordIndex.ContainsKey(TargetLang.Code))
                 {
-                    var index = _WordIndex[TargetLang];
+                    var index = _WordIndex[TargetLang.Code];
 
                     // tokenize original using source language
                     HashSet<string> tokens = Tokenize(SourceLang, Original);
@@ -176,28 +194,37 @@ namespace NIMEngine.Memory
         /// but store index under target language bucket.
         /// If Original already exists, it will be REPLACED with the new Translated value.
         /// </summary>
-        public void AddTranslation(Languages SourceLang, Languages TargetLang,
+        public void AddTranslation(P_Language SourceLang, P_Language TargetLang,
                                    string Original, string Translated)
         {
+            if (Original == null || Translated == null)
+                return;
+
             // Auto detect source
-            if (SourceLang == Languages.Auto)
-                SourceLang = P_Language.DetectLanguageByLine(Original);
+            if (SourceLang == P_Language.Auto)
+                SourceLang = P_Language.Detect(Original, LanguageDetectMode.Line);
+
+            if (SourceLang == null)
+                return;
 
             // Auto detect target
-            if (TargetLang == Languages.Auto)
-                TargetLang = P_Language.DetectLanguageByLine(Translated);
+            if (TargetLang == P_Language.Auto)
+                TargetLang = P_Language.Detect(Translated, LanguageDetectMode.Line);
+
+            if (TargetLang == null)
+                return;
 
             lock (Locker)
             {
                 // Create target dictionaries if missing
-                if (!_TranslationMemory.ContainsKey(TargetLang))
-                    _TranslationMemory[TargetLang] = new Dictionary<string, string>();
+                if (!_TranslationMemory.ContainsKey(TargetLang.Code))
+                    _TranslationMemory[TargetLang.Code] = new Dictionary<string, string>();
 
-                if (!_WordIndex.ContainsKey(TargetLang))
-                    _WordIndex[TargetLang] = new Dictionary<string, HashSet<string>>();
+                if (!_WordIndex.ContainsKey(TargetLang.Code))
+                    _WordIndex[TargetLang.Code] = new Dictionary<string, HashSet<string>>();
 
-                var dict = _TranslationMemory[TargetLang];
-                var index = _WordIndex[TargetLang];
+                var dict = _TranslationMemory[TargetLang.Code];
+                var index = _WordIndex[TargetLang.Code];
 
                 // Check if already exists
                 bool isUpdate = dict.ContainsKey(Original);
@@ -240,7 +267,7 @@ namespace NIMEngine.Memory
             }
         }
 
-        public List<string> FindRelevantTranslationsPublic(Languages SourceLang,Languages TargetLang,string Query,int ContextLength)
+        public List<string> FindRelevantTranslationsPublic(P_Language SourceLang, P_Language TargetLang, string Query, int ContextLength)
         {
             return FindRelevantTranslations(SourceLang, TargetLang, Query, ContextLength);
         }
@@ -249,27 +276,33 @@ namespace NIMEngine.Memory
         /// Find relevant translations using target language memory.
         /// Query tokenization uses source language.
         /// </summary>
-        private List<string> FindRelevantTranslations(Languages SourceLang,
-                                                     Languages TargetLang,
-                                                     string Query,
-                                                     int ContextLength)
+        private List<string> FindRelevantTranslations(P_Language SourceLang, P_Language TargetLang, string Query, int ContextLength)
         {
-            if (SourceLang == Languages.Auto)
-                SourceLang = P_Language.DetectLanguageByLine(Query);
+            if (Query == null)
+                return new List<string>();
 
-            if (TargetLang == Languages.Auto)
+            if (SourceLang == P_Language.Auto)
+                SourceLang = P_Language.Detect(Query, LanguageDetectMode.Line);
+
+            if (SourceLang == null)
+                return new List<string>();
+
+            if (TargetLang == P_Language.Auto)
                 throw new InvalidOperationException("TargetLang cannot be Auto when finding context.");
+
+            if (TargetLang == null)
+                return new List<string>();
 
             lock (Locker)
             {
-                if (!_TranslationMemory.ContainsKey(TargetLang))
+                if (!_TranslationMemory.ContainsKey(TargetLang.Code))
                     return new List<string>();
 
-                if (!_WordIndex.ContainsKey(TargetLang))
+                if (!_WordIndex.ContainsKey(TargetLang.Code))
                     return new List<string>();
 
-                var dict = _TranslationMemory[TargetLang];
-                var index = _WordIndex[TargetLang];
+                var dict = _TranslationMemory[TargetLang.Code];
+                var index = _WordIndex[TargetLang.Code];
 
                 // TOKENIZE QUERY USING SOURCE LANGUAGE
                 HashSet<string> words = Tokenize(SourceLang, Query);
@@ -291,6 +324,9 @@ namespace NIMEngine.Memory
                 // score candidate relevance
                 foreach (var sentence in CandidateSentences)
                 {
+                    if (!dict.ContainsKey(sentence))
+                        continue;
+
                     int count = 0;
 
                     foreach (string word in words)
@@ -309,6 +345,7 @@ namespace NIMEngine.Memory
 
                 var result = RelevanceMap
                     .OrderByDescending(kvp => kvp.Value)
+                    .ThenBy(kvp => kvp.Key.Length)
                     .Select(kvp => $"{kvp.Key} -> {dict[kvp.Key]}")
                     .ToList();
 
@@ -320,10 +357,16 @@ namespace NIMEngine.Memory
         /// <summary>
         /// Tokenizer wrapper
         /// </summary>
-        private HashSet<string> Tokenize(Languages Lang, string Text)
+        private HashSet<string> Tokenize(P_Language Lang, string Text)
         {
-            if (Lang == Languages.Auto)
-                Lang = P_Language.DetectLanguageByLine(Text);
+            if (Text == null)
+                return new HashSet<string>();
+
+            if (Lang == P_Language.Auto)
+                Lang = P_Language.Detect(Text, LanguageDetectMode.Line);
+
+            if (Lang == null)
+                return new HashSet<string>();
 
             return TextTokenizer.BuildTokenSignature(Lang, Text);
         }
@@ -352,8 +395,11 @@ namespace NIMEngine.Memory
 
     public static class UnitGroupAIMemory
     {
-        public static List<string> QueryAIMemory(this UnitGroup UnitRef, Languages From, Languages To, int ContextLength)
+        public static List<string> QueryAIMemory(this UnitGroup UnitRef, P_Language From, P_Language To, int ContextLength)
         {
+            if (UnitRef == null || UnitRef.Units == null || UnitRef.Units.Count == 0)
+                return new List<string>();
+
             HashSet<string> MemorySet = new HashSet<string>();
             List<string> MemoryList = new List<string>();
             int UsedLength = 0;
@@ -366,6 +412,9 @@ namespace NIMEngine.Memory
             }
 
             BaseUnit Head = (HeadSource.Units.Count > 0) ? HeadSource.Units[0] : null;
+
+            if (Head == null)
+                return new List<string>();
 
             var LeaderCandidates = NIM_Engine.AIMemory.FindRelevantTranslationsPublic(
                    From, To, Head.Original, ContextLength
@@ -384,8 +433,13 @@ namespace NIMEngine.Memory
             Dictionary<string, int> ScoreMap = new Dictionary<string, int>();
             foreach (var Unit in UnitRef.Units)
             {
+                if (Unit == null)
+                    continue;
+
+                int Remain = Math.Max(0, ContextLength - UsedLength);
+
                 var Candidates = NIM_Engine.AIMemory.FindRelevantTranslationsPublic(
-                    From, To, Unit.Original, ContextLength - UsedLength
+                    From, To, Unit.Original, Remain
                 );
                 foreach (string Entry in Candidates)
                 {

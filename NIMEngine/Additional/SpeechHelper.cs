@@ -10,38 +10,38 @@ namespace NIMEngine.Additional
         private static readonly object VoiceLock = new object();
         private static dynamic VoiceInstance = null;
 
-        private static readonly Dictionary<Languages, string[]> VoiceHints = new Dictionary<Languages, string[]>()
-    {
-        { Languages.English, new[] { "English", "David", "Zira", "George" } },
-        { Languages.SimplifiedChinese, new[] { "Chinese", "Huihui", "Zh-cn" } },
-        { Languages.TraditionalChinese, new[] { "Chinese (Traditional)", "Zh-hk", "Zh-tw" } },
-        { Languages.Japanese, new[] { "Japanese", "Haruka", "Ja-jp" } },
-        { Languages.German, new[] { "German", "De-de" } },
-        { Languages.Korean, new[] { "Korean", "Heami", "Ko-kr" } },
-        { Languages.Turkish, new[] { "Turkish", "Tr-tr" } },
-        { Languages.Brazilian, new[] { "Portuguese", "Pt-br" } },
-        { Languages.Russian, new[] { "Russian", "Ru-ru" } },
-        { Languages.Italian, new[] { "Italian", "It-it" } },
-        { Languages.Spanish, new[] { "Spanish", "Es-es" } },
-        { Languages.Hindi, new[] { "Hindi", "Hi-in" } },
-        { Languages.Urdu, new[] { "Urdu", "Ur-pk" } },
-        { Languages.Indonesian, new[] { "Indonesian", "Id-id" } }
-    };
+        private static readonly Dictionary<string, string[]> VoiceHints = new Dictionary<string, string[]>()
+        {
+        { "English", new[] { "English", "David", "Zira", "George" } },
+        { "SimplifiedChinese", new[] { "Chinese", "Huihui", "Zh-cn" } },
+        { "TraditionalChinese", new[] { "Chinese (Traditional)", "Zh-hk", "Zh-tw" } },
+        { "Japanese", new[] { "Japanese", "Haruka", "Ja-jp" } },
+        { "German", new[] { "German", "De-de" } },
+        { "Korean", new[] { "Korean", "Heami", "Ko-kr" } },
+        { "Turkish", new[] { "Turkish", "Tr-tr" } },
+        { "Brazilian", new[] { "Portuguese", "Pt-br" } },
+        { "Russian", new[] { "Russian", "Ru-ru" } },
+        { "Italian", new[] { "Italian", "It-it" } },
+        { "Spanish", new[] { "Spanish", "Es-es" } },
+        { "Hindi", new[] { "Hindi", "Hi-in" } },
+        { "Urdu", new[] { "Urdu", "Ur-pk" } },
+        { "Indonesian", new[] { "Indonesian", "Id-id" } }
+        };
 
-        public static void TryPlaySound(Languages To,string Text,bool CanCreatTrd = false)
+        public static void TryPlaySound(P_Language To,string Text,bool CanCreatTrd = false)
         {
             Action PlaySoundAction = new Action(() => {
                 try
                 {
-                    Languages DetectLang = P_Language.DetectLanguageByLine(Text);
+                    P_Language DetectLang = P_Language.Detect(Text,LanguageDetectMode.WholeText);
 
-                    if (DetectLang == Languages.Japanese ||
-                        DetectLang == Languages.SimplifiedChinese ||
-                        DetectLang == Languages.TraditionalChinese)
+                    if (DetectLang.Name == "Japanese" ||
+                        DetectLang.Name == "SimplifiedChinese" ||
+                        DetectLang.Name == "TraditionalChinese")
                     {
-                        if (To == Languages.Japanese ||
-                            To == Languages.SimplifiedChinese ||
-                            To == Languages.TraditionalChinese)
+                        if (To.Name == "Japanese" ||
+                            To.Name == "SimplifiedChinese" ||
+                            To.Name == "TraditionalChinese")
                         {
                             DetectLang = To;
                         }
@@ -60,7 +60,7 @@ namespace NIMEngine.Additional
                         dynamic Voices = VoiceInstance.GetVoices();
                         dynamic BestMatch = null;
 
-                        if (VoiceHints.TryGetValue(DetectLang, out var Hints))
+                        if (VoiceHints.TryGetValue(DetectLang.Name, out var Hints))
                         {
                             foreach (dynamic Token in Voices)
                             {

@@ -19,7 +19,7 @@ namespace NIMEngine.Translate
         /// <param name="from">The source language.</param>
         /// <param name="to">The target language.</param>
         /// <param name="aiParameter">The optional provider-neutral AI instruction.</param>
-        public TranslationRequest(TransParam parameters, Languages from, Languages to, string aiParameter)
+        public TranslationRequest(TransParam parameters, P_Language from, P_Language to, string aiParameter)
         {
             Parameters = parameters ?? throw new ArgumentNullException(nameof(parameters));
             From = from;
@@ -31,10 +31,10 @@ namespace NIMEngine.Translate
         public TransParam Parameters { get; }
 
         /// <summary>Gets the source language.</summary>
-        public Languages From { get; }
+        public P_Language From { get; }
 
         /// <summary>Gets the target language.</summary>
-        public Languages To { get; }
+        public P_Language To { get; }
 
         /// <summary>Gets the optional provider-neutral AI instruction.</summary>
         public string AIParameter { get; }

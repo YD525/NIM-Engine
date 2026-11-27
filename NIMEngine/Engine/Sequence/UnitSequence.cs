@@ -39,7 +39,7 @@ namespace NIMEngine.Sequence
         /// <param name="Preprocessor"></param>
         public static void StartPreProcess(this UnitGroup Item,
             TranslationPreprocessor Preprocessor,
-            Languages From,Languages To,
+            P_Language From,P_Language To,
             out Dictionary<string,UnitSequence> Sequences)
         {
             Sequences = new Dictionary<string, UnitSequence>();
@@ -95,7 +95,7 @@ namespace NIMEngine.Sequence
             }
         }
 
-        public static bool FindTranslatedCache(Translator TranslatorRef,BaseUnit GetUnit,Languages From,Languages To,string Source, ref Dictionary<string, UnitSequence> Sequences)
+        public static bool FindTranslatedCache(Translator TranslatorRef,BaseUnit GetUnit,P_Language From,P_Language To,string Source, ref Dictionary<string, UnitSequence> Sequences)
         {
             CacheCall Call = new CacheCall();
             Call.SendString = Source;
@@ -125,7 +125,7 @@ namespace NIMEngine.Sequence
             }
             if (NIM_Engine.Config.EnableGlobalSearch)
             {
-                var MatchItem = CloudDBCache.Match((int)To, Source);
+                var MatchItem = CloudDBCache.Match(To, Source);
                 if (MatchItem != null)
                 {
                     Call.ReceiveString = GetCacheStr;
@@ -163,7 +163,7 @@ namespace NIMEngine.Sequence
         /// <param name="Sequences"></param>
         /// <param name="CanSkipSleep"></param>
         public static void CenterPreProcess(this UnitGroup Item,
-          Translator TranslatorRef,Languages From, Languages To,
+          Translator TranslatorRef,P_Language From, P_Language To,
           ref Dictionary<string, UnitSequence> Sequences)
         {
             for (int i = 0; i < Item.Units.Count; i++)
@@ -185,7 +185,7 @@ namespace NIMEngine.Sequence
             }
         }
 
-        public static void StartGeneratePlaceholder(this UnitGroup Item,Translator TranslatorRef, Languages From, Languages To, ref Dictionary<string, UnitSequence> Sequences, 
+        public static void StartGeneratePlaceholder(this UnitGroup Item,Translator TranslatorRef,P_Language From, P_Language To, ref Dictionary<string, UnitSequence> Sequences, 
          bool ForceReplace, bool ForceReplaceProtected)
         {
             for (int i = 0; i < Item.Units.Count; i++)
@@ -290,9 +290,7 @@ namespace NIMEngine.Sequence
             }
         }
 
-        public static void EndGeneratePlaceholder(this UnitGroup Item,
-            Languages From, Languages To,
-            ref Dictionary<string, UnitSequence> Sequences)
+        public static void EndGeneratePlaceholder(this UnitGroup Item,P_Language From, P_Language To,ref Dictionary<string, UnitSequence> Sequences)
         {
             for (int i = 0; i < Item.Units.Count; i++)
             {
@@ -317,7 +315,7 @@ namespace NIMEngine.Sequence
         /// <param name="To"></param>
         /// <param name="Sequences"></param>
         public static void EndPreProcess(this UnitGroup Item,
-            Languages From, Languages To,
+            P_Language From, P_Language To,
             ref Dictionary<string, UnitSequence> Sequences)
         {
             for (int i = 0; i < Item.Units.Count; i++)

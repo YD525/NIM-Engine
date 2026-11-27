@@ -73,8 +73,8 @@ namespace NIMEngine.Tests
             Dictionary<string, UnitSequence> sequences;
             group.StartPreProcess(
                 new TranslationPreprocessor(),
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                new P_Language("de", "German"),
                 out sequences);
 
             Assert.IsTrue(sequences["symbols"].CanSkip);
@@ -143,14 +143,14 @@ namespace NIMEngine.Tests
         {
             var memory = new AITranslationMemory();
             memory.AddTranslation(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "The dragon guards the cave",
                 "Der Drache bewacht die Höhle");
 
             List<string> initial = memory.FindRelevantTranslationsPublic(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "dragon cave",
                 500);
             CollectionAssert.AreEqual(
@@ -158,19 +158,19 @@ namespace NIMEngine.Tests
                 initial);
 
             memory.AddTranslation(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "The dragon guards the cave",
                 "Ein Drache bewacht die Höhle");
             Assert.IsFalse(memory.RemoveTranslation(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "The dragon guards the cave",
                 "obsolete"));
 
             List<string> updated = memory.FindRelevantTranslationsPublic(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "dragon",
                 500);
             CollectionAssert.AreEqual(
@@ -178,14 +178,14 @@ namespace NIMEngine.Tests
                 updated);
 
             Assert.IsTrue(memory.DeleteTranslation(
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 "The dragon guards the cave"));
             Assert.AreEqual(
                 0,
                 memory.FindRelevantTranslationsPublic(
-                    Languages.English,
-                    Languages.German,
+                    new P_Language("en", "English"),
+                     new P_Language("de", "German"),
                     "dragon",
                     500).Count);
         }
@@ -194,8 +194,8 @@ namespace NIMEngine.Tests
         {
             var translator = new Translator(
                 "bucket-test",
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                 new P_Language("de", "German"),
                 false);
             try
             {

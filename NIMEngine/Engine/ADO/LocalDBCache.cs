@@ -12,26 +12,26 @@ namespace NIMEngine.ADO
     {
         public int FileUniqueKey = 0;
         public string Key = "";
-        public int To = 0;
+        public string To = "";
         public string Source = "";
         public string Result = "";
         public int Index = 0;
 
-        public LocalTranslationItem(int FileUniqueKey, string Key, Languages TargetLanguage,string Source, string Result)
+        public LocalTranslationItem(int FileUniqueKey, string Key, P_Language TargetLanguage, string Source, string Result)
         {
             this.FileUniqueKey = FileUniqueKey;
             this.Key = Key;
-            this.To = (int)TargetLanguage;
+            this.To = TargetLanguage.Code;
             this.Source = Source;
             this.Result = Result;
             this.Index = 0;
         }
 
-        public LocalTranslationItem(object FileUniqueKey, object Key, object To,object Source, object Result)
+        public LocalTranslationItem(object FileUniqueKey, object Key, object To, object Source, object Result)
         {
             this.FileUniqueKey = P_Convert.ObjToInt(FileUniqueKey);
             this.Key = P_Convert.ObjToStr(Key);
-            this.To = P_Convert.ObjToInt(To);
+            this.To = P_Convert.ObjToStr(To);
             this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
             this.Index = 0;
@@ -42,7 +42,7 @@ namespace NIMEngine.ADO
         public static void Init()
         {
             string TableName = "LocalTranslation";
-            string CreateSQL = "CREATE TABLE [LocalTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [Source] TEXT, [Result] TEXT, [Index] INT);";
+            string CreateSQL = "CREATE TABLE [LocalTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [Source] TEXT, [Result] TEXT, [Index] INT);";
 
             // Check if table exists
             const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
@@ -74,6 +74,17 @@ namespace NIMEngine.ADO
                         "DROP TABLE IF EXISTS " + SQLiteBuilder.QuoteIdentifier(TableName) + ";");
                     NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
+                else
+                {
+                    //Check whether To column is TEXT (old INT structure needs migration)
+                    var ToColumn = Columns.FirstOrDefault(R => R["name"].ToString() == "To");
+                    bool IsToText = ToColumn != null && ToColumn["type"].ToString().ToUpper().Contains("TEXT");
+
+                    if (!IsToText)
+                    {
+                        MigrateLanguageCodeColumn();
+                    }
+                }
             }
             else
             {
@@ -82,7 +93,18 @@ namespace NIMEngine.ADO
             }
         }
 
-        public static List<LocalTranslationItem> MatchLocalItem(int To, string Source, int Limit = 5)
+        private static void MigrateLanguageCodeColumn()
+        {
+            NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE LocalTranslation RENAME TO LocalTranslation_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("CREATE TABLE [LocalTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [Source] TEXT, [Result] TEXT, [Index] INT);");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("INSERT INTO LocalTranslation (FileUniqueKey, Key, [To], Source, Result, [Index]) SELECT FileUniqueKey, Key, [To], Source, Result, [Index] FROM LocalTranslation_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE LocalTranslation_Old;");
+        }
+
+        public static List<LocalTranslationItem> MatchLocalItem(P_Language To, string Source, int Limit = 5)
         {
             new TranslationPreprocessor().OptimizeStrings(ref Source);
 
@@ -93,7 +115,7 @@ namespace NIMEngine.ADO
                 const string SQLOrder = "SELECT * FROM LocalTranslation WHERE [To] = @To AND [Source] = @Source LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                     SQLOrder,
-                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@To", To.Code),
                     SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
                     SQLiteBuilder.Parameter("@Limit", Limit));
                 if (NTable.Count > 0)
@@ -105,7 +127,7 @@ namespace NIMEngine.ADO
                         LocalTransItems.Add(new LocalTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
-                            Row["To"],
+                            P_Convert.ObjToStr(Row["To"]),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
                         ));
@@ -120,7 +142,7 @@ namespace NIMEngine.ADO
             }
         }
 
-        public static bool DeleteCacheByFileUniqueKey(int FileUniqueKey, Languages TargetLanguage)
+        public static bool DeleteCacheByFileUniqueKey(int FileUniqueKey, P_Language TargetLanguage)
         {
             try
             {
@@ -128,7 +150,7 @@ namespace NIMEngine.ADO
                 int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code));
 
                 if (State != 0)
                 {
@@ -140,7 +162,7 @@ namespace NIMEngine.ADO
             catch { return false; }
         }
 
-        public static bool DeleteCacheBySource(int FileUniqueKey, string Source, Languages TargetLanguage)
+        public static bool DeleteCacheBySource(int FileUniqueKey, string Source, P_Language TargetLanguage)
         {
             new TranslationPreprocessor().OptimizeStrings(ref Source);
 
@@ -151,7 +173,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code));
 
                 if (State != 0)
                 {
@@ -164,7 +186,7 @@ namespace NIMEngine.ADO
             catch { return false; }
         }
 
-        public static bool DeleteCacheByResult(int FileUniqueKey, string ResultText, Languages TargetLanguage)
+        public static bool DeleteCacheByResult(int FileUniqueKey, string ResultText, P_Language TargetLanguage)
         {
             try
             {
@@ -173,7 +195,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(ResultText)),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code));
 
                 if (State != 0)
                 {
@@ -185,7 +207,7 @@ namespace NIMEngine.ADO
             catch { return false; }
         }
 
-        public static bool DeleteCache(int FileUniqueKey, string Key, Languages TargetLanguage)
+        public static bool DeleteCache(int FileUniqueKey, string Key, P_Language TargetLanguage)
         {
             try
             {
@@ -194,7 +216,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code));
 
                 if (State != 0)
                 {
@@ -206,7 +228,7 @@ namespace NIMEngine.ADO
             catch { return false; }
         }
 
-        public static string GetCacheText(int FileUniqueKey, string Key, Languages TargetLanguage)
+        public static string GetCacheText(int FileUniqueKey, string Key, P_Language TargetLanguage)
         {
             try
             {
@@ -215,7 +237,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage)));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code)));
 
                 if (GetText.Trim().Length > 0)
                 {
@@ -227,13 +249,7 @@ namespace NIMEngine.ADO
             catch { return string.Empty; }
         }
 
-        public static string FindCache(int FileUniqueKey, string Key, Languages TargetLanguage)
-        {
-            return FindCache(FileUniqueKey, Key, (int)TargetLanguage);
-        }
-
-
-        public static string FindCache(int FileUniqueKey, string Key, int To)
+        public static string FindCache(int FileUniqueKey, string Key, P_Language To)
         {
             try
             {
@@ -242,7 +258,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", To)));
+                    SQLiteBuilder.Parameter("@To", To.Code)));
 
                 if (GetResult.Trim().Length > 0)
                 {
@@ -254,7 +270,7 @@ namespace NIMEngine.ADO
             catch { return string.Empty; }
         }
 
-        public static bool UpdateLocalTransItem(int FileUniqueKey, string Key, int To, string Source, string Result, int Index)
+        public static bool UpdateLocalTransItem(int FileUniqueKey, string Key, P_Language To, string Source, string Result, int Index)
         {
             if (Result.Length > 0)
             {
@@ -263,11 +279,11 @@ namespace NIMEngine.ADO
                 int GetRowID = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar("SELECT Rowid FROM LocalTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;",
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", To)));
+                    SQLiteBuilder.Parameter("@To", To.Code)));
 
                 if (GetRowID <= 0)
                 {
-                    var GetStr = CloudDBCache.FindCache(FileUniqueKey, Key, (Languages)To);
+                    var GetStr = CloudDBCache.FindCache(FileUniqueKey, Key, To);
                     if (GetStr.Length > 0)
                     {
                         if (GetStr.Equals(Result))
@@ -281,7 +297,7 @@ namespace NIMEngine.ADO
                         SQLOrder,
                         SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                         SQLiteBuilder.Parameter("@Key", Key),
-                        SQLiteBuilder.Parameter("@To", To),
+                        SQLiteBuilder.Parameter("@To", To.Code),
                         SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
                         SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Result)),
                         SQLiteBuilder.Parameter("@Index", Index));
@@ -306,7 +322,7 @@ namespace NIMEngine.ADO
             }
             else
             {
-                DeleteCache(FileUniqueKey, Key, (Languages)To);
+                DeleteCache(FileUniqueKey, Key, To);
             }
 
             return false;
@@ -344,7 +360,7 @@ namespace NIMEngine.ADO
                 LocalTransItems.Add(new LocalTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
-                            Row["To"],
+                            P_Convert.ObjToStr(Row["To"]),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"]))
                 ));
