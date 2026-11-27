@@ -21,6 +21,10 @@ namespace NIMEngine.Language
             "solcher","solche","solches",
             "alle","aller","allen","allem",
             "beide","beiden","beider",
+            "dies","jene","jener","jenes","jenem","jenen",
+            "kein","keine","keiner","keines","keinem","keinen",
+            "einige","einigen","einiger","viel","viele","vielen",
+            "wenig","wenige","mehrere",
 
             // Conjunctions
             "und","oder","aber","denn","sondern",
@@ -49,6 +53,8 @@ namespace NIMEngine.Language
             "dein","deine","deiner","deines","deinem","deinen",
             "unser","unsere","unserer","unseres","unserem","unseren",
             "euer","eure","eurer","eures","eurem","euren",
+            "sich","seine","seiner","seines","seinem","seinen",
+            "ihre","ihrer","ihres","ihrem","ihren",
 
             // Interrogative and relative pronouns
             "wer","wen","wem","wessen",
@@ -57,7 +63,7 @@ namespace NIMEngine.Language
 
             // Auxiliary and modal verbs
             "sein","bin","bist","ist","sind","seid",
-            "war","warst","waren","wart","gewesen",
+            "war","warst","waren","wart","gewesen","worden","geworden",
             "haben","habe","hast","hat","habt","hatte",
             "hatten","hattet","gehabt",
             "werden","werde","wirst","wird","werdet",
@@ -73,6 +79,7 @@ namespace NIMEngine.Language
             "auch","nur","schon","bereits","nicht","mehr",
             "immer","oft","manchmal","selten","meistens",
             "sehr","so","dann","danach","davor",
+            "nichts","nie","niemals","niemand",
             "hier","dort","jetzt","heute","morgen",
             "gestern","wieder","weiter","vielleicht",
             "eigentlich","wohl","eben","erst",
@@ -94,7 +101,8 @@ namespace NIMEngine.Language
             "an","in","ab","bei","bis","so","also","als",
             "was","war","wart","man","will","hat","hast",
             "bin","mag","fast","dank","erst",
-            "ins","im","am"
+            "ins","im","am",
+            "dies","nie","worden"
         };
 
         private static readonly Regex WordRegex = new Regex(@"[\p{L}\p{M}]+", RegexOptions.Compiled);
@@ -108,9 +116,15 @@ namespace NIMEngine.Language
             "[çÇğĞıİşŞåÅõÕőŐűŰøØæÆñÑãÃąĄćĆęĘłŁńŃśŚźŹżŻčČďĎěĚňŇřŘšŠťŤůŮžŽ]",
             RegexOptions.Compiled);
 
+        public float Version { get; set; } = 1.1f;
         public HashSet<string> GetStopWords()
         {
             return StopWords;
+        }
+
+        public int GetLanguage()
+        {
+            return (int)Languages.German;
         }
 
         private static void CountHits(string Input, out int WordCount, out int StrongHits, out int WeakHits)
