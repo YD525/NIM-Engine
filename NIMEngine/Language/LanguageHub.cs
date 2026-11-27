@@ -36,6 +36,7 @@ namespace NIMEngine.Language
 
         public static P_Language NULL = new P_Language();
         public const string Auto = "(Auto)";
+        public static readonly P_Language P_Auto = new P_Language("", "(Auto)");
         public static P_Language Detect(string Text, LanguageDetectMode DetectMode)
         {
             string Str = String.Copy(Text);
