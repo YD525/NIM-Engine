@@ -11,46 +11,6 @@ namespace NIMEngine.Engine
     public class TextTokenizer
     {
 
-        private static readonly HashSet<string> EnglishStopWords =
-        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "a","an","the",
-            "and","or","but","if","then","else","while","when","because","since","unless",
-
-            "on","in","at","to","for","with","by","of","from","into","onto","upon",
-            "about","around","through","across","between","among","against",
-            "over","under","above","below","before","after","during","within","without",
-
-            "i","me","my","mine","myself",
-            "you","your","yours","yourself","yourselves",
-            "he","him","his","himself",
-            "she","her","hers","herself",
-            "it","its","itself",
-            "we","us","our","ours","ourselves",
-            "they","them","their","theirs","themselves",
-            "this","that","these","those","which","who","whom","whose","what",
-
-            "is","are","was","were","be","been","being",
-            "has","have","had","having",
-            "do","does","did","doing",
-
-            "can","could","may","might","must",
-            "will","would","shall","should",
-
-            "not","no","nor","never","none","nothing","nobody",
-
-            "very","too","so","just","only","even","still","also","already","yet",
-            "again","ever","always","often","sometimes","usually","rarely",
-
-            "all","any","some","none","each","every","either","neither",
-            "much","many","few","less","more","most","several",
-
-            "now","today","tomorrow","yesterday",
-            "current","previous","next","new","old",
-
-            "as","than","like","via","per"
-        };
-
         public static HashSet<string> BuildTokenSignature(P_Language Lang,string Text,int MinTokenLength = 2)
         {
             if (string.IsNullOrWhiteSpace(Text))
@@ -90,7 +50,7 @@ namespace NIMEngine.Engine
 
                 return tokens
                     .Where(t => t.Length > 1)
-                    .Where(t => !(Lang.Name == "English" && EnglishStopWords.Contains(t)))
+                    .Where(t => (LanguageHub.Languages[Lang.Name].GetStopWords().Contains(t) == false))
                     .ToArray();
             }
 
