@@ -1,64 +1,118 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    internal class JapaneseHelper
+    public class JapaneseHelper : I_Language
     {
-        // Matches kana characters and Japanese-specific symbols (hiragana, katakana, extended kana, half-width kana, and some kanji symbols)
-        private static readonly Regex JapaneseCharRegex = new Regex(@"[\u3040-\u30FF\u31F0-\u31FF\uFF66-\uFF9F々〆ヵヶ]", RegexOptions.Compiled);
+        public double PassScore { get; set; } = 0.5;
 
-        // Common Japanese functional words: particles, auxiliary verbs, and structure words often used in sentences
-        private static readonly string[] JapaneseKeywords = new[]
+        // Japanese uses a separate stop-word algorithm for language detection.
+        // Stop words are only used for detection; text processing still uses the standard sliding N-gram algorithm.
+        private static readonly HashSet<string> StopWords =
+        new HashSet<string>(StringComparer.Ordinal)
         {
-        "です", "ます", "する", "した", "して", "いる", "いない",
-        "から", "まで", "だけ", "そして", "しかし", "など", "という",
-        "こと", "もの", "よう", "それ", "これ", "あれ", "どれ",
-        "なに", "なん", "はい", "いいえ"
-    };
+        // Particles and particle phrases
+        "から","まで","より","だけ","しか","など","ほど","くらい","ぐらい","ばかり","こそ",
+        "でも","ても","けど","けれど","けれども","のに","ので",
+        "について","として","による","によって","にとって","において",
 
-        /// <summary>
-        /// Determines whether the input string is likely Japanese based on kana density and keyword matches.
-        /// </summary>
-        /// <param name="Input">Input text to check</param>
-        /// <param name="KanaThreshold">Threshold ratio of kana characters to total length (default 0.1)</param>
-        /// <param name="KeywordHitsThreshold">Minimum number of matched keywords required (default 1)</param>
-        /// <returns>True if text is probably Japanese, otherwise false</returns>
-        public static bool IsProbablyJapanese(string Input, double KanaThreshold = 0.1, int KeywordHitsThreshold = 1)
+        // Copula and auxiliary verbs
+        "です","ます","でした","ました","ません","でしょう","ましょう",
+        "だった","である","なかった","たい","れる","られる","せる","させる",
+
+        // Common verbs
+        "する","した","して","しない","され","させ",
+        "いる","いた","いて","いない",
+        "ある","あった","ない",
+        "なる","なった","できる","できない",
+
+        // Conjunctions
+        "そして","しかし","また","または","それで","だから","それから",
+        "ところが","つまり","なぜなら","ただし","もし",
+
+        // Demonstratives
+        "これ","それ","あれ","どれ",
+        "この","その","あの","どの",
+        "ここ","そこ","あそこ","どこ",
+        "こう","そう","ああ","どう",
+        "こんな","そんな","あんな","どんな",
+
+        // Question words
+        "なに","なん","なぜ","いつ","だれ","どうして",
+
+        // Formal nouns and set phrases
+        "こと","もの","ため","よう","という","といった",
+
+        // Responses
+        "はい","いいえ"
+        };
+
+        // Hiragana, katakana, extended and half-width kana, plus a few Japanese symbols.
+        // The middle dot (U+30FB) and U+30A0 are excluded: Chinese names often use the dot.
+        private static readonly Regex JapaneseCharRegex = new Regex(
+            @"[\u3041-\u309F\u30A1-\u30FA\u30FC-\u30FF\u31F0-\u31FF\uFF66-\uFF9F々〆]",
+            RegexOptions.Compiled);
+
+        public float Version { get; set; } = 1.1f;
+
+        public int GetLanguage()
         {
-            if (string.IsNullOrWhiteSpace(Input)) return false;
+            return (int)Languages.Japanese;
+        }
 
-            // Count of kana characters (hiragana, katakana, extended kana, half-width kana)
-            int KanaCount = JapaneseCharRegex.Matches(Input).Count;
-            int TotalLength = Input.Length;
+        public HashSet<string> GetStopWords()
+        {
+            return StopWords;
+        }
 
-            // Kana density (to avoid false positives from very few kana characters)
-            double KanaRatio = (double)KanaCount / TotalLength;
+        private static int CountKeywordHits(string Input)
+        {
+            return StopWords.Count(Word => Input.IndexOf(Word, StringComparison.Ordinal) >= 0);
+        }
 
-            // Number of matched keywords found in the input text
-            int KeywordHits = JapaneseKeywords.Count(word => Input.Contains(word));
-
-            // Evaluation rule: either kana density is sufficiently high, or enough keywords are matched
-            return KanaRatio > KanaThreshold || KeywordHits >= KeywordHitsThreshold;
+        public bool IsProbablyMatch(string Input)
+        {
+            return GetProbability(Input) >= PassScore;
         }
 
         /// <summary>
-        /// Calculates a weighted score representing the likelihood of the input text being Japanese.
+        /// Returns a score from 0 to 1. A score of PassScore or higher is a match.
         /// </summary>
-        /// <param name="Input">Input text to evaluate</param>
-        /// <param name="KanaWeight">Weight factor for kana character count (default 1.5)</param>
-        /// <param name="KeywordWeight">Weight factor for keyword matches (default 2.0)</param>
-        /// <returns>Score value indicating Japanese language likelihood</returns>
-        public static double GetJapaneseScore(string Input, double KanaWeight = 1.5, double KeywordWeight = 2.0)
+        /// <param name="Input">Input text</param>
+        public double GetProbability(string Input)
         {
-            if (string.IsNullOrWhiteSpace(Input)) return 0;
+            const double MinKanaRatio = 0.1;
+            const double MaxFailScore = 0.49;
+            const double KeywordBonus = 0.1;
 
-            int TotalLength = Input.Length;
+            if (string.IsNullOrWhiteSpace(Input))
+                return 0;
+
             int KanaCount = JapaneseCharRegex.Matches(Input).Count;
-            int KeywordHits = JapaneseKeywords.Count(word => Input.Contains(word));
 
-            // Weighted score combines kana count and keyword hits normalized by total length
-            return (KanaCount * KanaWeight + KeywordHits * KeywordWeight) / TotalLength;
+            if (KanaCount == 0)
+                return 0;
+
+            // Spaces, digits and punctuation are not counted
+            int LetterCount = Input.Count(char.IsLetter);
+
+            double KanaRatio = (double)KanaCount / Math.Max(LetterCount, KanaCount);
+
+            double Score = KanaRatio >= MinKanaRatio
+                ? PassScore + (1 - PassScore) * (KanaRatio - MinKanaRatio) / (1 - MinKanaRatio)
+                : MaxFailScore * KanaRatio / MinKanaRatio;
+
+            int KeywordHits = CountKeywordHits(Input);
+
+            // One keyword is enough to pass
+            if (KeywordHits >= 1)
+                Score = Math.Max(Score, PassScore) + KeywordBonus * KeywordHits;
+
+            return Math.Min(1.0, Score);
         }
     }
 }

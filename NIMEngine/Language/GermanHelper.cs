@@ -7,6 +7,8 @@ namespace NIMEngine.Language
 {
     public class GermanHelper : I_Language
     {
+        public double PassScore { get; set; } = 0.5;
+
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -117,14 +119,15 @@ namespace NIMEngine.Language
             RegexOptions.Compiled);
 
         public float Version { get; set; } = 1.1f;
-        public HashSet<string> GetStopWords()
-        {
-            return StopWords;
-        }
 
         public int GetLanguage()
         {
             return (int)Languages.German;
+        }
+
+        public HashSet<string> GetStopWords()
+        {
+            return StopWords;
         }
 
         private static void CountHits(string Input, out int WordCount, out int StrongHits, out int WeakHits)
@@ -149,63 +152,54 @@ namespace NIMEngine.Language
 
         public bool IsProbablyMatch(string Input)
         {
+            return GetProbability(Input) >= PassScore;
+        }
+
+        /// <summary>
+        /// Returns a score from 0 to 1. A score of PassScore or higher is a match.
+        /// </summary>
+        /// <param name="Input">Input text</param>
+        public double GetProbability(string Input)
+        {
             const int ShortTextWords = 3;
             const double MinHitRatio = 0.15;
+            const double FullHitRatio = 0.5;
+            const double MaxFailScore = 0.49;
 
             if (string.IsNullOrWhiteSpace(Input))
-                return false;
+                return 0;
 
             CountHits(Input, out int WordCount, out int StrongHits, out int WeakHits);
 
             if (WordCount == 0)
-                return false;
+                return 0;
 
             bool HasGermanChar = GermanCharRegex.IsMatch(Input);
 
             // Short text (item names, UI labels): one clear clue is enough
             if (WordCount <= ShortTextWords)
             {
-                if (StrongHits >= 1 || Input.IndexOf('ß') >= 0)
-                    return true;
+                bool HasClue = StrongHits >= 1 || Input.IndexOf('ß') >= 0 ||
+                    (HasGermanChar && !ForeignCharRegex.IsMatch(Input));
 
-                // Umlauts count only if no non-German letters are present
-                return HasGermanChar && !ForeignCharRegex.IsMatch(Input);
+                if (HasClue)
+                    return PassScore + (1 - PassScore) * StrongHits / WordCount;
+
+                return 0.25 * WeakHits / WordCount;
             }
-
-            if (StrongHits == 0)
-                return false;
-
-            // Needs a second clue
-            if (StrongHits < 2 && WeakHits == 0 && !HasGermanChar)
-                return false;
 
             double HitRatio = (StrongHits + WeakHits * 0.5) / WordCount;
 
-            return HitRatio >= MinHitRatio;
-        }
+            bool HasSecondClue = StrongHits >= 2 || WeakHits > 0 || HasGermanChar;
 
-        /// <summary>
-        /// Calculates a feature score indicating likelihood of German language
-        /// </summary>
-        /// <param name="Input">Input text</param>
-        /// <returns>Score value representing German language likelihood</returns>
-        public double GetProbability(string Input)
-        {
-            if (string.IsNullOrWhiteSpace(Input))
-                return 0;
-
-            CountHits(Input, out _, out int StrongHits, out int WeakHits);
-
-            int SpecialCharCount = GermanCharRegex.Matches(Input).Count;
-
-            // Weak words only count when there is other German evidence
-            double KeywordScore = StrongHits;
-            if (StrongHits > 0 || SpecialCharCount > 0)
+            if (StrongHits >= 1 && HasSecondClue && HitRatio >= MinHitRatio)
             {
-                KeywordScore += WeakHits * 0.25;
+                double Extra = (HitRatio - MinHitRatio) / (FullHitRatio - MinHitRatio);
+
+                return PassScore + (1 - PassScore) * Math.Min(1.0, Extra);
             }
 
-            return (SpecialCharCount * 1.5 + KeywordScore * 2.0) / Input.Length;
+            return Math.Min(MaxFailScore, MaxFailScore * HitRatio / MinHitRatio);
         }
     }
 }

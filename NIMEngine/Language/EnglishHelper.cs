@@ -7,6 +7,8 @@ namespace NIMEngine.Language
 {
     public class EnglishHelper : I_Language
     {
+        public double PassScore { get; set; } = 0.5;
+
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -83,31 +85,34 @@ namespace NIMEngine.Language
         // Matching the character set is enough, with or without stop words.
         public bool IsProbablyMatch(string Input)
         {
-            if (string.IsNullOrWhiteSpace(Input))
-                return false;
-
-            return EnglishRegex.IsMatch(Input);
+            return GetProbability(Input) >= PassScore;
         }
 
         /// <summary>
-        /// Calculates a feature score indicating likelihood of English language
+        /// Returns a score from 0 to 1. A score of PassScore or higher is a match.
         /// </summary>
         /// <param name="Input">Input text</param>
-        /// <returns>Score value representing English language likelihood</returns>
         public double GetProbability(string Input)
         {
-            if (!IsProbablyMatch(Input))
+            if (string.IsNullOrWhiteSpace(Input) || !EnglishRegex.IsMatch(Input))
                 return 0;
 
+            int WordCount = 0;
             int Hits = 0;
 
             foreach (Match Word in WordRegex.Matches(Input))
             {
+                WordCount++;
+
                 if (StopWords.Contains(Word.Value))
                     Hits++;
             }
 
-            return Hits * 2.0 / Input.Length;
+            if (WordCount == 0)
+                return PassScore;
+
+            // Matching text starts at PassScore, stop words raise the score
+            return PassScore + (1 - PassScore) * Hits / WordCount;
         }
     }
 }
