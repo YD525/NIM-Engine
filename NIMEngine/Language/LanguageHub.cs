@@ -214,7 +214,13 @@ namespace NIMEngine.Language
         Line,       // Detect each line independently
         WholeText   // Detect the entire text as a whole
     }
-    public class P_Language
+    public class P_Language_Ext
+    {
+        public static readonly P_Language English = new P_Language("en", "English");
+        public static readonly P_Language German = new P_Language("de", "German");
+    }
+
+    public class P_Language : P_Language_Ext
     {
         public string Code = "";
         public string Name = "";

@@ -504,18 +504,18 @@ namespace NIMEngine.Tests
                     LocalDBCache.UpdateLocalTransItem(
                         fileUniqueKey,
                         hostileKey,
-                        new P_Language("de", "German"),
+                        P_Language.German,
                         hostileSource,
                         hostileResult,
                         3),
                     "The local cache must store hostile values as data.");
                 AssertEqual(
                     hostileResult,
-                    LocalDBCache.FindCache(fileUniqueKey, hostileKey, new P_Language("de", "German")),
+                    LocalDBCache.FindCache(fileUniqueKey, hostileKey, P_Language.German),
                     "The local cache value must round-trip without executing the key.");
                 AssertEqual(
                     hostileResult,
-                    LocalDBCache.MatchLocalItem(new P_Language("de", "German"), hostileSource)[0].Result,
+                    LocalDBCache.MatchLocalItem(P_Language.German, hostileSource)[0].Result,
                     "Wildcard and control characters must remain literal in local cache matching.");
 
                 AssertEqual(
@@ -523,18 +523,18 @@ namespace NIMEngine.Tests
                     CloudDBCache.AddCache(
                         fileUniqueKey,
                         hostileKey,
-                        new P_Language("de", "German"),
+                        P_Language.German,
                         hostileSource,
                         hostileResult,
                         "test model"),
                     "The cloud cache must store hostile values as data.");
                 AssertEqual(
                     hostileResult,
-                    CloudDBCache.FindCache(fileUniqueKey, hostileKey, new P_Language("de", "German")),
+                    CloudDBCache.FindCache(fileUniqueKey, hostileKey, P_Language.German),
                     "The cloud cache value must round-trip without executing the key.");
                 AssertEqual(
                     hostileResult,
-                    CloudDBCache.Match(new P_Language("de", "German"), hostileSource).Result,
+                    CloudDBCache.Match(P_Language.German, hostileSource).Result,
                     "Wildcard and control characters must remain literal in cloud cache matching.");
 
                 AssertEqual(
@@ -550,8 +550,8 @@ namespace NIMEngine.Tests
                     Type = hostileKey,
                     Source = hostileSource,
                     Result = hostileResult,
-                    From = new P_Language("en", "English").Code,
-                    To = new P_Language("de", "German").Code,
+                    From = P_Language.English.Code,
+                    To = P_Language.German.Code,
                     ExactMatch = 1,
                     IgnoreCase = 0,
                     Regex = string.Empty
@@ -559,16 +559,16 @@ namespace NIMEngine.Tests
                 AssertEqual(true, AdvancedDictionary.AddItem(dictionaryItem),
                     "The advanced dictionary must store hostile values as data.");
                 AdvancedDictionaryItem dictionaryResult = AdvancedDictionary.ExactMatch(
-                    new P_Language("en", "English"),
-                    new P_Language("de", "German"),
+                    P_Language.English,
+                    P_Language.German,
                     hostileKey,
                     hostileSource);
                 AssertEqual(hostileResult, dictionaryResult.Result,
                     "The advanced dictionary result must round-trip unchanged.");
                 P_SQL_Page<List<AdvancedDictionaryItem>> page = AdvancedDictionary.QueryByPage(
                     hostileSource,
-                    new P_Language("en", "English"),
-                    new P_Language("de", "German"),
+                    P_Language.English,
+                    P_Language.German,
                     1);
                 AssertEqual(1, page.CurrentPage.Count,
                     "Pagination filters must bind hostile dictionary values.");
@@ -576,7 +576,7 @@ namespace NIMEngine.Tests
                 var historyItem = new HistoryItem(
                     fileUniqueKey,
                     hostileKey,
-                    new P_Language("de", "German").Code,
+                    P_Language.German.Code,
                     hostileResult,
                     0,
                     DateTime.UtcNow,
@@ -626,14 +626,14 @@ namespace NIMEngine.Tests
 VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                     SQLiteBuilder.Parameter("@fileUniqueKey", fileUniqueKey),
                     SQLiteBuilder.Parameter("@key", key),
-                    SQLiteBuilder.Parameter("@to", new P_Language("de", "German")),
+                    SQLiteBuilder.Parameter("@to", P_Language.German),
                     SQLiteBuilder.Parameter("@source", SQLSafeCodec.Encode(source)),
                     SQLiteBuilder.Parameter("@result", SQLSafeCodec.Encode(result)),
                     SQLiteBuilder.Parameter("@index", 0));
 
                 AssertEqual(
                     result,
-                    LocalDBCache.FindCache(fileUniqueKey, key, new P_Language("de", "German")),
+                    LocalDBCache.FindCache(fileUniqueKey, key, P_Language.German),
                     "Existing codec-backed rows must remain readable.");
             });
         }
@@ -672,7 +672,7 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                         {
                             SQLiteBuilder.Parameter("@fileUniqueKey", 41),
                             SQLiteBuilder.Parameter("@key", "transaction-key"),
-                            SQLiteBuilder.Parameter("@to", new P_Language("de", "German")),
+                            SQLiteBuilder.Parameter("@to", P_Language.German),
                             SQLiteBuilder.Parameter("@source", "source"),
                             SQLiteBuilder.Parameter("@result", "result"),
                             SQLiteBuilder.Parameter("@index", 0)
@@ -703,7 +703,7 @@ VALUES (@fileUniqueKey, @key, @to, @source, @result, @index);",
                             {
                                 SQLiteBuilder.Parameter("@fileUniqueKey", 42),
                                 SQLiteBuilder.Parameter("@key", "committed-key"),
-                                SQLiteBuilder.Parameter("@to", new P_Language("de", "German")),
+                                SQLiteBuilder.Parameter("@to", P_Language.German),
                                 SQLiteBuilder.Parameter("@source", "source"),
                                 SQLiteBuilder.Parameter("@result", "result"),
                                 SQLiteBuilder.Parameter("@index", 0)
