@@ -1,40 +1,173 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    internal static class GermanHelper
+    public class GermanHelper : I_Language
     {
-        // Matches German special characters with umlauts and sharp s (ß)
+        private static readonly HashSet<string> StopWords =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // Articles and determiners
+            "der","die","das",
+            "den","dem","des",
+            "ein","eine","einer","eines","einem","einen",
+            "dieser","diese","dieses","diesem","diesen",
+            "jeder","jede","jedes","jedem","jeden",
+            "welcher","welche","welches","welchem","welchen",
+            "mancher","manche","manches",
+            "solcher","solche","solches",
+            "alle","aller","allen","allem",
+            "beide","beiden","beider",
+
+            // Conjunctions
+            "und","oder","aber","denn","sondern",
+            "wenn","falls","weil","da","dass","ob",
+            "obwohl","während","nachdem","bevor","sobald",
+            "solange","damit","sodass","indem","entweder",
+            "weder","noch","sowie","als",
+
+            // Prepositions
+            "an","auf","aus","bei","bis","durch",
+            "für","gegen","hinter","in","mit","nach",
+            "neben","ohne","seit","über","um","unter",
+            "von","vor","zu","zwischen","ab","außer",
+            "entlang","gegenüber","innerhalb","außerhalb",
+            "trotz","wegen","statt","anstatt","dank",
+            "zum","zur","vom","beim","ins","im","am",
+
+            // Personal and possessive pronouns
+            "ich","mich","mir",
+            "du","dich","dir",
+            "er","ihn","ihm",
+            "sie","ihr","ihnen",
+            "es","wir","uns",
+            "euch","selbst","selber","man",
+            "mein","meine","meiner","meines","meinem","meinen",
+            "dein","deine","deiner","deines","deinem","deinen",
+            "unser","unsere","unserer","unseres","unserem","unseren",
+            "euer","eure","eurer","eures","eurem","euren",
+
+            // Interrogative and relative pronouns
+            "wer","wen","wem","wessen",
+            "was","wo","woher","wohin","wann","warum",
+            "wieso","weshalb","wodurch","womit","wie",
+
+            // Auxiliary and modal verbs
+            "sein","bin","bist","ist","sind","seid",
+            "war","warst","waren","wart","gewesen",
+            "haben","habe","hast","hat","habt","hatte",
+            "hatten","hattet","gehabt",
+            "werden","werde","wirst","wird","werdet",
+            "wurde","wurden","würde","würden",
+            "können","kann","kannst","könnt","konnte","konnten",
+            "müssen","muss","musst","müsst","musste","mussten",
+            "sollen","soll","sollst","sollt","sollte","sollten",
+            "wollen","will","willst","wollt","wollte","wollten",
+            "dürfen","darf","darfst","dürft","durfte","durften",
+            "mögen","mag","magst","möchte","möchten",
+
+            // Common adverbs
+            "auch","nur","schon","bereits","nicht","mehr",
+            "immer","oft","manchmal","selten","meistens",
+            "sehr","so","dann","danach","davor",
+            "hier","dort","jetzt","heute","morgen",
+            "gestern","wieder","weiter","vielleicht",
+            "eigentlich","wohl","eben","erst",
+            "fast","ganz","zusammen","allerdings","jedoch",
+            "deshalb","deswegen","darum","also",
+            "dabei","davon","dazu","daher","darauf",
+            "darüber","darin","daran","daraus",
+
+            // Other common words
+            "je","etc"
+        };
+
+        // Stop words that also exist in English or other languages.
+        // Still filtered by the tokenizer, but weak evidence for detection.
+        private static readonly HashSet<string> AmbiguousWords =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "die","den","des","du","er","es","da","wo","um","je","etc",
+            "an","in","ab","bei","bis","so","also","als",
+            "was","war","wart","man","will","hat","hast",
+            "bin","mag","fast","dank","erst",
+            "ins","im","am"
+        };
+
+        private static readonly Regex WordRegex = new Regex(@"[\p{L}\p{M}]+", RegexOptions.Compiled);
+
+        // German umlauts and sharp s (umlauts are also used by Turkish, Swedish, etc.)
         private static readonly Regex GermanCharRegex = new Regex("[äöüß]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        // Matches common German function words (articles, verbs, conjunctions, pronouns, etc.)
-        private static readonly Regex GermanKeywordRegex = new Regex(
-            @"\b(der|die|das|und|ich|nicht|du|er|sie|es|wir|ihr|sie|ist|bin|bist|sind|seid|war|waren|habe|hat|haben|sein|kann|können|muss|müssen|soll|sollen|will|wollen|ein|eine|einer|eines|dem|den|des|mit|für|auf|in|an|zu|von|über|unter|um|aber|oder|wenn|weil|dass|was|wer|wie|wo|da|hier|dort|jetzt|dann|nur|schon|noch|mehr|als|auch)\b",
-            RegexOptions.Compiled | RegexOptions.IgnoreCase
-        );
+        // Letters not used in native German words.
+        // Both cases are listed explicitly (no IgnoreCase) to avoid Turkish I casing issues.
+        private static readonly Regex ForeignCharRegex = new Regex(
+            "[çÇğĞıİşŞåÅõÕőŐűŰøØæÆñÑãÃąĄćĆęĘłŁńŃśŚźŹżŻčČďĎěĚňŇřŘšŠťŤůŮžŽ]",
+            RegexOptions.Compiled);
 
-        /// <summary>
-        /// Determines whether a given text is likely to be German
-        /// </summary>
-        /// <param name="Input">Input text to check</param>
-        /// <param name="CharThreshold">Threshold for ratio of special characters</param>
-        /// <param name="KeywordHitsThreshold">Minimum number of matched keywords</param>
-        public static bool IsProbablyGerman(string Input, double CharThreshold = 0.01, int KeywordHitsThreshold = 2)
+        public HashSet<string> GetStopWords()
         {
+            return StopWords;
+        }
+
+        private static void CountHits(string Input, out int WordCount, out int StrongHits, out int WeakHits)
+        {
+            WordCount = 0;
+            StrongHits = 0;
+            WeakHits = 0;
+
+            foreach (Match Word in WordRegex.Matches(Input))
+            {
+                WordCount++;
+
+                if (!StopWords.Contains(Word.Value))
+                    continue;
+
+                if (AmbiguousWords.Contains(Word.Value))
+                    WeakHits++;
+                else
+                    StrongHits++;
+            }
+        }
+
+        public bool IsProbablyMatch(string Input)
+        {
+            const int ShortTextWords = 3;
+            const double MinHitRatio = 0.15;
+
             if (string.IsNullOrWhiteSpace(Input))
                 return false;
 
-            int TotalLength = Input.Length;
+            CountHits(Input, out int WordCount, out int StrongHits, out int WeakHits);
 
-            // Count of special German characters matched
-            int SpecialCharCount = GermanCharRegex.Matches(Input).Count;
-            double SpecialCharRatio = (double)SpecialCharCount / TotalLength;
+            if (WordCount == 0)
+                return false;
 
-            // Count of matched keywords
-            int KeywordHits = GermanKeywordRegex.Matches(Input).Count;
+            bool HasGermanChar = GermanCharRegex.IsMatch(Input);
 
-            // Return true if either special character ratio or keyword hits exceed threshold
-            return SpecialCharRatio > CharThreshold || KeywordHits >= KeywordHitsThreshold;
+            // Short text (item names, UI labels): one clear clue is enough
+            if (WordCount <= ShortTextWords)
+            {
+                if (StrongHits >= 1 || Input.IndexOf('ß') >= 0)
+                    return true;
+
+                // Umlauts count only if no non-German letters are present
+                return HasGermanChar && !ForeignCharRegex.IsMatch(Input);
+            }
+
+            if (StrongHits == 0)
+                return false;
+
+            // Needs a second clue
+            if (StrongHits < 2 && WeakHits == 0 && !HasGermanChar)
+                return false;
+
+            double HitRatio = (StrongHits + WeakHits * 0.5) / WordCount;
+
+            return HitRatio >= MinHitRatio;
         }
 
         /// <summary>
@@ -42,17 +175,23 @@ namespace NIMEngine.Language
         /// </summary>
         /// <param name="Input">Input text</param>
         /// <returns>Score value representing German language likelihood</returns>
-        public static double GetGermanScore(string Input)
+        public double GetProbability(string Input)
         {
             if (string.IsNullOrWhiteSpace(Input))
                 return 0;
 
-            int TotalLength = Input.Length;
-            int SpecialCharCount = GermanCharRegex.Matches(Input).Count;
-            int KeywordHits = GermanKeywordRegex.Matches(Input).Count;
+            CountHits(Input, out _, out int StrongHits, out int WeakHits);
 
-            // Simple weighted score formula combining special characters and keywords
-            return (SpecialCharCount * 1.5 + KeywordHits * 2.0) / TotalLength;
+            int SpecialCharCount = GermanCharRegex.Matches(Input).Count;
+
+            // Weak words only count when there is other German evidence
+            double KeywordScore = StrongHits;
+            if (StrongHits > 0 || SpecialCharCount > 0)
+            {
+                KeywordScore += WeakHits * 0.25;
+            }
+
+            return (SpecialCharCount * 1.5 + KeywordScore * 2.0) / Input.Length;
         }
     }
 }
