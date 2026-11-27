@@ -1,86 +1,161 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    internal static class PersianHelper
+    public class PersianHelper : I_Language
     {
-        // Common Persian function words / particles
-        private static readonly string[] PersianKeywords = new[]
+        public double PassScore { get; set; } = 0.5;
+
+        public float Version { get; set; } = 1.1f;
+
+        private static readonly HashSet<string> StopWords =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "و",       // and
-            "در",      // in / at
-            "به",      // to
-            "از",      // from / of
-            "این",     // this
-            "آن",      // that
-            "برای",    // for
-            "که",      // that
-            "با",      // with
-            "یک",      // a / one
-            "را",      // object marker
-            "است",     // is / be
-            "می",      // present tense marker
-            "شد",      // past tense marker
-            "بر",      // on / over
-            "هم",      // also / too
-            "تا"       // until
+            // Conjunctions / particles
+            "و","یا","اما","ولی","که","اگر","چون","زیرا","پس","تا","هم","نیز",
+            "بلکه","لیکن","هرچند","گرچه","بنابراین","درنتیجه","یعنی","مثلا","مانند",
+
+            // Prepositions
+            "در","به","از","با","برای","بر","بدون","بین","زیر","روی","درباره",
+            "نزد","پیش","طبق","مثل","غیر","جز","الا","سوی","سو","جانب",
+
+            // Object marker / copula / auxiliary
+            "را","است","هست","بود","بودند","شد","شدند","می","نمی","خواهد","خواهند",
+            "باید","نباید","شاید","می‌توان","نمی‌توان","دارد","دارند","داشت","داشتند",
+
+            // Personal and reflexive pronouns
+            "من","مرا","به‌من","ازمن",
+            "تو","تورا","به‌تو","ازتو",
+            "او","اورا","به‌او","ازاو",
+            "ما","مارا","به‌ما","ازما",
+            "شما","شمارا","به‌شما","ازشما",
+            "آنها","ایشان","آنان","اینا","اونها",
+            "خود","خودم","خودت","خودش","خودمان","خودتان","خودشان",
+
+            // Demonstrative pronouns and adjectives
+            "این","آن","اینها","اینجا","آنجا","چنین","چنان","همین","همان",
+
+            // Interrogative and relative words
+            "چه","چی","کی","کجا","کدام","چطور","چگونه","چرا","کِی","چند","چقدر",
+            "آیا","مگر","کیست","چیست","کدامین",
+
+            // Negative and indefinite words
+            "نه","هیچ","هیچ‌کس","هیچ‌چیز","هیچوقت","هرگز","بی","بدون",
+            "کسی","چیزی","بعضی","برخی","همه","هر","هریک","دیگر","دیگری",
+
+            // Common adverbs
+            "خیلی","بسیار","کم","زیاد","بیشتر","کمتر","الان","اکنون","حالا",
+            "دیروز","امروز","فردا","قبلا","بعد","قبل","همیشه","گاهی","اغلب",
+            "دوباره","باز","هنوز","فقط","تنها","حتی","همچنین","البته",
+            "حتما","شاید","اصلا","واقعا","تقریبا","کاملا","جدا",
+
+            // Discourse markers
+            "بنابراین","درنتیجه","به‌هرحال","به‌طور","خلاصه"
         };
 
-        // Persian Unicode block: U+0600 – U+06FF
+        private static readonly Regex PersianKeywordRegex = new Regex(
+            @"\b(و|در|به|از|این|آن|برای|که|با|یک|را|است|می|شد|بر|هم|تا)\b",
+            RegexOptions.Compiled);
+
         private static readonly Regex PersianCharRegex = new Regex(
             "[\u0600-\u06FF]",
             RegexOptions.Compiled);
 
-        /// <summary>
-        /// Determines whether the input text is likely Persian
-        /// </summary>
-        /// <param name="Input">The text to check</param>
-        /// <param name="KeywordThreshold">Minimum number of keyword matches required (default 1)</param>
-        /// <param name="CharRatioThreshold">Minimum ratio of Persian characters (default 0.3)</param>
-        /// <returns>True if the text is probably Persian, otherwise false</returns>
-        public static bool IsProbablyPersian(
-            string Input,
-            int KeywordThreshold = 1,
-            double CharRatioThreshold = 0.3)
+        private static readonly Regex ScriptLetterRegex = new Regex(
+            @"[\p{L}]",
+            RegexOptions.Compiled);
+
+        // ---- Persian / Arabic disambiguation ----
+
+        // Strong Persian signals
+        private static readonly Regex PersianStrongLetterRegex = new Regex(
+            @"[پچژگ]",
+            RegexOptions.Compiled);
+
+        private static readonly Regex PersianStrongDigitRegex = new Regex(
+            @"[\u06F0-\u06F9]",
+            RegexOptions.Compiled);
+
+        // Weak Persian signals (occur in Persian but less exclusively)
+        private static readonly Regex PersianWeakLetterRegex = new Regex(
+            @"[کی]",
+            RegexOptions.Compiled);
+
+        // Weak Arabic signals (old Persian texts / input methods may use them)
+        private static readonly Regex ArabicWeakLetterRegex = new Regex(
+            @"[يك]",
+            RegexOptions.Compiled);
+
+        public int GetLanguage()
         {
-            if (string.IsNullOrWhiteSpace(Input))
-                return false;
+            return (int)Languages.Persian;
+        }
 
-            int TotalLength = Input.Length;
-            if (TotalLength == 0)
-                return false;
+        public HashSet<string> GetStopWords()
+        {
+            return StopWords;
+        }
 
-            int PersianCharCount = PersianCharRegex.Matches(Input).Count;
-            double PersianCharRatio = (double)PersianCharCount / TotalLength;
+        private static int CountKeywordHits(string Input)
+        {
+            return PersianKeywordRegex.Matches(Input).Count;
+        }
 
-            int KeywordHits = PersianKeywords.Count(k => Input.IndexOf(k, StringComparison.Ordinal) >= 0);
-
-            // Consider Persian if enough characters and at least some keywords
-            return PersianCharRatio >= CharRatioThreshold &&
-                   KeywordHits >= KeywordThreshold;
+        public bool IsProbablyMatch(string Input)
+        {
+            return GetProbability(Input) >= PassScore;
         }
 
         /// <summary>
-        /// Calculates a score indicating the likelihood that the text is Persian
+        /// Returns a score from 0 to 1. A score of PassScore or higher is a match.
         /// </summary>
-        /// <param name="Input">The text to score</param>
-        /// <returns>A score representing the likelihood of Persian language</returns>
-        public static double GetPersianScore(string Input)
+        public double GetProbability(string Input)
         {
+            const double MinPersianRatio = 0.3;
+            const double MaxFailScore = 0.49;
+            const double KeywordBonus = 0.1;
+            const double StrongSignalScore = 0.7;
+            const double WeakSignalFactor = 0.85;
+
             if (string.IsNullOrWhiteSpace(Input))
                 return 0;
 
-            int TotalLength = Input.Length;
-            if (TotalLength == 0)
+            int LetterCount = ScriptLetterRegex.Matches(Input).Count;
+
+            if (LetterCount == 0)
                 return 0;
 
             int PersianCharCount = PersianCharRegex.Matches(Input).Count;
-            int KeywordHits = PersianKeywords.Count(k => Input.IndexOf(k, StringComparison.Ordinal) >= 0);
+            double PersianCharRatio = (double)PersianCharCount / LetterCount;
 
-            // Persian chars are more reliable than keywords
-            return (PersianCharCount * 1.5 + KeywordHits * 2.0) / TotalLength;
+            double Score = PersianCharRatio >= MinPersianRatio
+                ? PassScore + (1 - PassScore) * (PersianCharRatio - MinPersianRatio) / (1 - MinPersianRatio)
+                : MaxFailScore * PersianCharRatio / MinPersianRatio;
+
+            bool HasStrongPersian = PersianStrongLetterRegex.IsMatch(Input) || PersianStrongDigitRegex.IsMatch(Input);
+            bool HasWeakArabic = ArabicWeakLetterRegex.IsMatch(Input);
+
+            // Strong Persian signal: raise to 0.7 and immune to weak Arabic penalty
+            if (HasStrongPersian)
+            {
+                Score = Math.Max(Score, StrongSignalScore);
+            }
+            // Weak Arabic signal only when no strong Persian evidence
+            else if (HasWeakArabic)
+            {
+                Score *= WeakSignalFactor;
+            }
+
+            int KeywordHits = CountKeywordHits(Input);
+
+            if (KeywordHits >= 1)
+                Score = Math.Max(Score, PassScore) + KeywordBonus * KeywordHits;
+
+            return Math.Min(1.0, Score);
         }
     }
 }
