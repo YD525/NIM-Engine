@@ -192,7 +192,7 @@ public class EngineCore
     }
 
     public UnitGroup CallOnce(CancellationToken CancelToken, Translator TranslatorRef, TranslationPreprocessor Preprocessor, UnitGroup Item,
-        Languages From, Languages To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate, ref string UseModel)
+        P_Language From, P_Language To, string AIParam, bool CanSleep, bool UseAIMemory, bool CanUpdate, ref string UseModel)
     {
         if (!Item.ApplyStateChange(TranslatorRef.ID, UnitTranslationState.Preparing).CanDo(-1))
         {
@@ -384,7 +384,7 @@ public class EngineCore
         }
 
         public string Call(string TranslatorID, CancellationToken CancelToken, Translator TranslatorRef, ref UnitGroup Source, ref Dictionary<string, UnitSequence> Sequences,
-           Languages From, Languages To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string UseModel)
+           P_Language From, P_Language To, bool UseAIMemory, int AIMemoryQueryLimit, string AIParam, ref string UseModel)
         {
             bool ForceReplace = true;
             bool ForceReplaceProtected = true;
@@ -411,9 +411,9 @@ public class EngineCore
                 return string.Empty;
             }
 
-            if (From == Languages.Auto)
+            if (From == P_Language.Auto)
             {
-                From = P_Language.DetectLanguageByLine(GetSource);
+                From = P_Language.Detect(GetSource,LanguageDetectMode.Line);
             }
 
             int MaxTranslationAttempts = NIMEngine.NIM_Engine.Config.MaxTranslationAttempts;

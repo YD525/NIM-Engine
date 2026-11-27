@@ -111,18 +111,20 @@ namespace NIMEngine.Language
             const double VariantSignalScore = 0.65;
 
             if (string.IsNullOrWhiteSpace(Input))
-                return 0;
+                return MaxFailScore;
 
             int LetterCount = ScriptLetterRegex.Matches(Input).Count;
 
             if (LetterCount == 0)
-                return 0;
+                return MaxFailScore;
 
             // Base score: Indonesian has no special diacritics, so use keyword density
             double Score = 0;
 
+            bool HasMarker = IndonesianMarkerRegex.IsMatch(Input);
+
             // Variant signal: Indonesian markers boost confidence
-            if (IndonesianMarkerRegex.IsMatch(Input))
+            if (HasMarker)
                 Score = Math.Max(Score, VariantSignalScore);
 
             int KeywordHits = CountKeywordHits(Input);
@@ -134,6 +136,10 @@ namespace NIMEngine.Language
             // One Indonesian keyword is enough to pass
             if (KeywordHits >= 1)
                 Score = Math.Max(Score, PassScore) + KeywordBonus * KeywordHits;
+
+            // No marker and no keyword hit -> treat as fail, capped at MaxFailScore
+            if (!HasMarker && KeywordHits == 0)
+                return MaxFailScore;
 
             return Math.Min(1.0, Score);
         }

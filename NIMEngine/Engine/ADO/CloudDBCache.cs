@@ -12,16 +12,16 @@ namespace NIMEngine.ADO
     {
         public int FileUniqueKey = 0;
         public string Key = "";
-        public int To = 0;
+        public string To = "";
         public string Source = "";
         public string Result = "";
         public string Model = "";
 
-        public CloudTranslationItem(object FileUniqueKey, object Key, object To, object Source, object Result,object Model)
+        public CloudTranslationItem(object FileUniqueKey, object Key, object To, object Source, object Result, object Model)
         {
             this.FileUniqueKey = P_Convert.ObjToInt(FileUniqueKey);
             this.Key = P_Convert.ObjToStr(Key);
-            this.To = P_Convert.ObjToInt(To);
+            this.To = P_Convert.ObjToStr(To);
             this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
             this.Model = P_Convert.ObjToStr(Model);
@@ -33,7 +33,7 @@ namespace NIMEngine.ADO
         public static void Init()
         {
             string TableName = "CloudTranslation";
-            string CreateSQL = "CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [Source] TEXT, [Result] TEXT,[Model] TEXT);";
+            string CreateSQL = "CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [Source] TEXT, [Result] TEXT, [Model] TEXT);";
 
             // Check if table exists
             const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
@@ -62,6 +62,17 @@ namespace NIMEngine.ADO
                     NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
                     NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
+                else
+                {
+                    //Check whether To column is TEXT (old INT structure needs migration)
+                    var ToColumn = Columns.FirstOrDefault(R => R["name"].ToString() == "To");
+                    bool IsToText = ToColumn != null && ToColumn["type"].ToString().ToUpper().Contains("TEXT");
+
+                    if (!IsToText)
+                    {
+                        MigrateLanguageCodeColumn();
+                    }
+                }
             }
             else
             {
@@ -70,7 +81,18 @@ namespace NIMEngine.ADO
             }
         }
 
-        public static bool DeleteCache(int FileUniqueKey, string Key, Languages TargetLanguage)
+        private static void MigrateLanguageCodeColumn()
+        {
+            NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE CloudTranslation RENAME TO CloudTranslation_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("CREATE TABLE [CloudTranslation]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [Source] TEXT, [Result] TEXT, [Model] TEXT);");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("INSERT INTO CloudTranslation (FileUniqueKey, Key, [To], Source, Result, Model) SELECT FileUniqueKey, Key, [To], Source, Result, Model FROM CloudTranslation_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE CloudTranslation_Old;");
+        }
+
+        public static bool DeleteCache(int FileUniqueKey, string Key, P_Language TargetLanguage)
         {
             try
             {
@@ -79,7 +101,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code));
 
                 if (State != 0)
                 {
@@ -90,7 +112,7 @@ namespace NIMEngine.ADO
             }
             catch { return false; }
         }
-        public static string FindCache(int FileUniqueKey, string Key, Languages TargetLanguage)
+        public static string FindCache(int FileUniqueKey, string Key, P_Language TargetLanguage)
         {
             try
             {
@@ -99,7 +121,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", (int)TargetLanguage)));
+                    SQLiteBuilder.Parameter("@To", TargetLanguage.Code)));
 
                 if (GetResult.Trim().Length > 0)
                 {
@@ -110,11 +132,11 @@ namespace NIMEngine.ADO
             }
             catch { return string.Empty; }
         }
-        public static string ModelsToLine(List<string>Models)
+        public static string ModelsToLine(List<string> Models)
         {
             return string.Join(",", Models);
         }
-        public static bool AddCache(int FileUniqueKey, string Key, int To, string Source, string Result,string Model)
+        public static bool AddCache(int FileUniqueKey, string Key, P_Language To, string Source, string Result, string Model)
         {
             try
             {
@@ -123,16 +145,16 @@ namespace NIMEngine.ADO
                 int GetRowID = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar("SELECT Rowid FROM CloudTranslation WHERE [FileUniqueKey] = @FileUniqueKey AND [Key] = @Key AND [To] = @To;",
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", To)));
+                    SQLiteBuilder.Parameter("@To", To.Code)));
 
                 if (GetRowID <= 0)
                 {
-                    const string SQLOrder = "INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result],[Model]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result,@Model);";
+                    const string SQLOrder = "INSERT INTO CloudTranslation ([FileUniqueKey], [Key], [To], [Source], [Result], [Model]) VALUES (@FileUniqueKey, @Key, @To, @Source, @Result, @Model);";
                     int State = NIM_Engine.LocalDB.ExecuteNonQuery(
                         SQLOrder,
                         SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                         SQLiteBuilder.Parameter("@Key", Key),
-                        SQLiteBuilder.Parameter("@To", To),
+                        SQLiteBuilder.Parameter("@To", To.Code),
                         SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
                         SQLiteBuilder.Parameter("@Result", SQLSafeCodec.Encode(Result)),
                         SQLiteBuilder.Parameter("@Model", Model));
@@ -150,7 +172,7 @@ namespace NIMEngine.ADO
             catch { return false; }
         }
 
-        public static List<CloudTranslationItem> MatchCloudItem(int To, string Source, int Limit = 5)
+        public static List<CloudTranslationItem> MatchCloudItem(P_Language To, string Source, int Limit = 5)
         {
             try
             {
@@ -161,7 +183,7 @@ namespace NIMEngine.ADO
                 const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                     SQLOrder,
-                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@To", To.Code),
                     SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
                     SQLiteBuilder.Parameter("@Limit", Limit));
                 if (NTable.Count > 0)
@@ -173,7 +195,7 @@ namespace NIMEngine.ADO
                         CloudTranslationItems.Add(new CloudTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
-                            Row["To"],
+                            P_Convert.ObjToStr(Row["To"]),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
                             P_Convert.ObjToStr(Row["Model"])
@@ -188,7 +210,7 @@ namespace NIMEngine.ADO
             return new List<CloudTranslationItem>();
         }
 
-        public static CloudTranslationItem Match(int To, string Source)
+        public static CloudTranslationItem Match(P_Language To, string Source)
         {
             try
             {
@@ -197,7 +219,7 @@ namespace NIMEngine.ADO
                 const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source LIMIT 1;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                     SQLOrder,
-                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@To", To.Code),
                     SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)));
                 if (NTable.Count > 0)
                 {
@@ -205,7 +227,7 @@ namespace NIMEngine.ADO
                     return new CloudTranslationItem(
                         Row["FileUniqueKey"],
                         Row["Key"],
-                        Row["To"],
+                        P_Convert.ObjToStr(Row["To"]),
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
                         P_Convert.ObjToStr(Row["Model"])
@@ -219,7 +241,7 @@ namespace NIMEngine.ADO
             return null;
         }
 
-        public static List<CloudTranslationItem> MatchOtherCloudItem(int Rowid, int To, string Source, int Limit = 5)
+        public static List<CloudTranslationItem> MatchOtherCloudItem(int Rowid, P_Language To, string Source, int Limit = 5)
         {
             try
             {
@@ -230,7 +252,7 @@ namespace NIMEngine.ADO
                 const string SQLOrder = "SELECT * FROM CloudTranslation WHERE [To] = @To AND [Source] = @Source AND Rowid != @Rowid LIMIT @Limit;";
                 List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                     SQLOrder,
-                    SQLiteBuilder.Parameter("@To", To),
+                    SQLiteBuilder.Parameter("@To", To.Code),
                     SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)),
                     SQLiteBuilder.Parameter("@Rowid", Rowid),
                     SQLiteBuilder.Parameter("@Limit", Limit));
@@ -243,7 +265,7 @@ namespace NIMEngine.ADO
                         CloudTranslationItems.Add(new CloudTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
-                            Row["To"],
+                            P_Convert.ObjToStr(Row["To"]),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
                             P_Convert.ObjToStr(Row["Model"])
@@ -258,8 +280,7 @@ namespace NIMEngine.ADO
             return new List<CloudTranslationItem>();
         }
 
-
-        public static string FindCacheAndID(int FileUniqueKey, string Key, int To, ref int ID)
+        public static string FindCacheAndID(int FileUniqueKey, string Key, P_Language To, ref int ID)
         {
             try
             {
@@ -268,7 +289,7 @@ namespace NIMEngine.ADO
                     SQLOrder,
                     SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
                     SQLiteBuilder.Parameter("@Key", Key),
-                    SQLiteBuilder.Parameter("@To", To));
+                    SQLiteBuilder.Parameter("@To", To.Code));
 
                 if (GetResult.Count > 0)
                 {
@@ -332,7 +353,7 @@ namespace NIMEngine.ADO
                 CloudTranslationItems.Add(new CloudTranslationItem(
                             Row["FileUniqueKey"],
                             Row["Key"],
-                            Row["To"],
+                            P_Convert.ObjToStr(Row["To"]),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                             SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
                             P_Convert.ObjToStr(Row["Model"])

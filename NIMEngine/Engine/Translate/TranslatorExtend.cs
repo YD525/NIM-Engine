@@ -157,7 +157,7 @@ namespace NIMEngine.Translate
                 return true;
             }
 
-            var GetState = LocalDBCache.UpdateLocalTransItem(FileUniqueKey, Key, (int)Translator.To, Original, Translated.String, 0);
+            var GetState = LocalDBCache.UpdateLocalTransItem(FileUniqueKey, Key, Translator.To, Original, Translated.String, 0);
 
             return GetState;
         }
@@ -180,7 +180,7 @@ namespace NIMEngine.Translate
                 return true;
             }
 
-            var GetState = CloudDBCache.AddCache(FileUniqueKey, Key, (int)Translator.To, SourceText, TransText,CloudDBCache.ModelsToLine(Models));
+            var GetState = CloudDBCache.AddCache(FileUniqueKey, Key, Translator.To, SourceText, TransText,CloudDBCache.ModelsToLine(Models));
 
             Translator.CalcTranslatedCount(0);
 

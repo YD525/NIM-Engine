@@ -361,7 +361,7 @@ namespace NIMEngine.Platform
             return null;
         }
         public static bool CallAINode(string Name, string ApiKey, EngineConfigJson ConfigRef,
-            List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
+            List<ReplaceTag> CustomWords, UnitGroup Source, P_Language FromLang, P_Language ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
             , out string TranslateStr)
         {
             if (CloudAINodes.TryGetValue(Name, out var CurrentNode))
@@ -439,7 +439,7 @@ namespace NIMEngine.Platform
             return null;
         }
         public static bool CallLocalAINode(string Name, EngineConfigJson ConfigRef,
-            List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
+            List<ReplaceTag> CustomWords, UnitGroup Source, P_Language FromLang, P_Language ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref string UseModel, ref AICall Call
             , out string TranslateStr)
         {
             if (LocalAINodes.TryGetValue(Name, out var CurrentNode))
@@ -545,7 +545,7 @@ namespace NIMEngine.Platform
         /// <param name="TranslateStr">Translated text, "<empty>" when there is nothing to translate</param>
         /// <returns>true when the platform was found and executed (check Call.Success for the result), false when the platform does not exist</returns>
         public static bool CallNode(string Name, string ApiKey, EngineConfigJson ConfigRef,
-            UnitGroup Source, Languages FromLang, Languages ToLang,
+            UnitGroup Source, P_Language FromLang, P_Language ToLang,
             ref PlatformCall Call, out string TranslateStr)
         {
             if (CloudNodes.TryGetValue(Name, out var CurrentNode))
@@ -562,8 +562,8 @@ namespace NIMEngine.Platform
                 }
 
                 // Node expects language code strings, convert from the Languages enum
-                string FromCode = P_Language.ToLanguageCode(FromLang);
-                string ToCode = P_Language.ToLanguageCode(ToLang);
+                string FromCode = FromLang.Code;
+                string ToCode = ToLang.Code;
 
                 string Response = "";
                 string ResponseStr = string.Empty;
@@ -613,7 +613,7 @@ namespace NIMEngine.Platform
         }
 
         public static bool CallHumanNode(string Name, EngineConfigJson ConfigRef,
-            List<ReplaceTag> CustomWords, UnitGroup Source, Languages FromLang, Languages ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call
+            List<ReplaceTag> CustomWords, UnitGroup Source, P_Language FromLang, P_Language ToLang, bool UseAIMemory, int AIMemoryCountLimit, string AIParam, ref AICall Call
             , out string TranslateStr)
         {
             if (HumanNodes.TryGetValue(Name, out var CurrentNode))

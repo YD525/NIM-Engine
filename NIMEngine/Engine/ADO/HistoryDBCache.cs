@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NIMEngine.ADO;
 using NIMEngine.Common;
+using NIMEngine.Language;
 using NIMEngine.Platform.Request;
 
 namespace NIMEngine.Engine.ADO
@@ -12,7 +13,7 @@ namespace NIMEngine.Engine.ADO
         public int FileUniqueKey = 0;
         public int Rowid = 0;
         public string Key = "";
-        public int To = 0;
+        public string To = "";
         public string CurrentText = "";
         public int IsCurrent = 0;
         public DateTime Time;
@@ -25,7 +26,7 @@ namespace NIMEngine.Engine.ADO
             this.Rowid = P_Convert.ObjToInt(Rowid);
             this.Key = P_Convert.ObjToStr(Key);
 
-            this.To = P_Convert.ObjToInt(To);
+            this.To = P_Convert.ObjToStr(To);
 
             this.CurrentText = P_Convert.ObjToStr(CurrentText);
 
@@ -36,7 +37,7 @@ namespace NIMEngine.Engine.ADO
             this.RangeID = P_Convert.ObjToStr(RangeID);
         }
 
-        public HistoryItem(int FileUniqueKey, string Key, int To, string CurrentText, int IsCurrent, DateTime Time, string RangeID)
+        public HistoryItem(int FileUniqueKey, string Key, string To, string CurrentText, int IsCurrent, DateTime Time, string RangeID)
         {
             this.FileUniqueKey = FileUniqueKey;
 
@@ -59,7 +60,7 @@ namespace NIMEngine.Engine.ADO
         {
             string TableName = "RecordsHistory";
 
-            string CreateSQL = "CREATE TABLE [RecordsHistory]([FileUniqueKey] INT, [Key] TEXT, [To] INT, [CurrentText] TEXT, [IsCurrent] INT, [Time] INT64, [RangeID] TEXT);";
+            string CreateSQL = "CREATE TABLE [RecordsHistory]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [CurrentText] TEXT, [IsCurrent] INT, [Time] INT64, [RangeID] TEXT);";
 
             // Check if table exists
             const string CheckTableSQL = "SELECT name FROM sqlite_master WHERE type = 'table' AND name = @TableName;";
@@ -99,12 +100,34 @@ namespace NIMEngine.Engine.ADO
                     NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE IF EXISTS " + QuotedTableName + ";");
                     NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
                 }
+                else
+                {
+                    //Check whether To column is TEXT (old INT structure needs migration)
+                    var ToColumn = Columns.FirstOrDefault(R => R["name"].ToString() == "To");
+                    bool IsToText = ToColumn != null && ToColumn["type"].ToString().ToUpper().Contains("TEXT");
+
+                    if (!IsToText)
+                    {
+                        MigrateLanguageCodeColumn();
+                    }
+                }
             }
             else
             {
                 // Create if not exists
                 NIM_Engine.LocalDB.ExecuteNonQuery(CreateSQL);
             }
+        }
+
+        private static void MigrateLanguageCodeColumn()
+        {
+            NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE RecordsHistory RENAME TO RecordsHistory_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("CREATE TABLE [RecordsHistory]([FileUniqueKey] INT, [Key] TEXT, [To] TEXT, [CurrentText] TEXT, [IsCurrent] INT, [Time] INT64, [RangeID] TEXT);");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("INSERT INTO RecordsHistory (FileUniqueKey, Key, [To], CurrentText, IsCurrent, Time, RangeID) SELECT FileUniqueKey, Key, [To], CurrentText, IsCurrent, Time, RangeID FROM RecordsHistory_Old;");
+
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE RecordsHistory_Old;");
         }
 
         private static object LockGenRangeID = new object();
@@ -271,7 +294,7 @@ namespace NIMEngine.Engine.ADO
             return State != 0;
         }
 
-        public static bool CheckPreviousHistoryItem(int CurrentID, int FileUniqueKey, int To, string Key, string CurrentText, out int TargetID)
+        public static bool CheckPreviousHistoryItem(int CurrentID, int FileUniqueKey, P_Language To, string Key, string CurrentText, out int TargetID)
         {
             int PreviousRowid = P_Convert.ObjToInt(
                 NIM_Engine.LocalDB.ExecuteScalar("SELECT Rowid FROM RecordsHistory WHERE Rowid < @CurrentId ORDER BY Rowid DESC LIMIT 1;",
@@ -289,7 +312,7 @@ namespace NIMEngine.Engine.ADO
                 NIM_Engine.LocalDB.ExecuteScalar("SELECT COUNT(*) FROM RecordsHistory WHERE Rowid = @Rowid AND FileUniqueKey = @FileUniqueKey AND [To] = @To AND [Key] = @Key AND CurrentText = @CurrentText;",
                 SQLiteBuilder.Parameter("@Rowid", PreviousRowid),
                 SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
-                SQLiteBuilder.Parameter("@To", To),
+                SQLiteBuilder.Parameter("@To", To.Code),
                 SQLiteBuilder.Parameter("@Key", Key),
                 SQLiteBuilder.Parameter("@CurrentText", SQLSafeCodec.Encode(CurrentText)))
             );
@@ -323,7 +346,7 @@ namespace NIMEngine.Engine.ADO
                     Row["FileUniqueKey"],
                     Row["Rowid"],
                     Row["Key"],
-                    Row["To"],
+                    P_Convert.ObjToStr(Row["To"]),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["CurrentText"])),
                     Row["IsCurrent"],
                     Row["Time"],
@@ -334,7 +357,7 @@ namespace NIMEngine.Engine.ADO
         }
 
         //Get HistoryItems
-        public static List<HistoryItem> GetHistoryItems(int FileUniqueKey, int To)
+        public static List<HistoryItem> GetHistoryItems(int FileUniqueKey, P_Language To)
         {
             List<HistoryItem> HistoryItems = new List<HistoryItem>();
 
@@ -343,7 +366,7 @@ namespace NIMEngine.Engine.ADO
             var NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SQLOrder,
                 SQLiteBuilder.Parameter("@FileUniqueKey", FileUniqueKey),
-                SQLiteBuilder.Parameter("@To", To));
+                SQLiteBuilder.Parameter("@To", To.Code));
 
             if (NTable.Count > 0)
             {
@@ -355,7 +378,7 @@ namespace NIMEngine.Engine.ADO
                         Row["FileUniqueKey"],
                         Row["Rowid"],
                         Row["Key"],
-                        Row["To"],
+                        P_Convert.ObjToStr(Row["To"]),
                         SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["CurrentText"])),
                         Row["IsCurrent"],
                         Row["Time"],

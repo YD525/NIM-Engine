@@ -54,11 +54,6 @@ namespace NIMEngine.Language
             @"[\uAC00-\uD7A3\u1100-\u11FF\u3131-\u318E\uA960-\uA97F\uD7B0-\uD7FF\uFFA0-\uFFDC]",
             RegexOptions.Compiled);
 
-        public int GetLanguage()
-        {
-            return (int)Languages.Korean;
-        }
-
         public HashSet<string> GetStopWords()
         {
             return StopWords;

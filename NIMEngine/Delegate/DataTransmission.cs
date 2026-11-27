@@ -66,14 +66,14 @@ namespace NIMEngine.P_Delegate
     public class PlatformCall
     {
         public string Name = "";
-        public Languages From = Languages.Null;
-        public Languages To = Languages.Null;
+        public P_Language From = new P_Language();
+        public P_Language To = new P_Language();
         public string SendString = "";
         public string ReceiveString = "";
         public bool Success = false;
 
         public PlatformCall() { }
-        public PlatformCall(string Name, Languages From, Languages To, string Send, string Receive)
+        public PlatformCall(string Name, P_Language From, P_Language To, string Send, string Receive)
         {
             this.Name = Name;
             this.From = From;

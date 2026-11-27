@@ -15,8 +15,8 @@ namespace NIMEngine.ADO
         public string Type = "";
         public string Source = "";
         public string Result = "";
-        public int From = 0;
-        public int To = 0;
+        public string From = "";
+        public string To = "";
         public int ExactMatch = 0;
         public int IgnoreCase = 0;
         public string Regex = "";
@@ -31,8 +31,8 @@ namespace NIMEngine.ADO
             this.Type = P_Convert.ObjToStr(Type);
             this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
-            this.From = P_Convert.ObjToInt(From);
-            this.To = P_Convert.ObjToInt(To);
+            this.From = P_Convert.ObjToStr(From);
+            this.To = P_Convert.ObjToStr(To);
             this.ExactMatch = P_Convert.ObjToInt(ExactMatch);
             this.IgnoreCase = P_Convert.ObjToInt(IgnoreCase);
             this.Regex = P_Convert.ObjToStr(Regex);
@@ -44,8 +44,8 @@ namespace NIMEngine.ADO
             this.Type = P_Convert.ObjToStr(Type);
             this.Source = P_Convert.ObjToStr(Source);
             this.Result = P_Convert.ObjToStr(Result);
-            this.From = P_Convert.ObjToInt(From);
-            this.To = P_Convert.ObjToInt(To);
+            this.From = P_Convert.ObjToStr(From);
+            this.To = P_Convert.ObjToStr(To);
             this.ExactMatch = P_Convert.ObjToInt(ExactMatch);
             this.IgnoreCase = P_Convert.ObjToInt(IgnoreCase);
             this.Regex = P_Convert.ObjToStr(Regex);
@@ -84,12 +84,26 @@ namespace NIMEngine.ADO
                     //Table structure is broken or unknown, recreate a new one
                     RecreateNewTable();
                 }
+                else
+                {
+                    //Check whether From/To columns are TEXT (old INT structure needs migration)
+                    var FromColumn = Dt.FirstOrDefault(R => R["name"].ToString() == "From");
+                    var ToColumn = Dt.FirstOrDefault(R => R["name"].ToString() == "To");
+
+                    bool IsFromText = FromColumn != null && FromColumn["type"].ToString().ToUpper().Contains("TEXT");
+                    bool IsToText = ToColumn != null && ToColumn["type"].ToString().ToUpper().Contains("TEXT");
+
+                    if (!IsFromText || !IsToText)
+                    {
+                        MigrateLanguageCodeColumns();
+                    }
+                }
             }
         }
 
         private static void CreateNewTable()
         {
-            string SQLOrder = "CREATE TABLE [AdvancedDictionary]([TargetFileName] TEXT, [Type] TEXT, [Source] TEXT, [Result] TEXT, [From] INT, [To] INT, [ExactMatch] INT, [IgnoreCase] INT, [Regex] TEXT);";
+            string SQLOrder = "CREATE TABLE [AdvancedDictionary]([TargetFileName] TEXT, [Type] TEXT, [Source] TEXT, [Result] TEXT, [From] TEXT, [To] TEXT, [ExactMatch] INT, [IgnoreCase] INT, [Regex] TEXT);";
             NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
         }
 
@@ -103,6 +117,23 @@ namespace NIMEngine.ADO
 
             //Migrate data from the old table to the new table
             string SQLOrder = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) SELECT TargetModName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;";
+
+            NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
+
+            //Drop the old table after migration
+            NIM_Engine.LocalDB.ExecuteNonQuery("DROP TABLE AdvancedDictionary_Old;");
+        }
+
+        private static void MigrateLanguageCodeColumns()
+        {
+            //Rename the old table
+            NIM_Engine.LocalDB.ExecuteNonQuery("ALTER TABLE AdvancedDictionary RENAME TO AdvancedDictionary_Old;");
+
+            //Create a new table with TEXT From/To columns
+            CreateNewTable();
+
+            //Migrate data, converting old INT language ids to language codes
+            string SQLOrder = "INSERT INTO AdvancedDictionary (TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex) SELECT TargetFileName, Type, Source, Result, [From], [To], ExactMatch, IgnoreCase, Regex FROM AdvancedDictionary_Old;";
 
             NIM_Engine.LocalDB.ExecuteNonQuery(SQLOrder);
 
@@ -136,14 +167,14 @@ namespace NIMEngine.ADO
             }
         }
 
-        public static AdvancedDictionaryItem ExactMatch(Languages From, Languages To, string Type, string Source)
+        public static AdvancedDictionaryItem ExactMatch(P_Language From, P_Language To, string Type, string Source)
         {
             const string SQLOrder = "SELECT Rowid, * FROM AdvancedDictionary WHERE [From] = @From AND [To] = @To AND ([Type] IS NULL OR [Type] = '' OR [Type] = @Type) AND [Source] = @Source LIMIT 1;";
 
             List<Dictionary<string, object>> NTable = NIM_Engine.LocalDB.ExecuteQuery(
                 SQLOrder,
-                SQLiteBuilder.Parameter("@From", (int)From),
-                SQLiteBuilder.Parameter("@To", (int)To),
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code),
                 SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Type)),
                 SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(Source)));
             if (NTable.Count > 0)
@@ -156,8 +187,8 @@ namespace NIMEngine.ADO
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Type"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
-                    Row["From"],
-                    Row["To"],
+                    P_Convert.ObjToStr(Row["From"]),
+                    P_Convert.ObjToStr(Row["To"]),
                     Row["ExactMatch"],
                     Row["IgnoreCase"],
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Regex"]))
@@ -203,7 +234,7 @@ namespace NIMEngine.ADO
             Items = FinalList;
         }
 
-        public static List<AdvancedDictionaryItem> Query(string FileName, string Type, Languages From, Languages To, string SourceText, bool UseWordBoundary)
+        public static List<AdvancedDictionaryItem> Query(string FileName, string Type, P_Language From, P_Language To, string SourceText, bool UseWordBoundary)
         {
             List<AdvancedDictionaryItem> AdvancedDictionaryItems = new List<AdvancedDictionaryItem>();
 
@@ -222,8 +253,8 @@ namespace NIMEngine.ADO
                 SQLOrder,
                 SQLiteBuilder.Parameter("@FileName", SQLSafeCodec.Encode(FileName)),
                 SQLiteBuilder.Parameter("@Type", SQLSafeCodec.Encode(Type)),
-                SQLiteBuilder.Parameter("@From", (int)From),
-                SQLiteBuilder.Parameter("@To", (int)To),
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code),
                 SQLiteBuilder.Parameter("@SourceText", SQLSafeCodec.Encode(SourceText)));
 
             for (int i = 0; i < NTable.Count; i++)
@@ -235,8 +266,8 @@ namespace NIMEngine.ADO
                 SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Type"])),
                 SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                 SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
-                Row["From"],
-                Row["To"],
+                P_Convert.ObjToStr(Row["From"]),
+                P_Convert.ObjToStr(Row["To"]),
                 Row["ExactMatch"],
                 Row["IgnoreCase"],
                 SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Regex"]))
@@ -319,23 +350,23 @@ namespace NIMEngine.ADO
                 SQLiteBuilder.Parameter("@Regex", SQLSafeCodec.Encode(Item.Regex)));
         }
 
-        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(int From, int To, int PageNo)
+        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(P_Language From, P_Language To, int PageNo)
         {
             const string Where = SQLiteBuilder.LanguageFilter;
 
             int MaxPage = P_SQL_Pagination.GetPageCount(
                 "AdvancedDictionary",
                 Where,
-                SQLiteBuilder.Parameter("@From", From),
-                SQLiteBuilder.Parameter("@To", To));
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code));
 
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
                 PageNo,
                 NIM_Engine.Config.DefPageSize,
                 Where,
-                SQLiteBuilder.Parameter("@From", From),
-                SQLiteBuilder.Parameter("@To", To));
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code));
 
             List<AdvancedDictionaryItem> Items = new List<AdvancedDictionaryItem>();
             for (int i = 0; i < NTable.Count; i++)
@@ -348,8 +379,8 @@ namespace NIMEngine.ADO
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Type"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
-                    Row["From"],
-                    Row["To"],
+                    P_Convert.ObjToStr(Row["From"]),
+                    P_Convert.ObjToStr(Row["To"]),
                     Row["ExactMatch"],
                     Row["IgnoreCase"],
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Regex"]))
@@ -359,7 +390,7 @@ namespace NIMEngine.ADO
             return new P_SQL_Page<List<AdvancedDictionaryItem>>(Items, PageNo, MaxPage);
         }
 
-        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(string SourceText, int From, int To, int PageNo)
+        public static P_SQL_Page<List<AdvancedDictionaryItem>> QueryByPage(string SourceText, P_Language From, P_Language To, int PageNo)
         {
             const string Where = SQLiteBuilder.SourceLanguageFilter;
 
@@ -367,8 +398,8 @@ namespace NIMEngine.ADO
                 "AdvancedDictionary",
                 Where,
                 SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(SourceText)),
-                SQLiteBuilder.Parameter("@From", From),
-                SQLiteBuilder.Parameter("@To", To));
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code));
 
             List<Dictionary<string, object>> NTable = P_SQL_Pagination.GetTablePageData(
                 "AdvancedDictionary",
@@ -376,8 +407,8 @@ namespace NIMEngine.ADO
                 NIM_Engine.Config.DefPageSize,
                 Where,
                 SQLiteBuilder.Parameter("@Source", SQLSafeCodec.Encode(SourceText)),
-                SQLiteBuilder.Parameter("@From", From),
-                SQLiteBuilder.Parameter("@To", To));
+                SQLiteBuilder.Parameter("@From", From.Code),
+                SQLiteBuilder.Parameter("@To", To.Code));
 
             List<AdvancedDictionaryItem> Items = new List<AdvancedDictionaryItem>();
             for (int I = 0; I < NTable.Count; I++)
@@ -389,8 +420,8 @@ namespace NIMEngine.ADO
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Type"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Source"])),
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Result"])),
-                    Row["From"],
-                    Row["To"],
+                    P_Convert.ObjToStr(Row["From"]),
+                    P_Convert.ObjToStr(Row["To"]),
                     Row["ExactMatch"],
                     Row["IgnoreCase"],
                     SQLSafeCodec.Decode(P_Convert.ObjToStr(Row["Regex"]))
@@ -412,6 +443,5 @@ namespace NIMEngine.ADO
             }
             return false;
         }
-
     }
 }

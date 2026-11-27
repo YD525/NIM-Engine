@@ -131,11 +131,11 @@ namespace NIMEngine.Engine
             return Tags;
         }
 
-        public string GeneratePlaceholderText(string FileName, Languages From, Languages To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace, bool ForceReplaceProtected)
+        public string GeneratePlaceholderText(string FileName, P_Language From, P_Language To, string SourceStr, string Type, out bool NeedFurtherTranslate, bool ForceReplace, bool ForceReplaceProtected)
         {
             ReplaceTags.Clear();
             HasPlaceholder = false;
-            bool UseWordBoundary = LanguageExtensions.IsSpaceDelimitedLanguage(From);
+            bool UseWordBoundary = From.IsSpaceDelimitedLanguage();
 
             var ProtectedTags = GenerateProtectedTags(SourceStr, ForceReplaceProtected);
             for (int i = 0; i < ProtectedTags.Count; i++)
@@ -292,7 +292,7 @@ namespace NIMEngine.Engine
             return SourceStr;
         }
 
-        public string RestoreFromPlaceholder(string Str, Languages Lang, bool RestoreHints = false)
+        public string RestoreFromPlaceholder(string Str, P_Language To, bool RestoreHints = false)
         {
             if (string.IsNullOrEmpty(Str) || ReplaceTags.Count == 0)
                 return Str;

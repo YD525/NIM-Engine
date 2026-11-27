@@ -18,8 +18,8 @@ namespace NIMEngine.Translate
     {
         public string ID = "";
 
-        public Languages From = Languages.Null;
-        public Languages To = Languages.Null;
+        public P_Language From = P_Language.NULL;
+        public P_Language To = P_Language.NULL;
 
         public string AIParam = null;
         public EngineCore Core = new EngineCore();
@@ -45,7 +45,7 @@ namespace NIMEngine.Translate
             return this.DataLink;
         }
 
-        public Translator(string ID,Languages SetFrom, Languages SetTo, bool ClearCache)
+        public Translator(string ID, P_Language SetFrom, P_Language SetTo, bool ClearCache)
         {
             this.ID = ID;
 
@@ -60,14 +60,8 @@ namespace NIMEngine.Translate
 
             if (NIM_Engine.AIMemory.OptimizeToken(this))
             {
-                if (SetFrom != Languages.Null)
-                {
-                    this.From = SetFrom;
-                }
-                if (SetTo != Languages.Null)
-                {
-                    this.To = SetTo;
-                }
+                this.From = SetFrom;
+                this.To = SetTo;
             }
         }
 
@@ -323,7 +317,7 @@ namespace NIMEngine.Translate
 
                 ReturnItem.Units.Add(SingleUnit);
 
-                CloudDBCache.AddCache(SingleUnit.FileUniqueKey, SingleUnit.Key, (int)To, SingleUnit.Original, SingleUnit.Translated, CloudDBCache.ModelsToLine(UseModels));
+                CloudDBCache.AddCache(SingleUnit.FileUniqueKey, SingleUnit.Key, To, SingleUnit.Original, SingleUnit.Translated, CloudDBCache.ModelsToLine(UseModels));
 
                 Models = UseModels;
 
@@ -389,7 +383,7 @@ FROM (
             int GetCount = P_Convert.ObjToInt(NIM_Engine.LocalDB.ExecuteScalar(
                 SQLOrder,
                 SQLiteBuilder.Parameter("@fileUniqueKey", FileUniqueKey),
-                SQLiteBuilder.Parameter("@to", (int)this.To)));
+                SQLiteBuilder.Parameter("@to", this.To)));
 
             return GetCount + Addition;
         }

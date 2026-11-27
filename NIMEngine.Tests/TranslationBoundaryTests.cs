@@ -33,8 +33,8 @@ namespace NIMEngine.Tests
             var store = new InMemoryStore();
             var translator = new Translator(
                 "boundary-test",
-                Languages.English,
-                Languages.German,
+                new P_Language("en", "English"),
+                new P_Language("de", "German"),
                 false)
             {
                 TranslationProvider = provider,
