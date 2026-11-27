@@ -162,6 +162,7 @@ namespace NIMEngine
             StepAction?.Invoke(9);
             WordAutoComplete.DatabaseDirectory = GetFullPath(NIMPlugin.PluginsPath);
             WordAutoComplete.Init();
+            PluginHub.Instance.Dispatch(0, Engine_Method.LoadTextAutoComplete);
 
             StepAction?.Invoke(10);
             PlatformHub.Init(
