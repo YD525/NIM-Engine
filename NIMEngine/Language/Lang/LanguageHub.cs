@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
@@ -40,46 +42,6 @@ namespace NIMEngine.Language
         Japanese = 52,
         Korean = 53,
         Thai = 55
-    }
-    public class LanguageDetector
-    {
-        public Dictionary<Languages, double> Array = new Dictionary<Languages, double>();
-
-        public void Add(Languages Lang)
-        {
-            if (Array.ContainsKey(Lang))
-            {
-                Array[Lang] = Array[Lang] + 1;
-            }
-            else
-            {
-                Array.Add(Lang, 1);
-            }
-        }
-
-        public void Add(Languages Lang, double Ratio)
-        {
-            if (Array.ContainsKey(Lang))
-            {
-                Array[Lang] = Array[Lang] + Ratio;
-            }
-            else
-            {
-                Array.Add(Lang, Ratio);
-            }
-        }
-
-
-        public Languages GetMaxLang()
-        {
-            if (Array.Count > 0)
-            {
-                return Array
-                  .OrderByDescending(kv => kv.Value)
-                  .First().Key;
-            }
-            return Languages.English;
-        }
     }
     public static class P_Language
     {
@@ -134,18 +96,24 @@ namespace NIMEngine.Language
 
             return CodeToLanguageMap.TryGetValue(Code, out var Lang) ? Lang : Languages.Null;
         }
-
-
         public static void DetectLanguage(ref LanguageDetector OneDetect, string Str)
         {
             if (string.IsNullOrWhiteSpace(Str))
                 return;
 
             double Score = 0;
-            var Lang = DetectLanguageByContent(Str,ref Score);
+            var Lang = DetectLanguageByContent(Str, ref Score);
 
-            OneDetect.Add(Lang,Score);
+            OneDetect.Add(Lang, Score);
         }
+
+        public static Languages FromInt(int Value)
+        {
+            return Enum.IsDefined(typeof(Languages), Value)
+                ? (Languages)Value
+                : Languages.Auto;
+        }
+
         public static Languages DetectLanguageByLine(string String)
         {
             LanguageDetector OneDetect = new LanguageDetector();
@@ -153,11 +121,7 @@ namespace NIMEngine.Language
             DetectLanguage(ref OneDetect, String);
             return OneDetect.GetMaxLang();
         }
-
-
-
-
-        private static Languages DetectLanguageByContent(string Text,ref double Score)
+        private static Languages DetectLanguageByContent(string Text, ref double Score)
         {
             if (string.IsNullOrWhiteSpace(Text)) return Languages.English;
 
@@ -193,7 +157,6 @@ namespace NIMEngine.Language
 
             return Best.Key;
         }
-
         private static Dictionary<Languages, double> DetectLineScores(string Line)
         {
             var Scores = new Dictionary<Languages, double>();
@@ -278,6 +241,64 @@ namespace NIMEngine.Language
                 AddScore(Languages.Persian, PersianHelper.GetPersianScore(Line));
 
             return Scores;
+        }
+    }
+
+    public class LanguageHub
+    { 
+        public static ConcurrentDictionary<Languages,I_Language> SupportedLanguages = new ConcurrentDictionary<Languages,I_Language>();
+
+        public static void Init((bool Executed, Dictionary<string, object[]> Results) PluginData)
+        {
+            SupportedLanguages.Clear();
+            SupportedLanguages[Languages.English] = new EnglishHelper();
+
+
+            if (PluginData.Executed)
+            { 
+            
+            }
+        }
+    }
+
+
+    public class LanguageDetector
+    {
+        public Dictionary<Languages, double> Array = new Dictionary<Languages, double>();
+
+        public void Add(Languages Lang)
+        {
+            if (Array.ContainsKey(Lang))
+            {
+                Array[Lang] = Array[Lang] + 1;
+            }
+            else
+            {
+                Array.Add(Lang, 1);
+            }
+        }
+
+        public void Add(Languages Lang, double Ratio)
+        {
+            if (Array.ContainsKey(Lang))
+            {
+                Array[Lang] = Array[Lang] + Ratio;
+            }
+            else
+            {
+                Array.Add(Lang, Ratio);
+            }
+        }
+
+        public Languages GetMaxLang()
+        {
+            if (Array.Count > 0)
+            {
+                return Array
+                  .OrderByDescending(kv => kv.Value)
+                  .First().Key;
+            }
+            return Languages.English;
         }
     }
 }

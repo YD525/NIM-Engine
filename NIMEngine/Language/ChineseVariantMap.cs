@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using NIMEngine.ADO;
 using NIMEngine.Common;
@@ -110,13 +111,22 @@ namespace NIMEngine.Language
         }
 
 
+        // Matches CJK Unified Ideographs block (mainly simplified Chinese characters)
+        private static readonly Regex ChineseRegex = new Regex("[\u4e00-\u9fff]+", RegexOptions.Compiled);
+        public static bool ContainsZH(string Input)
+        {
+            if (string.IsNullOrWhiteSpace(Input))
+                return false;
+
+            return ChineseRegex.IsMatch(Input);
+        }
         public static ZHType CheckLangType(string Line)
         {
             Line = SQLSafeCodec.Encode(Line);
 
             ZHType SetType = ZHType.Null;
 
-            if (ZHHelper.ContainsZH(Line))
+            if (ContainsZH(Line))
             {
                 List<string> WordList = new List<string>(ChineseVariantMap.RamWords);
                 for (int i = 0; i < WordList.Count; i++)
