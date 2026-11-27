@@ -248,6 +248,11 @@ namespace NIMEngine.Language
         {
             return ((Code ?? string.Empty) + "|" + (Name ?? string.Empty)).GetHashCode();
         }
+
+        public override string ToString()
+        {
+            return this.Name;
+        }
     }
 
     public class LanguageHub
