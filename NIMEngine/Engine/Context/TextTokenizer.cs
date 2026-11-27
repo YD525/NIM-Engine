@@ -50,7 +50,7 @@ namespace NIMEngine.Engine
 
                 return tokens
                     .Where(t => t.Length > 1)
-                    .Where(t => (LanguageHub.Languages[Lang.Name].GetStopWords().Contains(t) == false))
+                    .Where(t => (LanguageHub.Languages[Lang.Name].GetStopWords()?.Contains(t) == false))
                     .ToArray();
             }
 
