@@ -126,7 +126,7 @@ namespace NIMEngine.Language
             "[ыЫэЭъЪёЁўЎјЈљЉњЊћЋђЂџЏѓЃќЌѕЅәӘғҒқҚңҢөӨұҰүҮһҺ]",
             RegexOptions.Compiled);
 
-        public float Version { get; set; } = 1.0f;
+        public float Version { get; set; } = 1.1f;
 
         public int GetLanguage()
         {
