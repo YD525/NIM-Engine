@@ -19,6 +19,89 @@ namespace NIMEngine.Language
         public static readonly P_Language German = new P_Language("de", "German");
     }
 
+    public class LanguageDetector
+    {
+        private readonly Dictionary<string, double> Scores = new Dictionary<string, double>();
+        private readonly LanguageDetectMode DetectMode;
+
+        public LanguageDetector(LanguageDetectMode DetectMode = LanguageDetectMode.Line)
+        {
+            this.DetectMode = DetectMode;
+        }
+
+        /// <summary>
+        /// Feed one piece of text. Can be called multiple times; scores accumulate.
+        /// </summary>
+        public void Add(string Text)
+        {
+            if (string.IsNullOrEmpty(Text))
+                return;
+
+            string Str = Text;
+
+            if (DetectMode == LanguageDetectMode.Line)
+            {
+                Accumulate(Str);
+            }
+            else
+            {
+                Str = Regex.Replace(Str, @"([.!?。！？．｡؟۔።፧։])", "$1\n");
+
+                foreach (var GetLine in Str.Split(new char[2] { '\r', '\n' }))
+                {
+                    if (GetLine.Trim().Length > 0)
+                    {
+                        Accumulate(GetLine);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Resolve the best matching language from everything accumulated so far.
+        /// Returns null when no language reaches its PassScore.
+        /// </summary>
+        public P_Language Detect()
+        {
+            if (Scores.Count == 0)
+                return null;
+
+            var Best = Scores.OrderByDescending(Kv => Kv.Value).First();
+
+            if (!LanguageHub.Languages.TryGetValue(Best.Key, out var SetLang))
+                return null;
+
+            if (Best.Value >= SetLang.PassScore)
+            {
+                return new P_Language(SetLang.Code, SetLang.LanguageName);
+            }
+
+            return null;
+        }
+
+        public void Reset()
+        {
+            Scores.Clear();
+        }
+
+        private void Accumulate(string Text)
+        {
+            foreach (var Key in LanguageHub.SupportedNames)
+            {
+                double P = LanguageHub.Languages[Key].GetProbability(Text);
+
+                if (Scores.ContainsKey(Key))
+                {
+                    Scores[Key] += P;
+                }
+                else
+                {
+                    Scores[Key] = P;
+                }
+            }
+        }
+    }
+
     public class P_Language : P_Language_Ext
     {
         public string Code = "";
@@ -34,7 +117,6 @@ namespace NIMEngine.Language
             this.Name = string.Empty;
         }
 
-        public static P_Language NULL = new P_Language();
         public const string Auto = "(Auto)";
         public static readonly P_Language P_Auto = new P_Language("", "(Auto)");
         public static P_Language Detect(string Text, LanguageDetectMode DetectMode)
@@ -93,7 +175,6 @@ namespace NIMEngine.Language
 
             return null;   
         }
-
         public bool IsSpaceDelimitedLanguage()
         {
             switch (this.Name)
@@ -133,7 +214,6 @@ namespace NIMEngine.Language
                     return false;
             }
         }
-
         public static bool operator ==(P_Language Left, string Right)
         {
             if (Left is null && Right is null) return true;

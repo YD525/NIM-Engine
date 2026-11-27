@@ -18,8 +18,8 @@ namespace NIMEngine.Translate
     {
         public string ID = "";
 
-        public P_Language From = P_Language.NULL;
-        public P_Language To = P_Language.NULL;
+        public P_Language From = new P_Language();
+        public P_Language To = new P_Language();
 
         public string AIParam = null;
         public EngineCore Core = new EngineCore();
