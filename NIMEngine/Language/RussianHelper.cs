@@ -8,7 +8,10 @@ namespace NIMEngine.Language
 {
     public class RussianHelper : I_Language
     {
+        public string Code { get; } = "ru";
+        public string LanguageName { get; } = "Russian";
         public double PassScore { get; set; } = 0.5;
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -84,13 +87,6 @@ namespace NIMEngine.Language
 
         // Cyrillic characters
         private static readonly Regex CyrillicCharRegex = new Regex(@"[\u0400-\u04FF]", RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Russian;
-        }
 
         public HashSet<string> GetStopWords()
         {

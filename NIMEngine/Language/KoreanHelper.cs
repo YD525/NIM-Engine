@@ -8,7 +8,10 @@ namespace NIMEngine.Language
 {
     public class KoreanHelper : I_Language
     {
+        public string Code { get; } = "ko";
+        public string LanguageName { get; } = "Korean";
         public double PassScore { get; set; } = 0.5;
+        public float Version { get; set; } = 1.1f;
 
         // Korean stop words are only used to assist language detection.
         // Text processing still uses the standard sliding N-gram algorithm.
@@ -50,8 +53,6 @@ namespace NIMEngine.Language
         private static readonly Regex KoreanCharRegex = new Regex(
             @"[\uAC00-\uD7A3\u1100-\u11FF\u3131-\u318E\uA960-\uA97F\uD7B0-\uD7FF\uFFA0-\uFFDC]",
             RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
 
         public int GetLanguage()
         {

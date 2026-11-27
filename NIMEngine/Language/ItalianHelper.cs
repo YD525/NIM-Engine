@@ -8,6 +8,8 @@ namespace NIMEngine.Language
 {
     public class ItalianHelper : I_Language
     {
+        public string Code { get; } = "it";
+        public string LanguageName { get; } = "Italian";
         public double PassScore { get; set; } = 0.5;
 
         public float Version { get; set; } = 1.1f;
@@ -84,11 +86,6 @@ namespace NIMEngine.Language
         private static readonly Regex ScriptLetterRegex = new Regex(
             @"[\p{L}]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Italian;
-        }
 
         public HashSet<string> GetStopWords()
         {

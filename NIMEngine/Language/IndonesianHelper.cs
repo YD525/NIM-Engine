@@ -8,9 +8,11 @@ namespace NIMEngine.Language
 {
     public class IndonesianHelper : I_Language
     {
+        public string Code { get; } = "id";
+        public string LanguageName { get; } = "Indonesian";
         public double PassScore { get; set; } = 0.5;
 
-        public float Version { get; set; } = 1.0f;
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -82,11 +84,6 @@ namespace NIMEngine.Language
         private static readonly Regex MalayMarkerRegex = new Regex(
             @"\b(aku|kami|kita|awak|anda|mereka|ia|ini|itu|tidak|boleh|sudah|belum|sedang|ialah|kerana|tetapi|namun|bagaimana|mengapa|sahaja|je)\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Indonesian;
-        }
 
         public HashSet<string> GetStopWords()
         {

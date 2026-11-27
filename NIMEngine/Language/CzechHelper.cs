@@ -8,6 +8,8 @@ namespace NIMEngine.Language
 {
     public class CzechHelper : I_Language
     {
+        public string Code { get; } = "cs";
+        public string LanguageName { get; } = "Czech";
         public double PassScore { get; set; } = 0.5;
 
         public float Version { get; set; } = 1.1f;
@@ -101,11 +103,6 @@ namespace NIMEngine.Language
         private static readonly Regex SlovakSpecificCharRegex = new Regex(
             @"[ľĺŕôäĽĹŔÔÄ]",
             RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Czech;
-        }
 
         public HashSet<string> GetStopWords()
         {

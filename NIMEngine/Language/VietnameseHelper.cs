@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class VietnameseHelper : I_Language
     {
+        public string Code { get; } = "vi";
+        public string LanguageName { get; } = "Vietnamese";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -82,11 +83,6 @@ namespace NIMEngine.Language
         private static readonly Regex NonVietnameseCharRegex = new Regex(
             @"[ñçğışřěůąłńśźżľĺŕôäåøæœ]",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Vietnamese;
-        }
 
         public HashSet<string> GetStopWords()
         {

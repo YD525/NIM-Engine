@@ -7,7 +7,11 @@ namespace NIMEngine.Language
 {
     public class FrenchHelper : I_Language
     {
+        public string Code { get; } = "fr";
+        public string LanguageName { get; } = "French";
         public double PassScore { get; set; } = 0.5;
+
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -94,13 +98,6 @@ namespace NIMEngine.Language
         private static readonly Regex ElisionRegex = new Regex(
             @"\b(?:l|d|j|qu|n|c|m|t|s)['’](?=[aeiouyhàâéèêîôœ])",
             RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        public float Version { get; set; } = 1.1f;
-
-        public int GetLanguage()
-        {
-            return (int)Languages.French;
-        }
 
         public HashSet<string> GetStopWords()
         {

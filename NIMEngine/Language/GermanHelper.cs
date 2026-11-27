@@ -7,7 +7,11 @@ namespace NIMEngine.Language
 {
     public class GermanHelper : I_Language
     {
+        public string Code { get; } = "de";
+        public string LanguageName { get; } = "German";
         public double PassScore { get; set; } = 0.5;
+
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -117,8 +121,6 @@ namespace NIMEngine.Language
         private static readonly Regex ForeignCharRegex = new Regex(
             "[çÇğĞıİşŞåÅõÕőŐűŰøØæÆñÑãÃąĄćĆęĘłŁńŃśŚźŹżŻčČďĎěĚňŇřŘšŠťŤůŮžŽ]",
             RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
 
         public int GetLanguage()
         {

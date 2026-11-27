@@ -8,7 +8,11 @@ namespace NIMEngine.Language
 {
     public class JapaneseHelper : I_Language
     {
+        public string Code { get; } = "ja";
+        public string LanguageName { get; } = "Japanese";
         public double PassScore { get; set; } = 0.5;
+
+        public float Version { get; set; } = 1.1f;
 
         // Asian language detection does not use the stop-word algorithm.
         // Stop words are only used for detection; text processing still uses the standard sliding N-gram algorithm.
@@ -56,13 +60,6 @@ namespace NIMEngine.Language
         private static readonly Regex JapaneseCharRegex = new Regex(
             @"[\u3041-\u309F\u30A1-\u30FA\u30FC-\u30FF\u31F0-\u31FF\uFF66-\uFF9F々〆]",
             RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Japanese;
-        }
 
         public HashSet<string> GetStopWords()
         {

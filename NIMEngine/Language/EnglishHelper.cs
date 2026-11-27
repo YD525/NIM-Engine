@@ -7,7 +7,11 @@ namespace NIMEngine.Language
 {
     public class EnglishHelper : I_Language
     {
+        public string Code { get; } = "en";
+        public string LanguageName { get; } = "English";
         public double PassScore { get; set; } = 0.5;
+
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -68,13 +72,6 @@ namespace NIMEngine.Language
         private static readonly Regex EnglishRegex = new Regex(
             @"^[a-zA-Z0-9éÉèÈêÊëËïÏàÀâÂçÇ\s\p{P}]+$",
             RegexOptions.Compiled);
-
-        public float Version { get; set; } = 1.1f;
-
-        public int GetLanguage()
-        {
-            return (int)Languages.English;
-        }
 
         public HashSet<string> GetStopWords()
         {

@@ -8,8 +8,9 @@ namespace NIMEngine.Language
 {
     public class PortugueseHelper : I_Language
     {
+        public string Code { get; } = "pt";
+        public string LanguageName { get; } = "Portuguese";
         public double PassScore { get; set; } = 0.5;
-
         public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
@@ -97,11 +98,6 @@ namespace NIMEngine.Language
         private static readonly Regex EuropeanMarkerRegex = new Regex(
             @"\b(tu|vós|convosco)\b|\b\w+-me\b|\b\w+-te\b|\b\w+-lhe\b|\b\w+-nos\b|\b\w+-vos\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        public int GetLanguage()
-        {
-            return (int)Languages.Portuguese;
-        }
 
         public HashSet<string> GetStopWords()
         {
