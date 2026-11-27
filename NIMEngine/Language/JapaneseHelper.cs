@@ -10,7 +10,7 @@ namespace NIMEngine.Language
     {
         public double PassScore { get; set; } = 0.5;
 
-        // Japanese uses a separate stop-word algorithm for language detection.
+        // Asian language detection does not use the stop-word algorithm.
         // Stop words are only used for detection; text processing still uses the standard sliding N-gram algorithm.
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.Ordinal)
