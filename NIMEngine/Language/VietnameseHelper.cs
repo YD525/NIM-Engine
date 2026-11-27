@@ -10,7 +10,7 @@ namespace NIMEngine.Language
     {
         public double PassScore { get; set; } = 0.5;
 
-        public float Version { get; set; } = 1.0f;
+        public float Version { get; set; } = 1.1f;
 
         private static readonly HashSet<string> StopWords =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase)
