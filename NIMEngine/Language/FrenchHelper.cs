@@ -1,58 +1,187 @@
-﻿using System.Text.RegularExpressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    internal static class FrenchHelper
+    public class FrenchHelper : I_Language
     {
-        // Matches common French function words: articles, pronouns, verbs, conjunctions, question words, etc.
-        private static readonly Regex FrenchKeywordRegex = new Regex(
-            @"\b(le|la|les|un|une|des|et|est|être|avoir|je|tu|il|elle|nous|vous|ils|elles|ne|pas|dans|sur|avec|pour|par|mais|ou|donc|car|que|qui|quoi|où|quand|comment|pourquoi|fait|beau|allons|au|parc|promener|aujourd'hui)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        public double PassScore { get; set; } = 0.5;
 
-        // Matches French accented characters (common diacritics)
-        private static readonly Regex FrenchAccentCharRegex = new Regex("[éèêëàâäùûüç]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-        /// <summary>
-        /// Determines whether a given text is likely to be French
-        /// </summary>
-        /// <param name="Input">Input text to check</param>
-        /// <param name="AccentCharThreshold">Threshold ratio for accented characters (default 0.01)</param>
-        /// <param name="KeywordHitsThreshold">Minimum number of matched keywords required (default 2)</param>
-        /// <returns>True if text is probably French, otherwise false</returns>
-        public static bool IsProbablyFrench(string Input, double AccentCharThreshold = 0.01, int KeywordHitsThreshold = 2)
+        private static readonly HashSet<string> StopWords =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            if (string.IsNullOrWhiteSpace(Input))
-                return false;
+            // Articles and determiners
+            "le","la","les","un","une","des","du","de","au","aux",
+            "ce","cet","cette","ces",
+            "chaque","quelque","quelques","plusieurs",
+            "tout","toute","tous","toutes",
+            "aucun","aucune","autre","autres",
 
-            int TotalLength = Input.Length;
+            // Conjunctions
+            "et","ou","mais","donc","car","ni","que","si",
+            "comme","lorsque","quand","puisque","quoique","parce",
 
-            // Count of matched accented French characters
-            int AccentCharCount = FrenchAccentCharRegex.Matches(Input).Count;
-            double AccentCharRatio = (double)AccentCharCount / TotalLength;
+            // Prepositions
+            "à","dans","sur","sous","avec","sans","pour","par","chez",
+            "vers","entre","contre","depuis","pendant","avant","après",
+            "devant","derrière","en",
 
-            // Count of matched French keywords
-            int KeywordHits = FrenchKeywordRegex.Matches(Input).Count;
+            // Personal and reflexive pronouns
+            "je","tu","il","elle","on","nous","vous","ils","elles",
+            "me","te","se","moi","toi","lui","leur","eux","y",
 
-            // Return true if either accented char ratio or keyword hits exceed threshold
-            return AccentCharRatio > AccentCharThreshold || KeywordHits >= KeywordHitsThreshold;
+            // Possessive determiners
+            "mon","ma","mes","ton","ta","tes","son","sa","ses",
+            "notre","nos","votre","vos","leurs",
+
+            // Interrogative and relative pronouns
+            "qui","quoi","où","dont","comment","pourquoi","combien",
+            "quel","quelle","quels","quelles","lequel","laquelle",
+
+            // Demonstrative pronouns
+            "ça","cela","ceci","celui","celle","ceux","celles",
+
+            // Auxiliary and modal verbs
+            "être","suis","es","est","sommes","êtes","sont",
+            "étais","était","étaient","été","sera","serait",
+            "avoir","ai","as","avons","avez","ont",
+            "avais","avait","avaient","eu","aura","aurait",
+            "fait","peux","peut","pouvons","pouvez","peuvent",
+            "dois","doit","devons","devez","doivent",
+            "veux","veut","voulons","voulez","veulent",
+
+            // Negations
+            "ne","pas","non","jamais","rien","personne",
+
+            // Common adverbs
+            "très","trop","plus","moins","aussi","encore","toujours","souvent",
+            "déjà","bien","ici","là","alors","ainsi","maintenant",
+            "aujourd","hui","demain","hier",
+
+            // Elided forms (the apostrophe splits them into separate words)
+            "c","d","j","l","m","n","s","t","qu"
+        };
+
+        // Stop words that also exist in English, German or other languages.
+        // Still filtered by the tokenizer, but weak evidence for detection.
+        private static readonly HashSet<string> AmbiguousWords =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "la","le","un","des","du","de","au","en","on","il","tu","me","te","se",
+            "ma","ta","sa","mon","ton","son","ses","mes","nos",
+            "ou","mais","car","ni","que","si","par","pour","sur","entre","comment",
+            "tout","plus","sans","chez","pas","non","ne","y",
+            "es","est","et","ai","as","eu","ont","fait","bien",
+            "personne","encore","hier",
+            "c","d","j","l","m","n","s","t"
+        };
+
+        private static readonly Regex WordRegex = new Regex(@"[\p{L}\p{M}]+", RegexOptions.Compiled);
+
+        // French accented characters (ä ö ü are left to German)
+        private static readonly Regex FrenchCharRegex = new Regex(
+            "[éèêëàâùûîïôçœ]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // Letters that indicate another language.
+        // Both cases are listed explicitly (no IgnoreCase) to avoid Turkish I casing issues.
+        private static readonly Regex ForeignCharRegex = new Regex(
+            "[äÄöÖüÜßáÁíÍóÓúÚìÌòÒñÑãÃõÕåÅøØğĞıİşŞąĄćĆęĘłŁńŃśŚźŹżŻčČďĎěĚňŇřŘšŠťŤůŮžŽőŐűŰ]",
+            RegexOptions.Compiled);
+
+        // Elision such as l'épée, d'or, j'ai
+        private static readonly Regex ElisionRegex = new Regex(
+            @"\b(?:l|d|j|qu|n|c|m|t|s)['’](?=[aeiouyhàâéèêîôœ])",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        public float Version { get; set; } = 1.1f;
+
+        public int GetLanguage()
+        {
+            return (int)Languages.French;
+        }
+
+        public HashSet<string> GetStopWords()
+        {
+            return StopWords;
+        }
+
+        private static void CountHits(string Input, out int WordCount, out int StrongHits, out int WeakHits)
+        {
+            WordCount = 0;
+            StrongHits = 0;
+            WeakHits = 0;
+
+            foreach (Match Word in WordRegex.Matches(Input))
+            {
+                WordCount++;
+
+                if (!StopWords.Contains(Word.Value))
+                    continue;
+
+                if (AmbiguousWords.Contains(Word.Value))
+                    WeakHits++;
+                else
+                    StrongHits++;
+            }
+        }
+
+        public bool IsProbablyMatch(string Input)
+        {
+            return GetProbability(Input) >= PassScore;
         }
 
         /// <summary>
-        /// Calculates a feature score indicating likelihood of French language
+        /// Returns a score from 0 to 1. A score of PassScore or higher is a match.
         /// </summary>
         /// <param name="Input">Input text</param>
-        /// <returns>Score value representing French language likelihood</returns>
-        public static double GetFrenchScore(string Input)
+        public double GetProbability(string Input)
         {
+            const int ShortTextWords = 3;
+            const double MinHitRatio = 0.15;
+            const double FullHitRatio = 0.5;
+            const double MaxFailScore = 0.49;
+
             if (string.IsNullOrWhiteSpace(Input))
                 return 0;
 
-            int TotalLength = Input.Length;
-            int AccentCharCount = FrenchAccentCharRegex.Matches(Input).Count;
-            int KeywordHits = FrenchKeywordRegex.Matches(Input).Count;
+            CountHits(Input, out int WordCount, out int StrongHits, out int WeakHits);
 
-            // Weighted score combining accented characters and keywords, normalized by input length
-            return (AccentCharCount * 1.5 + KeywordHits * 2.0) / TotalLength;
+            if (WordCount == 0)
+                return 0;
+
+            bool HasFrenchChar = FrenchCharRegex.IsMatch(Input);
+            bool HasElision = ElisionRegex.IsMatch(Input);
+
+            // Short text (item names, UI labels): one clear clue is enough
+            if (WordCount <= ShortTextWords)
+            {
+                bool HasClue = StrongHits >= 1 || HasElision ||
+                    (HasFrenchChar && !ForeignCharRegex.IsMatch(Input));
+
+                if (HasClue)
+                    return PassScore + (1 - PassScore) * StrongHits / WordCount;
+
+                return 0.25 * WeakHits / WordCount;
+            }
+
+            // An elision counts as one strong hit
+            if (HasElision)
+                StrongHits++;
+
+            double HitRatio = Math.Min(1.0, (StrongHits + WeakHits * 0.5) / WordCount);
+
+            bool HasSecondClue = StrongHits >= 2 || WeakHits > 0 || HasFrenchChar;
+
+            if (StrongHits >= 1 && HasSecondClue && HitRatio >= MinHitRatio)
+            {
+                double Extra = (HitRatio - MinHitRatio) / (FullHitRatio - MinHitRatio);
+
+                return PassScore + (1 - PassScore) * Math.Min(1.0, Extra);
+            }
+
+            return Math.Min(MaxFailScore, MaxFailScore * HitRatio / MinHitRatio);
         }
     }
 }
