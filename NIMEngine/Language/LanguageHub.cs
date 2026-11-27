@@ -393,5 +393,19 @@ namespace NIMEngine.Language
             }
             return null;
         }
+
+        public static bool GetLang(string LanguageName,out P_Language Lang)
+        {
+            if (Languages.ContainsKey(LanguageName))
+            {
+                var SetLang = Languages[LanguageName];
+                Lang = new P_Language(SetLang.Code, SetLang.LanguageName);
+
+                return true;
+            }
+
+            Lang = null;
+            return false;
+        }
     }
 }
