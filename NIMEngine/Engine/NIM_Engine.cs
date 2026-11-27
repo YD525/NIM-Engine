@@ -91,54 +91,54 @@ namespace NIMEngine
             PluginVersion = NIMPlugin.Version;
             NIMPlugin.Init(StartupPath,NIM_Engine.Config.Plugins);
 
-            string GetFilePath = GetFullPath(@"\Engine.db");
+            string DBFilePath = GetFullPath(@"\Engine.db");
 
             StepAction?.Invoke(1);
             PluginHub.Instance.Init();//Must be called first, before the first load.
 
-            if (!File.Exists(GetFilePath))
+            if (!File.Exists(DBFilePath))
             {
-                StepAction?.Invoke(2);
-                P_SQLite.CreateDataBase(GetFilePath);
-
-                var Results = PluginHub.Instance.Dispatch(0, Engine_Method.InitDatabase);
-                if (Results.Executed)
-                {
-                    foreach (var GetPluginResult in Results.Results)
-                    {
-                        object[] Payload = GetPluginResult.Value;
-                        if (Payload == null || Payload.Length < 1) continue;
-
-                        try 
-                        {
-                            var DBRef = ((I_Database)Payload[0]);
-
-                            if (DBRef.Bind(
-                            new DB_ExecuteQuery(
-                            (SQL) =>
-                            {
-                                return NIM_Engine.LocalDB.ExecuteQuery(SQL);
-                            }),
-                            new DB_ExecuteNonQuery(
-                            (SQL) =>
-                            {
-                                return NIM_Engine.LocalDB.ExecuteNonQuery(SQL);
-                            }),
-                            new DB_ExecuteScalar(
-                            (SQL) =>
-                            {
-                                return NIM_Engine.LocalDB.ExecuteScalar(SQL);
-                            })))
-                            {
-                                DBRef.OnBound();
-                            }
-                        }
-                        catch { }
-                    }
-                }
+                P_SQLite.CreateDataBase(DBFilePath);
             }
 
-            LocalDB.OpenSQL(GetFilePath);
+            LocalDB.OpenSQL(DBFilePath);
+
+            StepAction?.Invoke(2);
+            var DBResults = PluginHub.Instance.Dispatch(0, Engine_Method.InitDatabase);
+            if (DBResults.Executed)
+            {
+                foreach (var GetPluginResult in DBResults.Results)
+                {
+                    object[] Payload = GetPluginResult.Value;
+                    if (Payload == null || Payload.Length < 1) continue;
+
+                    try
+                    {
+                        var DBRef = ((I_Database)Payload[0]);
+
+                        if (DBRef.Bind(
+                        new DB_ExecuteQuery(
+                        (SQL) =>
+                        {
+                            return NIM_Engine.LocalDB.ExecuteQuery(SQL);
+                        }),
+                        new DB_ExecuteNonQuery(
+                        (SQL) =>
+                        {
+                            return NIM_Engine.LocalDB.ExecuteNonQuery(SQL);
+                        }),
+                        new DB_ExecuteScalar(
+                        (SQL) =>
+                        {
+                            return NIM_Engine.LocalDB.ExecuteScalar(SQL);
+                        })))
+                        {
+                            DBRef.OnBound();
+                        }
+                    }
+                    catch { }
+                }
+            }
 
             StepAction?.Invoke(3);
             AdvancedDictionary.Init();
@@ -169,7 +169,11 @@ namespace NIMEngine
             );
 
             StepAction?.Invoke(11);
+            LanguageHub.Init(
+                PluginHub.Instance.Dispatch(0, Engine_Method.LoadLanguages)
+            );
 
+            StepAction?.Invoke(12);
             P_ModReader.Init(
                 PluginHub.Instance.Dispatch(0, Engine_Method.LoadReaders)
             );

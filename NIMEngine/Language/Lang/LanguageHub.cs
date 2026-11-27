@@ -6,43 +6,7 @@ using NIM_Plugin.Language;
 
 namespace NIMEngine.Language
 {
-    public enum Languages
-    {
-        // Special
-        Null = -1,
-        Auto = 0,
-
-        // Latin-based / common Western languages
-        English = 1,
-        German = 2,
-        French = 3,
-        Spanish = 6,
-        Italian = 7,
-        Portuguese = 8,
-        Brazilian = 9,
-        Polish = 10,
-        Turkish = 11,
-        Vietnamese = 12,
-        Indonesian = 13,
-
-        // Slavic / Eastern European
-        Russian = 20,
-        Ukrainian = 21,
-        Czech = 22,
-
-        // South Asian / Middle Eastern (RTL / special word boundaries)
-        Hindi = 30,
-        Urdu = 31,
-        Persian = 32,
-        Arabic = 33,
-
-        // East Asian (no explicit word delimiters)
-        TraditionalChinese = 50,
-        SimplifiedChinese = 51,
-        Japanese = 52,
-        Korean = 53,
-        Thai = 55
-    }
+  
     public static class P_Language
     {
         private static readonly Dictionary<Languages, string> LanguageCodeMap = new Dictionary<Languages, string>()
@@ -62,16 +26,16 @@ namespace NIMEngine.Language
             //[Languages.Italian] = "it",
             //[Languages.Spanish] = "es",
             //[Languages.Hindi] = "hi",
-            [Languages.Urdu] = "ur",
+            //[Languages.Urdu] = "ur",
             //[Languages.Indonesian] = "id",
             //[Languages.French] = "fr",
-            [Languages.Vietnamese] = "vi",
+            //[Languages.Vietnamese] = "vi",
             //[Languages.Polish] = "pl",
             //[Languages.Thai] = "th",
             //[Languages.Persian] = "fa",
             //[Languages.Arabic] = "ar",
-            [Languages.Auto] = "auto",
-            [Languages.Null] = ""
+            //[Languages.Auto] = "auto",
+            //[Languages.Null] = ""
         };
 
         private static readonly Dictionary<string, Languages> CodeToLanguageMap = new Dictionary<string, Languages>(StringComparer.OrdinalIgnoreCase);
@@ -246,17 +210,109 @@ namespace NIMEngine.Language
 
     public class LanguageHub
     { 
-        public static ConcurrentDictionary<Languages,I_Language> SupportedLanguages = new ConcurrentDictionary<Languages,I_Language>();
+        public static ConcurrentDictionary<string,I_Language> SupportedLanguages = new ConcurrentDictionary<string, I_Language>();
+
+        private static void AddLanguage(I_Language Lang)
+        {
+            SupportedLanguages[Lang.LanguageName] = Lang;
+        }
+
+        //public enum Languages
+        //{
+        //    // Special
+        //    Null = -1,
+        //    Auto = 0,
+
+        //    // Latin-based / common Western languages
+        //    English = 1,
+        //    German = 2,
+        //    French = 3,
+        //    Spanish = 6,
+        //    Italian = 7,
+        //    Portuguese = 8,
+        //    Brazilian = 9,
+        //    Polish = 10,
+        //    Turkish = 11,
+        //    Vietnamese = 12,
+        //    Indonesian = 13,
+
+        //    // Slavic / Eastern European
+        //    Russian = 20,
+        //    Ukrainian = 21,
+        //    Czech = 22,
+
+        //    // South Asian / Middle Eastern (RTL / special word boundaries)
+        //    Hindi = 30,
+        //    Urdu = 31,
+        //    Persian = 32,
+        //    Arabic = 33,
+
+        //    // East Asian (no explicit word delimiters)
+        //    TraditionalChinese = 50,
+        //    SimplifiedChinese = 51,
+        //    Japanese = 52,
+        //    Korean = 53,
+        //    Thai = 55
+        //}
 
         public static void Init((bool Executed, Dictionary<string, object[]> Results) PluginData)
         {
             SupportedLanguages.Clear();
-            SupportedLanguages[Languages.English] = new EnglishHelper();
 
+            // Latin-based / common Western languages
+            AddLanguage(new EnglishHelper());
+            AddLanguage(new GermanHelper());
+            AddLanguage(new FrenchHelper());
+            AddLanguage(new SpanishHelper());
+            AddLanguage(new ItalianHelper());
+            AddLanguage(new PortugueseHelper());
+            AddLanguage(new BrazilianPortugueseHelper());
+            AddLanguage(new PolishHelper());
+            AddLanguage(new TurkishHelper());
+            AddLanguage(new VietnameseHelper());
+            AddLanguage(new IndonesianHelper());
+
+            // Slavic / Eastern European
+            AddLanguage(new RussianHelper());
+            AddLanguage(new UkrainianHelper());
+            AddLanguage(new CzechHelper());
+
+            // South Asian / Middle Eastern (RTL / special word boundaries)
+            AddLanguage(new HindiHelper());
+            AddLanguage(new UrduHelper());
+            AddLanguage(new PersianHelper());
+            AddLanguage(new ArabicHelper());
+
+            // East Asian (no explicit word delimiters)
+            AddLanguage(new TraditionalChineseHelper());
+            AddLanguage(new SimplifiedChineseHelper());
+            AddLanguage(new JapaneseHelper());
+            AddLanguage(new KoreanHelper());
+            AddLanguage(new ThaiHelper());
 
             if (PluginData.Executed)
-            { 
-            
+            {
+                foreach (var GetPluginResult in PluginData.Results)
+                {
+                    object[] Payload = GetPluginResult.Value;
+                    if (Payload == null || Payload.Length < 1) continue;
+
+                    if (!(Payload[0] is List<Type> List)) continue;
+
+                    foreach (var Kv in List)
+                    {
+                        try
+                        {
+                            if (!typeof(I_Language).IsAssignableFrom(Kv)) continue;
+
+                            I_Language Lang = (I_Language)Activator.CreateInstance(Kv);
+                            AddLanguage(Lang);
+                        }
+                        catch (Exception)
+                        {
+                        }
+                    }
+                }
             }
         }
     }
